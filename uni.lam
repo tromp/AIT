@@ -1,11 +1,12 @@
 let
   -- binary LC interpreter
   -- intL cont bits = cont (\free parsed) unparsed_bits
-  intL = \cont\list list (\bit0\list1 list1 (\bit1 bit0
+  intL = \cont\list list (\bit0\list1\intL\cont list1 (\bit1 bit0
     (intL (\exp bit1 (cont (\args\arg exp (\z z arg args)))
                    (intL (\exp2 cont (\args exp args (exp2 args))))))
     (bit1 (cont (\args args bit1))
-         (\list2 intL (\var cont (\args var (args bit1))) list1))));
+         (\list2 intL (\var cont (\args var (args bit1))) list1))))
+    intL cont;
   
   -- loop
   omega = omega;
