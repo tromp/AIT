@@ -1,0 +1,10 @@
+let
+  cat = \x x(\b\r\y\z z b(cat r y));
+  halfquine = \x cat x x
+in halfquine
+
+-- these should all produce same output:
+-- ./blc u @uni.lam @quine.blc++@quine.blc
+-- ./blc u @id.lam @quine.blc++@quine.blc
+-- ./blc u @quine.lam @quine.blc
+-- cat quine.blc quine.blc; echo

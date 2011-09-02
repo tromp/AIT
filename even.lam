@@ -1,0 +1,6 @@
+-- outputs characteristic sequence of even numbers
+let
+  false = \f\t f;
+  true = \f\t t;
+  even = \z z true (\z z false even)
+in \x even

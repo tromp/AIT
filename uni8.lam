@@ -1,0 +1,23 @@
+let
+  -- binary LC interpreter
+  -- int8 cont bits bytes = cont (\free parsed) unparsed_bytes
+  int8 = \cont\bits bits (\bit0\bits1\z bits1 (\bit1\bits2\z (\cont bit0
+    (int8 (\exp bit1 (cont (\args\arg exp (\z z arg args)))
+                   (int8 (\exp2 cont (\args exp args (exp2 args))))) bits2)
+    (bit1 (cont (\args args bit1) bits2)
+         (int8 (\var cont (\args var (args bit1))) bits1))) cont)
+      (\bytes bytes (\byte int8 cont (\z z bit0 byte))))
+    (\bytes bytes (int8 cont));
+  
+  -- loop
+  omega = omega;
+
+  -- binary LC universal machine for closed programs
+  uni8 = \bytes bytes (int8 (\exp\bits exp omega))
+  
+in uni8
+
+-- test with
+-- ./blc u8 @uni8.lam @id.Blc++@id.lam
+-- which should output
+-- \x x

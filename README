@@ -1,0 +1,59 @@
+This software allows one to run some experiments with
+binary lambda calculus as a vehicle for Algorithmic Information Theory.
+
+To run a lambda calculus program on some input,
+
+  ./blc u program bitstring
+
+e.g.
+
+  ./blc u '\x x' 0110
+
+If the program is in a file prog.lam, then use
+
+  ./blc u @prog.lam bitstring
+
+Similarly, use specify @bits if the bistring is in a file called bits.
+
+You can do
+  make prog.blc
+to generate binary prog.blc from prog.lam
+
+Multiple input strings, can be combined with ++, e.g.
+
+  ./blc u '\x x' 0110++@bits++110
+
+A program can be run on any number of strings, e.g.
+
+  ./blc u '\x \y \z y' 10 110 110
+
+Use u8 for byte strings, e.g.
+
+  ./blc u8 '\x \y \z y' arg1 arg2 arg3
+
+Run the bit-oriented universal machine with
+
+  ./blc u @uni.lam ...
+
+and the byte-oriented universal machine
+
+  ./blc u8 @uni8.lam ...
+
+Other actions besides u are:
+
+  f to show the evaluated term with the bruijn indices
+  p to show the un-evaluated term in regular notation
+  d like p but with de Bruijn indices
+  t like d but with LaTeX \lambda's
+  b to show the bit encoded optimized term
+  B like b but byte oriented
+  s to show the length of the encoding in bits
+
+See the lambda source files *.lam for more examples.
+
+See http://en.wikipedia.org/wiki/Binary_lambda_calculus
+for background information and the paper LC.pdf for technical details.
+
+credits:
+Module Lambda is copied from Lennart Augustsson's
+http://www.augustsson.net/Darcs/Lambda/

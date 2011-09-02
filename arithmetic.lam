@@ -1,0 +1,31 @@
+let False = \t \f f;
+    True = \t \f t;
+    if = \b \t \f b t f;
+    Zero = \z \s z;
+    Succ = \n \z \s s n;
+    one = Succ Zero;
+    two = Succ one;
+    three = Succ two;
+    isZero = \n n True (\m False);
+    const = \x \y x;
+    Pair = \a \b \p p a b;
+    fst = \ab ab (\a \b a);
+    snd = \ab ab (\a \b b);
+    add = \x \y  x y (\ n  Succ (add n y));
+    mul = \x \y  x Zero (\ n  add y (mul n y));
+    fac = \x  x one (\ n  mul x (fac n));
+    eqnat = \x \y  x (y True (const False)) (\x1 y False (\y1 eqnat x1 y1));
+    sumto = \x  x Zero (\n add x (sumto n));
+    n5 = add two three;
+    n6 = add three three;
+    n17 = add n6 (add n6 n5);
+    n37 = Succ (mul n6 n6);
+    n703 = sumto n37;
+    n720 = fac n6
+in eqnat n720 (add n703 n17)
+
+-- test with
+-- ./blc f @arithmetic.lam
+-- which should output
+-- \\1
+-- i.e. True

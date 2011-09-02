@@ -1,0 +1,35 @@
+let
+ id = \x x;
+ true = \x\y x;
+ zero = true;
+ false = \x\y y;
+ one = false;
+ nil = false;
+ cons = \x\y\z z x y;
+
+ -- increment or decrement a bigendian binary number
+ -- ccps version
+ indec = \which\cont\done\list list (\msb indec which (\r\dummy which msb cont done (\z z (\x\y msb y x) r)) (\r\dummy done (\z z msb r))) (cont list);
+
+ inc = indec (\b\x\y b y x) (\r\z z zero r) (\r r);
+
+ dec = indec (\b b) (\r r one) (\r r);
+
+ -- read n bits from bitstream in CPS
+ readbits = \cont\len len (\a\b\c \list list (\bit readbits (\x cont (\z z bit x)) (dec len))) (cont len);
+
+ -- read delimited string from bitstream in CPS
+ delimit = \cont\list list (\bit bit (cont nil) (delimit (readbits (\n cont (inc n)))));
+
+ countlen = \list list (\h\t\z inc (countlen t)) false;
+ pairlen = \list\prog\z z (countlen prog) list
+
+in delimit cons
+
+-- test with
+
+-- ./blc u @delimit.lam 1111000111001
+-- which should output
+-- <11010,>
+
+-- is also tested in uni.lam and pairup.lam

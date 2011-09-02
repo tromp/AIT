@@ -1,0 +1,11 @@
+-- outputs characteristic sequence of primes
+let
+   zero = \z\s z;
+   succ = \n\z\s s n;
+   step = \cont\ms ms (\m step (\p\ms\n\dummy m
+      (    cont zero (\z z n ms))
+      (\m1 cont    p (\z z m1 ms))
+    (succ n))) (cont ms ms (succ zero));
+   primes = step (\p\ms\n\z z p (primes (\z z n ms)));
+   main = \io \z z zero (\z z zero (primes (\x\y y)))
+in main

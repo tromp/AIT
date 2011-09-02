@@ -1,0 +1,65 @@
+let
+  -- booleans
+  true  = \t\f t; false = \t\f f;
+  -- identity
+  id = \x x;
+  -- numbers a la splitAt: n cont list = cont prefix_take_n_list drop_n_list
+  zero = \cont cont id;
+  succ = \n\cont\list list (\h n (\pref cont (\r\z z h (pref r))));
+  -- binary LC interpreter
+  intL = \cont\list list (\bit0\list1 list1 (\bit1 bit0
+    (intL (\exp bit1 (cont (\args\arg exp (\z z arg args)))
+                   (intL (\exp2 cont (\args exp args (exp2 args))))))
+    (bit1 (cont (\args args bit1))
+         (\list2 intL (\var cont (\args var (args bit1))) list1))));
+  -- binary LC universal machine allowing open programs
+  uniL1 = intL (\x x x);
+  -- read varables of the form 1 1^k 0
+  readvar = \cont\list list (\bit0 bit0
+     (cont zero)
+     (readvar (\v cont (succ v))));
+  -- binary LC parser
+  readc = \cont\list list (\bit0\list1 list1 (\bit1 (\pref01 bit0
+    (readc (\pref1\exp1 bit1
+      (cont (\suff pref01 (pref1 suff)) (\l\a\v l exp1))
+      (readc (\pref2\exp2 cont (\suff pref01 (pref1 (pref2 suff)))
+        (\l\a\v a exp1 exp2)))))
+    (\list2 readvar (\var cont (\suff pref01 (var true list2 suff))
+        (\l\a\v v var)) list1))
+      (\suff \z z bit0 (\z z bit1 suff))));
+  -- partial symbolic reduction using Thorsten Altenkirch's technique
+  eval = \term\env term
+    (\body \f\k\n f (\x eval body (\z z x env)))
+    (\term1\term2 (eval term1 env) (\f f (eval term2 env)) (\f\k\n n) (\f\k\n n))
+    (\var var (\pref\rest rest true) env);
+  symbit = \x\l\a\v l (\l\a\v l (\l\a\v v (x succ id zero)));
+  -- mink returns the smallest number of at least k bits of data that prog
+  -- will "read" from it to produce a pair <_,restofdata>
+  -- it does so by symbolically reducing prog applied to data applied to false
+  -- note that variable (\l\a\v v k) is free in the expression
+  -- one k is just a dummy since the reduction should never yield a lambda
+  mink = \prog\prefsymbits\k\data
+    eval (\l\a\v a (\l\a\v a
+           prog (prefsymbits (\l\a\v v k))) (symbit false))
+         (\z\f\k\n k)
+      k
+      k
+      (data (\b mink prog  (\z prefsymbits (\l\a\v l (\l\a\v a
+         (\l\a\v a (\l\a\v v zero) (symbit b)) z)))(succ k)));
+  -- program list returns the program at the start of binary stream list
+  program = readc (\pref\prog\data pref ((mink prog id zero data) true data false));
+  -- pairup listpq returns <<x,y>,z> if the binary stream listpq
+  -- starts with a program p for x, followed by a program q for
+  -- computing y given p, followed by the remainder stream z
+  pairup = \listpq (\uni uni listpq
+             (\x\listq uni listq (program listpq)
+               (\y\list \z z (\z z x y) list))
+           ) uniL1
+in pairup
+
+-- test with
+-- ./blc u @pairup.lam @delimit.blc++1111000111001++@pairlen.blc
+-- recall that pairlen = \list\prog\z z (countlen prog) list
+-- which should output
+-- <<11010,11010110>,>
+-- where 11010110, or the number 469, is the length of the program for 42

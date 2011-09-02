@@ -1,0 +1,40 @@
+let
+  id = \x x;
+  true = \x\y x;
+  false = \x\y y;
+  nil = false;
+  not = \b\x\y b y x;
+  eq = \p\q p q (not q);
+
+  -- increment or decrement a bigendian fixed width number, ccps version
+  step = \down\cont\done\list list (\msb step down (\r\dummy eq down msb cont done (\z z (\x\y msb y x) r)) (\r\dummy done (\z z msb r))) (cont list);
+
+  modify = \down
+         \cont\cell cont id (step down id id cell);
+  prev = \cont\cell\left\right left (\b\l cont id b l (\z z cell right));
+  next = \cont\cell\left\right right (\b cont id b (\z z cell left));
+  putc = \cont\cell cont (\w\z z cell w) cell;
+  getc = \cont\cell\left\right\input input (\b cont id b left right);
+
+  nonzero = \list list (\b\l\d b (nonzero l) true) list;
+  loop = \body\cont\cell (nonzero cell)
+       (body (\w loop body (\ws cont (\s w(ws s))))) (cont id)
+        cell;
+
+  parse = \cont\bfs bfs (\bf bf false false false (\b4\bf4 bf4 false false(\b1\bf1 bf1 (\b0\bla (\more b4 (more (
+      b0 (b1 getc putc) (modify b1)))(
+      b0 (more (b1 prev next))(
+        b1 (cont (\cont cont id)) (parse (\body more (loop body))
+    ))))(\sim1 parse (\sim2 cont (\cont sim1 (\w1 sim2 (\w2 cont (\s w1(w2 s)))))))))));
+
+  two = \f\x f(f x);
+  three = \f\x f(f(f x));
+  byte0 = three two (\l\z z true l) nil;
+  rpt = \x\z z x (rpt x);
+  rpt0 = rpt byte0
+in parse (\sim sim (\ws\cell\left\right\input ws nil) byte0 rpt0 rpt0)
+
+-- test with
+-- ./blc u8 @bf.lam @hw.bf
+-- which should output
+-- Hello world!

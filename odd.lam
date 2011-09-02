@@ -1,0 +1,6 @@
+-- outputs characteristic sequence of odd numbers
+let
+  false = \f\t f;
+  true = \f\t t;
+  odd = \z z false (\z z true odd)
+in \x odd
