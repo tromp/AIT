@@ -1,5 +1,5 @@
 let
-  cat = \x x(\b\r\y\z z b(cat r y));
+  cat = \xs xs (let rec = \x \xs \ys \p p x (xs rec ys) in rec);
   halfquine = \x cat x x
 in halfquine
 
