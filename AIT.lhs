@@ -16,7 +16,7 @@ Size in bits of an expression, assuming no free variables
 > instance Encodeable DB where
 >   encode z = prebin z "" where
 >     prebin (DBVar 0) s = '1':'0':s
->     prebin (DBVar (i+1)) s = '1':(prebin (DBVar i) s)
+>     prebin (DBVar i) s = '1':(prebin (DBVar (i-1)) s)
 >     prebin (DBVar   _) _ = error "Negative de-Bruijn index"
 >     prebin (DBLam   e) s = '0':'0':(prebin e s)
 >     prebin (DBApp x y) s = '0':'1':(prebin x (prebin y s))
