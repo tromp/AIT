@@ -80,15 +80,20 @@ as a syntactic sugar for $\lambda$ and application.
 >          return (v, e)
 >     sstring "let"
 >     bs <- sepBy pDef (schar ';')
->     sstring "in "
+>     sstring "in"
 >     e <- pLC
 >     return $ foldr lcLet e bs
 
 > schar :: Char -> ReadP Char
 > schar c = do skipSpaces; char c
 >
+> eow :: ReadP ()
+> eow = readS_to_P $ \s -> case s of
+>     c:_ | isAlphaNum c -> []
+>     s -> [((),s)]
+>
 > sstring :: String -> ReadP String
-> sstring c = do skipSpaces; string c
+> sstring c = do skipSpaces; r <- string c; eow; return r
 >
 > pVar :: (Read v) => ReadP v
 > pVar = do skipSpaces; readS_to_P (readsPrec 9)
