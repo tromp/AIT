@@ -46,18 +46,18 @@ let
      (\e e false (boolP x) false (xs (listP (\rs ys (\p p x rs))))));
 
   pairupP = uni absP appP (\prog \ps \pi
-     let pspi = \d ps (
-           prog (IFDIRTY d omega)
-           false
-           (pi (listP (\f f)))
-           false
-           (\p p (IFDIRTY p omega) (\e \p p (IFDIRTY p omega) (\e e)))
-           true);
-         -- Direct evaluator, using the identity monad.
-         abs = \ca \ctx (\cb ca (\p p cb ctx));
-         app = \ca ca;
-         eval = uni abs app (IFDIRTY (\f f) (\p \ps p omega))
-     in eval (ps pi) (\po \qs eval qs (pspi qs) (\qo \rs \p p (\p p po qo) rs)));
+    let pspi = \d ps (
+          prog (IFDIRTY d omega)
+          false
+          (pi (listP (\f f)))
+          false
+          (\p p (IFDIRTY p omega) (\e \p p (IFDIRTY p omega) (\e e)))
+          true);
+        -- Direct evaluator, using the identity monad.
+        abs = \ca \ctx (\cb ca (\p p cb ctx));
+        app = \ca ca;
+        eval = uni abs app (IFDIRTY (\f f) (\p \ps p omega))
+    in eval (ps pi) (\po \qs eval qs (pspi qs) (\qo \rs \p p (\p p po qo) rs)));
 
   ------------------------------------------------------------------------
   -- CPS evaluator. C a = (a -> label -> label) -> label -> label
@@ -75,18 +75,18 @@ let
     \r \d r (\cb (\r cb (\a a mx (\a a mxs r)))) (ys nil);
 
   pairupC = uni absC appC (\prog \ps \pi
-     let pspi = ps (
-           prog
-             (IFDIRTY pi omega)
-             (\a a (pi (listC (\f f)))
-               (\a a (\r r (\d \r r (\b b))) (\a \f f)))
-             (IFDIRTY pi omega));
+    let pspi = ps (
+          prog
+            (IFDIRTY pi omega)
+            (\a a (pi (listC (\f f)))
+              (\a a (\r r (\d \r r (\b b))) (\a \f f)))
+            (IFDIRTY pi omega));
 
-         -- Direct evaluator, using the identity monad.
-         abs = \ca \ctx (\cb ca (\p p cb ctx));
-         app = \ca ca;
-         eval = uni abs app (IFDIRTY (\p p) (\p \ps p omega))
-     in eval (ps pi) (\po \qs eval qs pspi (\qo \rs \p p (\p p po qo) rs)));
+        -- Direct evaluator, using the identity monad.
+        abs = \ca \ctx (\cb ca (\p p cb ctx));
+        app = \ca ca;
+        eval = uni abs app (IFDIRTY (\p p) (\p \ps p omega))
+    in eval (ps pi) (\po \qs eval qs pspi (\qo \rs \p p (\p p po qo) rs)));
 
   main = IFCPS pairupC pairupP
 in main
