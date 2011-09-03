@@ -1,0 +1,17 @@
+let
+ true = \x\y x;
+ zero = true;
+ false = \x\y y;
+ one = false;
+ nil = false;
+
+ -- increment or decrement a bigendian binary number
+ -- ccps version
+ indec = \which\cont\done\list list (\msb indec which (\r\dummy which msb cont done (\z z (\x\y msb y x) r)) (\r\dummy done (\z z msb r))) (cont list);
+
+ inc = indec (\b\x\y b y x) (\r\z z zero r) (\r r);
+
+ countlen = \list list (\h\t\z inc (countlen t)) false;
+ pairlen = \list\prog\z z (countlen prog) list
+
+in pairlen
