@@ -10,83 +10,82 @@ let
   cons = \a \b \p p a b;
 
   -- Enabling IFDIRTY replaces some omegas by suitable variables to save space.
-  -- IFDIRTY,  !CPS: 788 bits / CPS: 802
-  -- !IFDIRTY, !CPS: 878 bits / CPS: 847
+  -- IFDIRTY,  !CPS: 726 bits / CPS: 738
+  -- !IFDIRTY, !CPS: 817 bits / CPS: 798
   IFDIRTY = true;
   IFCPS = false;
 
+  ----------------------------------------------------------------------------
   -- Parse and compile binary lambda calculus.
-  uni = \abs \app let uni = \cnt \rs \xs
-    xs (\b0 \ys ys (\b1
-      let rs0 = \ts rs (\p p b0 (\p p b1 ts)) in
-        b0 (uni (\v1 (b1 (cnt (abs v1))
-                         (uni (\v2 cnt (\ctx app (v1 ctx) (v2 ctx)))))) rs0)
-           (b1 (cnt (\ctx ctx b1) rs0)
-               (\d uni (\v cnt (\ctx v (ctx b1))) (\ts rs (\p p b0 ts)) ys))))
+  --
+  -- For reference, a generic monadic evaluator, using type
+  --   Val ~ m Val -> m Val
+  -- would be  uni return (liftM2 id) (\prog \ps \rs prog omega (encode rs))
+  -- where encode :: [Bool] -> m Val.
+  --
+  -- In the continuation, ps contains the consumed bits as a difference list.
+
+  uni = \abs \app let uni = \cnt \ps \xs
+    xs (\b0 let ps0 = \ts ps (\p p b0 ts) in
+      \ys \uni \cnt ys (\b1
+        let ps1 = \ts ps0 (\p p b1 ts) in
+          b0 (uni (\v1 (b1 (cnt (\ctx abs (\v2 v1 (\p p v2 ctx))))
+                           (uni (\v2 cnt (\ctx app (v1 ctx) (v2 ctx)))))))
+             (b1 (cnt (\ctx ctx b1))
+                 (\d \d uni (\v cnt (\ctx v (ctx b1))) ps0 ys)) ps1)) uni cnt
   in \cnt uni cnt (\f f);
 
-  -- For reference, a generic monadic evaluator, using types
-  --   Term = [m Val] -> m Val, Val ~ m Val -> m Val.
-  -- appM = \ca \cb \ctx bind (ca ctx) (\a a (cb ctx));
-  -- absM = \ca \ctx return (\cb ca (\p p cb ctx));
-
-  ------------------------------------------------------------------------
-  -- Pair evaluator, using types
-  --   Term = [(label, Val)] -> (label, Val), Val ~ (label, Val) -> (label, Val)
+  ----------------------------------------------------------------------------
+  -- Pair evaluator, using m a = (label, a).
   -- The label is usually 'omega', but the input is labelled such that each
-  -- tail of io is initially labelled with the corresponding prefix ys.
+  -- tail of io is initially annotated with the corresponding prefix ys.
 
   omega = omega;
-  absP =  \ca \ctx \p p(IFDIRTY (\f f) omega) (\cb ca (\p p cb ctx));
-  appP = \ca \cb ca (\d \a a cb);
+  absP = \v \p p (IFDIRTY p omega) v;
+  appP = \ca \cb ca false cb;
 
-  boolP = \x \p p (IFDIRTY p omega) (\e \p p (IFDIRTY p omega) (\f x e f));
-  listP = \ys (\x \xs
-     \p p (ys nil)
-     (\e e false (boolP x) false (xs (listP (\rs ys (\p p x rs))))));
+  listP = \x \xs \ys
+     let mx = \p p (IFDIRTY p omega) (\e \p p (IFDIRTY p omega) (\f x e f));
+         mxs = xs listP (\rs ys (\p p x rs)) in
+     \p p (ys nil) (\e e false mx false mxs);
 
   pairupP = uni absP appP (\prog \ps \pi
     let pspi = \d ps (
           prog (IFDIRTY d omega)
           false
-          (pi (listP (\f f)))
+          (pi listP (\f f))
           false
           (\p p (IFDIRTY p omega) (\e \p p (IFDIRTY p omega) (\e e)))
           true);
         -- Direct evaluator, using the identity monad.
-        abs = \ca \ctx (\cb ca (\p p cb ctx));
-        app = \ca ca;
-        eval = uni abs app (IFDIRTY (\f f) (\p \ps p omega))
+        eval = uni (\f f) (\f f) (IFDIRTY (\f f) (\p \ps p omega))
     in eval (ps pi) (\po \qs eval qs (pspi qs) (\qo \rs \p p (\p p po qo) rs)));
 
-  ------------------------------------------------------------------------
-  -- CPS evaluator. C a = (a -> label -> label) -> label -> label
+  ----------------------------------------------------------------------------
+  -- CPS evaluator, using m a = (a -> label -> label) -> label -> label
   --   returnC = \a \r r a;
   --   bindC = \ma \mb \r ma (\a mb a r);
   -- The label -> label function keeps track of the most recently seen tail
   -- of the input.
 
-  absC = \ca \ctx \r \d r (\cb ca (\p p cb ctx)) (IFDIRTY (\t t) omega);
+  absC = \v \r \d r v (IFDIRTY d omega);
   appC = \ca \cb \r ca (\a a cb r);
 
-  listC = \ys \x \xs
+  listC = \x \xs \ys
     let mx = \r r (\a \r r (\b x a b));
-        mxs = xs (listC (\rs ys (\p p x rs))) in
+        mxs = xs listC (\rs ys (\p p x rs)) in
     \r \d r (\cb (\r cb (\a a mx (\a a mxs r)))) (ys nil);
 
   pairupC = uni absC appC (\prog \ps \pi
-    let pspi = ps (
-          prog
-            (IFDIRTY pi omega)
-            (\a a (pi (listC (\f f)))
-              (\a a (\r r (\d \r r (\b b))) (\a \f f)))
-            (IFDIRTY pi omega));
+    let pspi = \d ps (
+          prog (IFDIRTY d omega)
+          (\a a (pi listC (\f f))
+            (\a a (\r r (\d \r r (\b b))) (\a \f f)))
+          (IFDIRTY d omega));
 
         -- Direct evaluator, using the identity monad.
-        abs = \ca \ctx (\cb ca (\p p cb ctx));
-        app = \ca ca;
-        eval = uni abs app (IFDIRTY (\p p) (\p \ps p omega))
-    in eval (ps pi) (\po \qs eval qs pspi (\qo \rs \p p (\p p po qo) rs)));
+        eval = uni (\f f) (\f f) (IFDIRTY (\p p) (\p \ps p omega))
+    in eval (ps pi) (\po \qs eval qs (pspi qs) (\qo \rs \p p (\p p po qo) rs)));
 
   main = IFCPS pairupC pairupP
 in main
