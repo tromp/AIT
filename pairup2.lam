@@ -10,8 +10,8 @@ let
   cons = \a \b \p p a b;
 
   -- Enabling IFDIRTY replaces some omegas by suitable variables to save space.
-  -- IFDIRTY,  !CPS: 726 bits / CPS: 738
-  -- !IFDIRTY, !CPS: 817 bits / CPS: 798
+  -- IFDIRTY,  !CPS: 711 bits / CPS: 722
+  -- !IFDIRTY, !CPS: 796 bits / CPS: 790
   IFDIRTY = true;
   IFCPS = false;
 
@@ -42,10 +42,10 @@ let
 
   omega = omega;
   absP = \v \p p (IFDIRTY p omega) v;
-  appP = \ca \cb ca false cb;
+  appP = \ca ca false;
 
   listP = \x \xs \ys
-     let mx = \p p (IFDIRTY p omega) (\e \p p (IFDIRTY p omega) (\f x e f));
+     let mx = absP (\e absP (x e));
          mxs = xs listP (\rs ys (\p p x rs)) in
      \p p (ys nil) (\e e false mx false mxs);
 
@@ -68,11 +68,11 @@ let
   -- The label -> label function keeps track of the most recently seen tail
   -- of the input.
 
-  absC = \v \r \d r v (IFDIRTY d omega);
+  absC = \v \r IFDIRTY (r v) (\d r v omega);
   appC = \ca \cb \r ca (\a a cb r);
 
   listC = \x \xs \ys
-    let mx = \r r (\a \r r (\b x a b));
+    let mx = \r r (\a \r r (x a));
         mxs = xs listC (\rs ys (\p p x rs)) in
     \r \d r (\cb (\r cb (\a a mx (\a a mxs r)))) (ys nil);
 
