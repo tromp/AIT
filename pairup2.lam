@@ -10,7 +10,7 @@ let
   cons = \a \b \p p a b;
 
   -- Enabling IFDIRTY replaces some omegas by suitable variables to save space.
-  -- IFDIRTY,  !CPS: 687 bits / CPS: 722
+  -- IFDIRTY,  !CPS: 667 bits / CPS: 722
   -- !IFDIRTY, !CPS: 796 bits / CPS: 790
   IFDIRTY = true;
   IFCPS = false;
@@ -52,10 +52,10 @@ let
   pairupP = uni absP appP (\prog \ps \pi
     let pspi = \d ps (
           prog (IFDIRTY d omega)
-          false
+          (IFDIRTY d false)
           (pi listP (\f f))
-          false
-          (\p p (IFDIRTY p omega) (\e \p p (IFDIRTY p omega) (\e e)))
+          false -- cannot be replaced by d, since we may have prog = \x x
+          (IFDIRTY (\p \e \p \e e) (\p p omega (\e \p p omega (\e e))))
           true);
         -- Direct evaluator, using the identity monad.
         eval = uni (\f f) (\f f) (IFDIRTY (\f f) (\p \ps p omega))
