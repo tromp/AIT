@@ -10,7 +10,7 @@ let
   cons = \a \b \p p a b;
 
   -- Enabling IFDIRTY replaces some omegas by suitable variables to save space.
-  -- IFDIRTY,  !CPS: 711 bits / CPS: 722
+  -- IFDIRTY,  !CPS: 687 bits / CPS: 722
   -- !IFDIRTY, !CPS: 796 bits / CPS: 790
   IFDIRTY = true;
   IFCPS = false;
@@ -41,7 +41,7 @@ let
   -- tail of io is initially annotated with the corresponding prefix ys.
 
   omega = omega;
-  absP = \v \p p (IFDIRTY p omega) v;
+  absP = IFDIRTY (\v \p v) (\v \p p omega v);
   appP = \ca ca false;
 
   listP = \x \xs \ys
