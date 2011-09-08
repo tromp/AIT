@@ -4,7 +4,7 @@ It also exports a simple type of identifiers that parse and
 print in a nice way.
 
 > module Lambda(LC(..), DB(..), CL(..),  Id(..), nf, toCL, strongCL, toDB) where
-> import Data.List(span, union, (\\), elemIndex)
+> import Data.List(union, (\\), elemIndex)
 > import Data.Char(isAlphaNum)
 > import Text.PrettyPrint.HughesPJ(Doc, renderStyle, style, text, (<>), (<+>), parens)
 > import Text.ParserCombinators.ReadP
@@ -90,7 +90,7 @@ as a syntactic sugar for $\lambda$ and application.
 > eow :: ReadP ()
 > eow = readS_to_P $ \s -> case s of
 >     c:_ | isAlphaNum c -> []
->     s -> [((),s)]
+>     _ -> [((),s)]
 >
 > sstring :: String -> ReadP String
 > sstring c = do skipSpaces; r <- string c; eow; return r
@@ -124,7 +124,7 @@ Identifiers print and parse without any adornment.
 
 > instance Read Id where
 >     readsPrec _ s =
->         case span isAlphaNum s of
+>         case span (\c -> isAlphaNum c || c=='_') s of
 >         ("", _) -> []
 >         (i, s') -> [(Id i, s')]
 
@@ -141,7 +141,7 @@ Pretty print de Bruijn terms when shown.
 >     show = renderStyle style . ppDB 0
 >
 > ppDB :: Int -> DB -> Doc
-> ppDB _ (DBVar   v) = text $ show v
+> ppDB _ (DBVar   v) = text $ show (v+1)
 > ppDB p (DBLam   e) = pparens (p>0) $ text ("\\") <> ppDB 0 e
 > ppDB p (DBApp f a) = pparens (p>1) $ ppDB 1 f <+> ppDB 2 a
 
@@ -203,18 +203,21 @@ The CL type of combinatory expressions has constructors for index variables, pri
 >
 > ppCL :: Int -> CL -> Doc
 > ppCL _ (CVar v) = text $ show v
-> ppCL p CombS = text "S"
-> ppCL p CombK = text "K"
+> ppCL _ CombS = text "S"
+> ppCL _ CombK = text "K"
 > ppCL p (CApp f a) = pparens (p>1) $ ppCL 1 f <+> ppCL 2 a
 
+> combI :: CL
 > combI = CApp (CApp CombS CombK) CombK
 
+> drip :: CL -> CL
 > drip i@(CApp (CApp CombS CombK) _) = i
 > drip (CVar 0) = error "Can't drip CVar 0"
 > drip (CVar i) = CVar (i-1)
 > drip (CApp x y) = CApp (drip x) (drip y)
 > drip x = x
 
+> bump :: CL -> CL
 > bump (CVar i) = CVar (i+1)
 > bump (CApp x y) = CApp (bump x) (bump y)
 > bump x = x
@@ -224,10 +227,10 @@ The CL type of combinatory expressions has constructors for index variables, pri
 > abstract e = if freeIn (==0) e
 >              then occabstract e
 >              else CApp CombK (drip e) where
->   freeIn fv (CApp (CApp CombS CombK) _) = False
+>   freeIn _ (CApp (CApp CombS CombK) _) = False
 >   freeIn fv (CApp x y) = freeIn fv x || freeIn fv y
 >   freeIn fv (CVar i) = fv i
->   freeIn fv _ = False
+>   freeIn _ _ = False
 >   isConst = not . freeIn (const True)
 >   occabstract (CVar 0) = combI
 >   occabstract (CApp e1 (CVar 0)) | not (freeIn (==0) e1) = drip e1
@@ -237,6 +240,7 @@ The CL type of combinatory expressions has constructors for index variables, pri
 >       = occabstract (CApp (CApp (CApp CombS e1) (abstract e3)) e2)
 >   occabstract (CApp e1 e2)
 >       = CApp (CApp CombS (abstract e1)) (abstract e2)
+>   occabstract _ = error $ "Impossible occabstract argument"
 
 > toCL :: DB -> CL
 > toCL (DBVar i) = CVar i
@@ -245,15 +249,15 @@ The CL type of combinatory expressions has constructors for index variables, pri
 
 > evalCL :: CL -> CL
 > evalCL (CApp x y) = eval2 (evalCL x) (evalCL y) where
->   eval2 (CApp CombK x) y = x
->   eval2 (CApp (CApp CombS x) y) z = eval2 (eval2 x z) (eval2 y z)
->   eval2 x y = CApp x y
+>   eval2 (CApp CombK u) _ = u
+>   eval2 (CApp (CApp CombS u) v) w = eval2 (eval2 u w) (eval2 v w)
+>   eval2 u v = CApp u v
 > evalCL x = x
 
 > strongCL :: CL -> CL
 > strongCL = strong . evalCL where
 >   strong (CApp CombK x) = abstract (strong x)
->   strong f@(CApp (CApp CombS x) y) = abstract . strongCL $ CApp (bump f) (CVar 0)
->   strong f@(CApp CombS x) = abstract . abstract . strongCL $ CApp (CApp (bump(bump f)) (CVar 1)) (CVar 0)
+>   strong f@(CApp (CApp CombS _) _) = abstract . strongCL $ CApp (bump f) (CVar 0)
+>   strong f@(CApp CombS _) = abstract . abstract . strongCL $ CApp (CApp (bump(bump f)) (CVar 1)) (CVar 0)
 >   strong (CApp x y) = CApp (strong x) (strong y)
 >   strong x = x
