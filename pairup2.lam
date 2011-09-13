@@ -4,14 +4,14 @@
 -- 2) p (pi ++ X) evaluates to <po, X> for all X (even non-lists), and
 -- 3) q qi (ps ++ pi) evaluates to <qo, rs>.
 let
+  id = \x x;
   true = \x \y x;
   false = \x \y y;
   nil = false;
-  cons = \a \b \p p a b;
 
   -- Enabling IFDIRTY replaces some omegas by suitable variables to save space.
-  -- IFDIRTY,  !CPS: 667 bits / CPS: 722
-  -- !IFDIRTY, !CPS: 796 bits / CPS: 790
+  -- IFDIRTY,  !CPS: 657 bits / CPS: 718
+  -- !IFDIRTY, !CPS: 787 bits / CPS: 787
   IFDIRTY = true;
   IFCPS = false;
 
@@ -25,15 +25,15 @@ let
   --
   -- In the continuation, ps contains the consumed bits as a difference list.
 
-  uni = \abs \app let uni = \cnt \ps \xs
+  uni = \abs \app let uni0 = \cnt \ps \xs
     xs (\b0 let ps0 = \ts ps (\p p b0 ts) in
-      \ys \uni \cnt ys (\b1
+      \ys \uni0 \cnt ys (\b1
         let ps1 = \ts ps0 (\p p b1 ts) in
-          b0 (uni (\v1 (b1 (cnt (\ctx abs (\v2 v1 (\p p v2 ctx))))
-                           (uni (\v2 cnt (\ctx app (v1 ctx) (v2 ctx)))))))
+          b0 (uni0 (\v1 (b1 (cnt (\ctx abs (\v2 v1 (\p p v2 ctx))))
+                           (uni0 (\v2 cnt (\ctx app (v1 ctx) (v2 ctx)))))))
              (b1 (cnt (\ctx ctx b1))
-                 (\d \d uni (\v cnt (\ctx v (ctx b1))) ps0 ys)) ps1)) uni cnt
-  in \cnt uni cnt (\f f);
+                 (\d \d uni0 (\v cnt (\ctx v (ctx b1))) ps0 ys)) ps1)) uni0 cnt
+  in uni0;
 
   ----------------------------------------------------------------------------
   -- Pair evaluator, using m a = (label, a).
@@ -47,19 +47,20 @@ let
   listP = \x \xs \ys
      let mx = absP (\e absP (x e));
          mxs = xs listP (\rs ys (\p p x rs)) in
-     \p p (ys nil) (\e e false mx false mxs);
+     \p p ys (\e e false mx false mxs);
 
   pairupP = uni absP appP (\prog \ps \pi
-    let pspi = \d ps (
-          prog (IFDIRTY d omega)
-          (IFDIRTY d false)
-          (pi listP (\f f))
-          false -- cannot be replaced by d, since we may have prog = \x x
-          (IFDIRTY (\p \e \p \e e) (\p p omega (\e \p p omega (\e e))))
-          true);
+    let pspi = \d (
+          prog (IFDIRTY d omega) -- provide ctx
+          (IFDIRTY d false)      -- monadic apply
+          (pi listP ps)          -- to monadic input, expect monadic <poM,qsM>
+          false                  -- get <poM,qsM>; can't use d here in case prog is id
+          (IFDIRTY (\p \e \p \e e) (\p p omega (\e \p p omega (\e e))))   -- monadic tail
+          true                   -- head of qsM is difflist of bits read
+          nil);                  -- terminate list
         -- Direct evaluator, using the identity monad.
-        eval = uni (\f f) (\f f) (IFDIRTY (\f f) (\p \ps p omega))
-    in eval (ps pi) (\po \qs eval qs (pspi qs) (\qo \rs \p p (\p p po qo) rs)));
+        eval = uni id id (IFDIRTY id (\p \ps p omega)) pi
+    in eval (ps pi) (\po \qs eval qs (pspi qs) (\qo \rs \p p (\p p po qo) rs))) id;
 
   ----------------------------------------------------------------------------
   -- CPS evaluator, using m a = (a -> label -> label) -> label -> label
@@ -80,12 +81,12 @@ let
     let pspi = \d ps (
           prog (IFDIRTY d omega)
           (\a a (pi listC (\f f))
-            (\a a (\r r (\d \r r (\b b))) (\a \f f)))
+            (\a a (\r r (\d \r r id)) (\a \f f)))
           (IFDIRTY d omega));
 
         -- Direct evaluator, using the identity monad.
-        eval = uni (\f f) (\f f) (IFDIRTY (\p p) (\p \ps p omega))
-    in eval (ps pi) (\po \qs eval qs (pspi qs) (\qo \rs \p p (\p p po qo) rs)));
+        eval = uni id id (IFDIRTY id (\p \ps p omega)) pi
+    in eval (ps pi) (\po \qs eval qs (pspi qs) (\qo \rs \p p (\p p po qo) rs))) id;
 
   main = IFCPS pairupC pairupP
 in main
