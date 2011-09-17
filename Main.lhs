@@ -16,6 +16,9 @@
 >       putStr $ uni action progtext strings where
 >         mkdata = liftM concat . mapM litOrFile . splitOn "++"
 >         litOrFile "stdin" = getContents
->         litOrFile ('@':s) = readFile s
+>         litOrFile ('@':s) = readBinaryFile s
 >         litOrFile  s      = return s
 >     _ -> putStrLn "Usage: blc action [@]progfile [ [@]data[++[@]data]... ]..."
+
+> readBinaryFile :: FilePath -> IO String
+> readBinaryFile fn = openBinaryFile fn ReadMode >>= hGetContents
