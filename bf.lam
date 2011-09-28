@@ -9,30 +9,23 @@ let
   -- increment or decrement a bigendian fixed width number, ccps version
   step = \down\cont\done\list list (\msb step down (\r\dummy eq down msb cont done (\z z (\x\y msb y x) r)) (\r\dummy done (\z z msb r))) (cont list);
 
-  modify = \down
-         \cont\cell cont id (step down id id cell);
-  prev = \cont\cell\left\right left (\b\l cont id b l (\z z cell right));
-  next = \cont\cell\left\right right (\b cont id b (\z z cell left));
-  putc = \cont\cell cont (\w\z z cell w) cell;
-  getc = \cont\cell\left\right\input input (\b cont id b left right);
+  -- foo post-applied to a list, returns body.loop body if all 0s, else id
+  loop = \body\cont\cell (cell (let foo=\b\l b (l foo) (\c body (loop body c)) in foo) cont cell);
 
-  nonzero = \list list (\b\l\d b (nonzero l) true) list;
-  loop = \body\cont\cell (nonzero cell)
-       (body (\w loop body (\ws cont (\s w(ws s))))) (cont id)
-        cell;
-
-  parse = \cont\bfs bfs (\bf bf false false false (\b4\bf4 bf4 false false(\b1\bf1 bf1 (\b0\bla (\more b4 (more (
-      b0 (b1 getc putc) (modify b1)))(
-      b0 (more (b1 prev next))(
-        b1 (cont (\cont cont id)) (parse (\body more (loop body))
-    ))))(\sim1 parse (\sim2 cont (\cont sim1 (\w1 sim2 (\w2 cont (\s w1(w2 s)))))))))));
-
-  two = \f\x f(f x);
-  three = \f\x f(f(f x));
-  byte0 = three two (\l\z z true l) nil;
-  rpt = \x\z z x (rpt x);
-  rpt0 = rpt byte0
-in parse (\sim sim (\ws\cell\left\right\input ws nil) byte0 rpt0 rpt0)
+  parse = \cont\bfs bfs (\bf let fls=false in bf fls fls fls (\b4\bf4 bf4 fls fls(\b1\bf1 bf1 (\b0\bla
+     let more=\sim1 parse (\sim2 cont (\cont sim1 (sim2 cont))) in b4 (more (
+      b0 (\cont\cell\left\right\input b1 (input (\b cont b left right))            -- ,
+                                         (\z z cell (cont cell left right input))) -- .
+         (\cont\cell cont (step b1 id id cell))))(                             -- -/+
+      b0 (more (\cont\cell\left\right b1 (left  (\b cont b) (\z z cell right))     -- <
+                                         (right (\b cont b  (\z z cell left)))))(  -- >
+        b1 (cont id)                                                               -- ]
+           (parse (\body more (loop body))                                         -- [
+    )))))));
+  
+  byte0 = let two=\f\x f(f x); three=\f\x f(f(f x)) in three two (\l\z z true l) nil;
+  rpt0 = let rpt=\z z byte0 rpt in rpt
+in parse (\sim sim (\cell\left\right\input nil) byte0 rpt0 rpt0)
 
 -- test with
 -- ./blc u8 @bf.lam @hw.bf
