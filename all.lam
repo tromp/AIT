@@ -1,5 +1,5 @@
 -- outputs characteristic sequence of all naturals
 let
-  true = \f\t t;
-  all = \z z true all
-in \x all
+  true = \f\t.t;
+  all = \z.z true all
+in \x.all

@@ -1,22 +1,22 @@
 let
- id = \x x;
- true = \x\y x;
- false = \x\y y;
+ id = \x.x;
+ true = \x\y.x;
+ false = \x\y.y;
  zero = false;
  one = id;
 
- readbit = \cont\n\list list (\bit cont (\f\x (n f (n f (bit x (f x))))));
+ readbit = \cont\n\list.list (\bit.cont (\f\x.(n f (n f (bit x (f x))))));
 
- delimit = \cont\list list (\bit bit (cont zero) (delimit (\len len readbit cont one)));
+ delimit = \cont\list.list (\bit.bit (cont zero) (delimit (\len.len readbit cont one)));
 
- incc = \cont\done\list list (\msb incc (\r\_ msb done cont (\z z (\x\y msb y x) r))
-                                        (\r\_     done      (\z z       msb      r))
+ incc = \cont\done\list.list (\msb.incc (\r\_.msb done cont (\z.z (\x\y.msb y x) r))
+                                        (\r\_.    done      (\z.z       msb      r))
                              ) (cont list);
- inc = incc (\r\z z true r) id;
+ inc = incc (\r\z.z true r) id;
 
  nil = false;
 
- main = delimit (\n\l\z z (n inc nil) l)
+ main = delimit (\n\l\z.z (n inc nil) l)
 in main
 
 -- test with

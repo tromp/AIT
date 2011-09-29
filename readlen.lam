@@ -1,15 +1,15 @@
 let
-  true = \x \y x;
-  false = \x \y y;
+  true = \x\y.x;
+  false = \x\y.y;
   nil = false;
   zero = false;
-  cons = \a \b \p p a b;
+  cons = \a\b\p.p a b;
   -- xs (fold f) <==> foldr f id xs
-  fold = \f (let go = \x \xs f x (xs go) in go);
-  consnat = \x \xs \n xs (\f \a n f (n f (f (x a (f a)))));
-  splitAt = \n
-    n (\c \ys \xs xs (\x c (\zs ys (cons x zs)))) (\ys cons (ys nil)) (\ys ys);
-  pairlen = \l\n splitAt (n (fold consnat) zero) l
+  fold = \f.(let go = \x\xs.f x (xs go) in go);
+  consnat = \x\xs\n.xs (\f\a.n f (n f (f (x a (f a)))));
+  splitAt = \n.
+    n (\c\ys\xs.xs (\x.c (\zs.ys (cons x zs)))) (\ys.cons (ys nil)) (\ys.ys);
+  pairlen = \l\n.splitAt (n (fold consnat) zero) l
 in pairlen
 
 -- test with

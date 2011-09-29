@@ -1,10 +1,10 @@
 -- outputs characteristic sequence of primes
-\io let
-   zero = \x \y x;
-   one = \x \y y;
-   consz = \xs \p p zero xs;
-   oneS = \cont \x \xs \p p x (xs cont);
-   zeroS = \cont \x \xs consz (xs cont);
-   primes = \N \p p one (let SN = \r oneS (N r); F = SN F in (primes SN) F);
+\io.let
+   zero = \x\y.x;
+   one = \x\y.y;
+   consz = \xs\p.p zero xs;
+   oneS = \cont\x\xs\p.p x (xs cont);
+   zeroS = \cont\x\xs.consz (xs cont);
+   primes = \N\p.p one (let SN = \r.oneS (N r); F = SN F in (primes SN) F);
    main = consz (consz (primes zeroS))
 in main

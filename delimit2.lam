@@ -7,34 +7,34 @@
 -- list (0:xs) = ([], xs)
 -- list (1:xs) = let (n, xs') = list xs in splitAt (nat n) xs'
 let
-  true = \x \y x;
-  false = \x \y y;
+  true = \x\y.x;
+  false = \x\y.y;
   nil = false;
-  cons = \a \b \p p a b;
+  cons = \a\b\p.p a b;
   -- xs (fold f) <==> foldr f id xs
-  fold = \f (let go = \x \xs f x (xs go) in go);
+  fold = \f.(let go = \x\xs.f x (xs go) in go);
 
   -- 236 bit decoder
-  consnat = \x \xs \n xs (\f \a n f (n f (x a (f a))));
-  splitAt = \n
-    n (\c \ys \xs xs (\x c (\zs ys (cons x zs)))) (\ys cons (ys nil)) (\ys ys);
-  list = \x \xs
-    x (\p p nil xs)
-      (xs list (\ns splitAt (ns (fold consnat) (\f f))));
-  decode = \io io list;
+  consnat = \x\xs\n.xs (\f\a.n f (n f (x a (f a))));
+  splitAt = \n.
+    n (\c\ys\xs.xs (\x.c (\zs.ys (cons x zs)))) (\ys.cons (ys nil)) (\ys.ys);
+  list = \x\xs.
+    x (\p.p nil xs)
+      (xs list (\ns.splitAt (ns (fold consnat) (\f.f))));
+  decode = \io.io list;
 
   -- 323 bit encoder
-  succ0 = \cc \nc \xs \d
-    xs (\x succ0 (\ys x nc cc (\p p (\a \b x b a) ys)) (\ys nc (\p p x ys))) cc;
+  succ0 = \cc\nc\xs\d.
+    xs (\x.succ0 (\ys.x nc cc (\p.p (\a\b.x b a) ys)) (\ys.nc (\p.p x ys))) cc;
   -- succ (cons true) xs dummy = <successor of xs as a dlist>
-  succ = \ct succ0 ct (\ys ys);
+  succ = \ct.succ0 ct (\ys.ys);
 
-  len = \ct \xs xs (fold (\x \xs succ ct (xs nil) xs));
-  list = \xs
-    xs (\y \ys \ct let lys = len ct ys
-                   in  \zs \p p false (list (lys nil) (lys zs)))
+  len = \ct\xs.xs (fold (\x\xs.succ ct (xs nil) xs));
+  list = \xs.
+    xs (\y\ys\ct.let lys = len ct ys
+                   in  \zs\p.p false (list (lys nil) (lys zs)))
        (cons true);
-  encode = \io list io io
+  encode = \io.list io io
 in decode
 
 -- ./blc u @delimit2.lam 1110101110000000000

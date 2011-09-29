@@ -1,6 +1,6 @@
 let
-  cat = \xs xs (let rec = \x \xs \ys \p p x (xs rec ys) in rec);
-  halfquine = \x cat x x
+  cat = \xs.xs (let rec = \x\xs\ys\p.p x (xs rec ys) in rec);
+  halfquine = \x.cat x x
 in halfquine
 
 -- these should all produce same output:

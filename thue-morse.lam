@@ -1,8 +1,8 @@
 let
-  true = \x\y x;
-  false = \x\y y;
-  xpd = \h\t \z z h (\z z (\x\y h y x) (t xpd));
+  true = \x\y.x;
+  false = \x\y.y;
+  xpd = \h\t\z.z h (\z.z (\x\y.h y x) (t xpd));
   tm = xpd true (tm false)
   -- tm = tm xpd = true:false:tm1 xpd
-  -- tm = \z z true (tm xpd false)
-in \x tm
+  -- tm = \z.z true (tm xpd false)
+in \x.tm
