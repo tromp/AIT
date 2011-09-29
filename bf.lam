@@ -4,10 +4,12 @@ let
   false = \x\y.y;
   nil = false;
   not = \b\x\y.b y x;
-  eq = \p\q.p q (not q);
 
   -- increment or decrement a bigendian fixed width number, ccps version
-  step = \down\cont\done\list.list (\msb.step down (\r\dummy.eq down msb cont done (\z.z (\x\y.msb y x) r)) (\r\dummy.done (\z.z msb r))) (cont list);
+  step = \down\cont\done\list.list (\msb.step down
+             (\r\dummy.let nmsb=not msb in down msb nmsb cont done (\z.z nmsb r))
+             (\r\dummy.                                       done (\z.z  msb r))
+         ) (cont list);
 
   -- foo post-applied to a list, returns body.loop body if all 0s, else id
   loop = \body\cont\cell.cell (let foo=\b\l.b (l foo) (\c.body (loop body c)) in foo) cont cell;
@@ -16,14 +18,14 @@ let
      let more=\sim1.parse (\sim2.cont (\cont.sim1 (sim2 cont))) in b4 (more (
       b0 (\cont\cell\left\right\input.b1 (input (\b.cont b left right))            -- ,
                                          (\z.z cell (cont cell left right input))) -- .
-         (\cont\cell.cont (step b1 id id cell))))(                             -- -/+
+         (\cont\cell.cont (step b1 id id cell))))(                                -- -/+
       b0 (more (\cont\cell\left\right.b1 (left  (\b.cont b) (\z.z cell right))     -- <
                                          (right (\b.cont b  (\z.z cell left)))))(  -- >
         b1 (cont id)                                                               -- ]
            (parse (\body.more (loop body))                                         -- [
     )))))));
   
-  byte0 = let two=\f\x.f(f x); three=\f\x.f(f(f x)) in three two (\l\z.z true l) nil;
+  byte0 = let two=\f\x.f(f x); three=\f.f(f(f(\l\z.z true l))) in three two nil;
   rpt0 = let rpt=\z.z byte0 rpt in rpt
 in parse (\sim.sim (\cell\left\right\input.nil) byte0 rpt0 rpt0)
 
@@ -31,3 +33,6 @@ in parse (\sim.sim (\cell\left\right\input.nil) byte0 rpt0 rpt0)
 -- ./blc u8 @bf.lam @hw.bf
 -- which should output
 -- Hello world!
+-- or with
+-- ./blc u8 @bf.lam thue-morse.bf
+-- which outputs the thue morse sequence
