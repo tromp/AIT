@@ -1,0 +1,12 @@
+-- outputs characteristic sequence of primes
+\io let
+   zero  = \x\y.x;
+   one   = \x\y.y;
+   consz = \xs\p.p zero xs;
+   oneS  = \cont\x\xs\p.p x (xs cont);
+   zeroS = \cont\x\xs.consz (xs cont);
+   fix   = \f.(let x=f x in x);
+   ones  = fix (\ones\p.p one ones);
+   sieve = fix(\sv\n\x\xs\p.p x (x xs (xs (fix n)) (sv (\r.oneS (n r)))));
+   main  = consz (consz ones (sieve zeroS))
+in main
