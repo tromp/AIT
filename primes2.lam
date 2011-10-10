@@ -10,3 +10,5 @@
    sieve = fix(\sv\n\x\xs\p.p x (x xs (xs (fix n)) (sv (\r.oneS (n r)))));
    main  = consz (consz ones (sieve zeroS))
 in main
+
+-- test with ./blc m primes2.lam

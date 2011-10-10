@@ -37,5 +37,5 @@ let
   encode = \io.list io io
 in decode
 
--- ./blc u @delimit2.lam 1110101110000000000
+-- echo -n 1110101110000000000 | ./blc m delimit2.lam
 -- <10000000000,>

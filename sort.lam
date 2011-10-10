@@ -20,5 +20,5 @@ let
        n (pre nil) (sort (cp true) zs (sort (cp false) os tss))));
   main = \io.sort (\f.f) io nil
 in main
--- ./blc u8 @sort.lam abracadabra
+-- echo -nabracadabra | ./blc m8 sort.lam
 -- aaaaabbcdrr

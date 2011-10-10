@@ -21,7 +21,7 @@ in main
 
 -- test with
 
--- ./blc u @delimit.lam 1111000111001110
+-- echo -n 1111000111001110 | ./blc m delimit.lam
 -- which should output
 -- <11010,110>
 

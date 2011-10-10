@@ -21,6 +21,6 @@ let
 in uni
 
 -- test with
--- ./blc u @uni.lam @delimit.blc++1111000111001
+-- (cat delimit.blc; echo -n 1111000111001) | ./blc m uni.lam
 -- which should output
 -- <11010,>

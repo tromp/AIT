@@ -1,53 +1,48 @@
 This software allows one to run some experiments with
 binary lambda calculus as a vehicle for Algorithmic Information Theory.
 
-To run a lambda calculus program on some input,
+To run a lambda calculus machine:
 
-  ./blc u program bitstring
+  ./blc m program_file
 
-e.g.
+where program_file holds the programa text, e.g.
 
-  ./blc u '\x x' 0110
+  ./blc m id.lam
 
-If the program is in a file prog.lam, then use
-
-  ./blc u @prog.lam bitstring
-
-Similarly, use specify @bits if the bistring is in a file called bits.
+The machine takes its input from stdin, so this works just like cat with no argument.
 
 You can do
   make prog.blc
-to generate binary prog.blc from prog.lam
-
-Multiple input strings, can be combined with ++, e.g.
-
-  ./blc u '\x x' 0110++@bits++110
-
-A program can be run on any number of strings, e.g.
-
-  ./blc u '\x \y \z y' 10 110 110
-
-Use u8 for byte strings, e.g.
-
-  ./blc u8 '\x \y \z y' arg1 arg2 arg3
+or 
+  make prog.Blc
+to compile programs for universal machine uni.lam or the byte oriented uni8.lam
 
 Run the bit-oriented universal machine with
 
-  ./blc u @uni.lam ...
+  ./blc m uni.lam [conditional data]
 
 and the byte-oriented universal machine
 
-  ./blc u8 @uni8.lam ...
+  ./blc m8 uni8.lam [conditional data]
 
-Other actions besides u are:
+Other actions besides m are:
 
-  f to show the evaluated term with the bruijn indices
-  p to show the un-evaluated term in regular notation
+  f to show the evaluated program with the bruijn indices
+  p to show the un-evaluated progran in regular notation
+  c show the program converted into Combinatory Logic
+  x show the binary encoding of c
+  e show the evaluated form of c
   d like p but with de Bruijn indices
   t like d but with LaTeX \lambda's
   b to show the bit encoded optimized term
   B like b but byte oriented
   s to show the length of the encoding in bits
+
+>   "f" -> nl .                  show . nf . toDB $ prog
+>   "e" -> nl .     show . strongCL . toCL . toDB $ prog
+>   "c" -> nl .     show . toCL . optimize . toDB $ prog
+>   "x" -> nl .   encode . toCL . optimize . toDB $ prog
+
 
 See the lambda source files *.lam for more examples.
 
@@ -55,5 +50,6 @@ See http://en.wikipedia.org/wiki/Binary_lambda_calculus
 for background information and the paper LC.pdf for technical details.
 
 credits:
-Module Lambda is copied from Lennart Augustsson's
+Module Lambda is derived from Lennart Augustsson's
 http://www.augustsson.net/Darcs/Lambda/
+Chris Hendrie and Bertram Felgenhauer contributed code and ideas

@@ -16,7 +16,7 @@ Size in bits of an expression, assuming no free variables
 > instance Encodeable DB where
 >   encode z = prebin z "" where
 >     prebin (DBVar 0) s = '1':'0':s
->     prebin (DBVar i) s = '1':(prebin (DBVar (i-1)) s)
+>     prebin (DBVar i) s | i>0 = '1':(prebin (DBVar (i-1)) s)
 >     prebin (DBVar   _) _ = error "Negative de-Bruijn index"
 >     prebin (DBLam   e) s = '0':'0':(prebin e s)
 >     prebin (DBApp x y) s = '0':'1':(prebin x (prebin y s))
@@ -111,26 +111,28 @@ Bitstring functions -----------------------------------------------------
 >   num = foldl (\x y -> 2*x + (digitToInt y)) 0 $ pad8 byte
 >   pad8 = take 8 . (++ repeat '0')
 
-> usesBytes :: String -> Bool
-> usesBytes = (=='8') . last
+> usesBytes :: String -> Maybe String
+> usesBytes action = if last action=='8' then Just (init action) else Nothing
 
-> uni :: String -> String -> [String] -> String
-> uni opn progtext args = let
->   (op,io) = if usesBytes opn then (init opn,bytestoLC) else (opn,bitstoLC)
+> uni :: String -> String -> String -> [String] -> String
+> uni opn progtext inp args = let
+>   (op,input) = case usesBytes opn of
+>     Just op' -> (op',bytestoLC inp)
+>     Nothing  -> (opn, bitstoLC inp)
 >   prog = read progtext :: LC Id
->   term = foldl (\p -> App p . io) prog args
+>   machine = foldl (\p -> App p . bitstoLC) (App prog input) args
 >   tex = concatMap (\c -> if c=='\\' then "\\lambda " else [c])
 >   nl = (++ "\n")
->   action "p" = nl . show
->   action "u" = nl .                 bshow . nf . toDB
->   action "f" = nl .                  show . nf . toDB
->   action "e" = nl .     show . strongCL . toCL . toDB
->   action "c" = nl .     show . toCL . optimize . toDB
->   action "x" = nl .   encode . toCL . optimize . toDB
->   action "d" = nl .            show . optimize . toDB
->   action "t" = nl .      tex . show . optimize . toDB
->   action "b" =           encode . optimize . toDB
->   action "B" = toBytes . encode . optimize . toDB
->   action "s" = nl .     show . size . optimize . toDB
->   action  a  = const $ "Action " ++ a ++ " not recognized.\n"
->   in action op term
+>  in case op of
+>   "m" -> nl .                 bshow . nf . toDB $ machine
+>   "p" -> nl .                  show             $ prog
+>   "f" -> nl .                  show . nf . toDB $ prog
+>   "e" -> nl .     show . strongCL . toCL . toDB $ prog
+>   "c" -> nl .     show . toCL . optimize . toDB $ prog
+>   "x" -> nl .   encode . toCL . optimize . toDB $ prog
+>   "d" -> nl .            show . optimize . toDB $ prog
+>   "t" -> nl .      tex . show . optimize . toDB $ prog
+>   "b" ->               encode . optimize . toDB $ prog
+>   "B" -> toBytes .     encode . optimize . toDB $ prog
+>   "s" -> nl .     show . size . optimize . toDB $ prog
+>   a   -> "Action " ++ a ++ " not recognized.\n"

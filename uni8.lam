@@ -18,6 +18,6 @@ let
 in uni8
 
 -- test with
--- ./blc u8 @uni8.lam @id.Blc++@id.lam
+-- cat id.Blc id.lam | ./blc m8 uni8.lam
 -- which should output
 -- \x.x

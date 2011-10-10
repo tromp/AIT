@@ -30,9 +30,9 @@ let
 in parse (\sim.sim (\cell\left\right\input.nil) byte0 rpt0 rpt0)
 
 -- test with
--- ./blc u8 @bf.lam @hw.bf
+-- ./blc m8 bf.lam < hw.bf
 -- which should output
 -- Hello world!
 -- or with
--- ./blc u8 @bf.lam thue-morse.bf
+-- ./blc m8 bf.lam < thue-morse.bf
 -- which outputs the thue morse sequence

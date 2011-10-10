@@ -5,10 +5,10 @@ FILES = README Makefile Lambda.lhs AIT.lhs Main.lhs arithmetic.lam delimit.lam p
 .SUFFIXES : .lhs .lam .blc .Blc
 
 .lam.blc :
-	./blc b @$< > $*.blc
+	./blc b $< > $*.blc
 
 .lam.Blc :
-	./blc B @$< > $*.Blc
+	./blc B $< > $*.Blc
 
 blc:	*.lhs
 	$(GHC) -O2 -Wall --make Main.lhs -o blc

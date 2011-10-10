@@ -91,7 +91,7 @@ let
   main = IFCPS pairupC pairupP
 in main
 
--- ./blc u @pairup2.lam @delimit.blc++1111000111001++@pairlen.blc
+-- (cat delimit.blc; echo -n  1111000111001; cat pairlen.blc) | ./blc m pairup2.lam
 -- <<11010,11010110>,>
--- ./blc u @pairup2.lam @delimit2.blc++1110101110000000000++@pairlen.blc++1010
+-- (cat delimit2.blc; echo -n 1110101110000000000; cat pairlen.blc; echo -n 1010) | ./blc m pairup2.lam
 -- <<10000000000,00000000>,1010>
