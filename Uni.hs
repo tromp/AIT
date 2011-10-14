@@ -6,8 +6,8 @@ import Control.Applicative
 import Debug.Trace
 
 data Term = App Term Term | Abs Term | Var Int
-data Term' = Return Term Env | Apply Term' Term Env
-data Closure = TE Term Env | IDX
+data Term' = Return Closure | Apply Term' Term Env
+data Closure = TE Term Env | IDX Int
 type Env = [Closure]
 
 instance Show Term where
@@ -30,19 +30,20 @@ parse ('1' : xs) = do
     return (Var (length os), xs')
 
 whnf :: Term -> Env -> Term'
-whnf t@(Var i) env = case env!!i of
-  IDX -> Return t undefined
+whnf (Var i) env = case env !! i of
+  i@(IDX _) -> Return i
   TE t e -> whnf t e
-whnf t@(Abs _) env = Return t env
+whnf t@(Abs _) env = Return (TE t env)
 whnf (App l r) env = case (whnf l env) of
-  Return (Abs l') env' -> whnf l' (TE r env:env')
+  Return (TE (Abs l') env') -> whnf l' (TE r env : env')
   l' -> Apply l' r env
 
-nf :: Term -> Env -> Term
-nf t env = nf' (whnf t env) where
-  nf' (Apply l r env) = App (nf' l) (nf r env)
-  nf' (Return (Abs t) env) = Abs (nf t (IDX:env))
-  nf' (Return t _) = t
+nf :: Int -> Term -> Env -> Term
+nf d t env = nf' d (whnf t env) where
+  nf' d (Apply l r env) = App (nf' d l) (nf d r env)
+  nf' d (Return (TE (Abs t) env)) = Abs (nf (d+1) t (IDX d : env))
+  nf' d (Return (TE t _)) = t
+  nf' d (Return (IDX i)) = Var (d - i - 1)
 
 encode :: String -> Term
 encode = foldr (\x -> Abs . (App . App (Var 0) . code $ x)) nil where
@@ -73,4 +74,4 @@ decode x = '(': shows x ")"
 main = do
     hSetBuffering stdout NoBuffering
     Just (t, input) <- parse . filter (not . isSpace) <$> getContents
-    putStr . decode . nf (App t (encode input)) $ []
+    putStr . decode . nf 0 (App t (encode input)) $ []
