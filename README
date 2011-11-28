@@ -46,6 +46,12 @@ Other actions besides m are:
 
 See the lambda source files *.lam for more examples.
 
+In the absence of a Haskell runtime environment, one can use
+the perl blc interpreter blc.pl to run blc programs;
+perl blc.pl is equivalent to ./blc m uni.lam, while perl blc.pl -8 is the byte
+oriented verion, equivalent to ./blc m8 uni.lam.
+This interpreter doesn't support conditional arguments though.
+
 See http://en.wikipedia.org/wiki/Binary_lambda_calculus
 for background information and the paper LC.pdf for technical details.
 
