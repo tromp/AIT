@@ -1,0 +1,14 @@
+-- has a normal form (namely, \x.x) iff the Goldbach conjecture is false
+let
+   zero = \x\y.x;
+   one = \x\y.y;
+   sieve = \N\p.p one (let
+     SN = \r.let oneS = \cont\x\xs\p.p x (xs cont) in oneS (oneS (N r));
+     F = SN F in (sieve SN) F);
+   zeroS = \cont\x\xs\p.p zero (xs cont);
+   primes = sieve zeroS;
+   check = \testp\p.
+     let testp1 = \q.q q p (\qs.qs testp) q in -- note: last q = \qs\v.v
+     \ps.primes testp1 (ps (check testp1));
+   main = primes (check (\q\qs\v\x.x))
+in main
