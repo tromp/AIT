@@ -1,0 +1,1199 @@
+\documentclass{article}
+\usepackage{amssymb}
+\usepackage{epsf}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+\newtheorem{corollary}{Corollary}
+\newtheorem{claim}{Claim}
+\newcommand{\tup}[1]{\langle #1 \rangle}
+\newcommand{\pref}[2]{(#1:#2)}
+\newcommand{\idx}[2]{#1[#2]}
+%\newcommand{\scott}[1]{[#1]}
+\newcommand{\bnd}[2]{#1^{#2[]}}
+\newcommand{\brr}[1]{\overline{#1}}
+\newcommand{\baz}[1]{\lambda^0 #1.\ }
+\newcommand{\basz}[1]{\lambda^1 #1.\ }
+\newcommand{\bassz}[1]{\lambda^2 #1.\ }
+\newcommand{\basssz}[1]{\lambda^3 #1.\ }
+\newcommand{\Ct}{{\bf true}}
+\newcommand{\Cf}{{\bf false}}
+\newcommand{\CS}{{\bf S}}
+\newcommand{\CK}{{\bf K}}
+\newcommand{\CZ}{{\bf 0}}
+\newcommand{\CO}{{\bf 1}}
+\newcommand{\CP}{{\bf P}}
+\newcommand{\CX}{{\bf X}}
+\newcommand{\CY}{{\bf Y}}
+\newcommand{\CI}{{\bf I}}
+\newcommand{\CU}{{\bf U}}
+\newcommand{\CE}{{\bf E}}
+\newcommand{\CF}{{\bf F}}
+\newcommand{\COm}{{\bf \Omega}}
+\newcommand{\Cnil}{{\bf nil}}
+\newcommand{\Csucc}{{\bf succ}}
+\newcommand{\Cnull}{{\bf null}}
+\newenvironment{proof}{\noindent{\bf Proof: }}
+
+\title{Binary Lambda Calculus and Combinatory Logic}
+\author{John Tromp}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+In the first part,
+we introduce binary representations of both lambda calculus
+and combinatory logic terms, and demonstrate their simplicity
+by providing very compact parser-interpreters for these binary
+languages.
+Along the way we also present new results on
+list representations, bracket abstraction,
+and fixpoint combinators.
+In the second part
+we review Algorithmic Information Theory, for which
+these interpreters provide a convenient vehicle.
+We demonstrate this with several concrete upper bounds
+on program-size complexity.
+%including an elegant self-delimiting code for binary strings.
+\end{abstract}
+
+\section{Introduction}
+
+The ability to represent programs as data and to map such data back
+to programs (known as reification and reflection~\cite{fw}),
+is of both practical use in
+metaprogramming~\cite{dm} as well as theoretical use in computability and
+logic~\cite{geb}.
+It comes as no surprise that the pure lambda calculus,
+which represents both programs and data as functions,
+is well equipped to offer these features.
+In~\cite{kl}, Kleene was the first to propose an encoding of lambda terms,
+mapping them to G\"{o}del numbers, which can in turn be represented as
+so called Church numerals.
+Decoding such numbers is somewhat cumbersome, and not particularly efficient.
+In search of simpler constructions, various alternative encodings have been proposed using
+higher-order abstract syntax~\cite{PE88}
+combined with the standard lambda representation of signatures \cite{SM89}.
+A particularly simple encoding was proposed by Mogensen~\cite{m00},
+for which the term $\lambda m.m(\lambda x.x)(\lambda x.x)$ acts as a
+selfinterpreter.
+The prevalent data format, both in information theory and in practice,
+however, is not numbers, or syntax trees, but bits.
+We propose binary encodings of both lambda and combinatory
+logic terms, and exhibit relatively simple
+and efficient interpreters (using the standard representation of
+bit-streams as lists of booleans).
+
+This gives us a representation-neutral notion of the size of a term,
+measured in bits.
+More importantly, it provides a way to describe arbitrary
+data with, in a sense, the least number of bits possible.
+We review the notion of how a computer reading bits and outputting
+some result constitutes a description method, and how universal computer
+correspond to optimal description methods.
+We then pick specific universal computers based on our interpreters
+and prove several of the basic results of Algorithmic Information Theory
+with explicit constants.
+
+\section{Lambda Calculus}
+We only summarize the basics here. For a comprehensive treatment
+we refer the reader to the standard reference~\cite{b}.
+
+Assume a countably infinite set of {\em variables}
+\[a,b,\ldots,x,y,z,x_0,x_1,\ldots\]
+The set of lambda terms $\Lambda$ is built up from variables
+using {\em abstraction} \[ (\lambda x.M) \]
+and {\em application} \[ (M\ N), \]
+where $x$ is any variable and $M,N$ are lambda terms.
+$(\lambda x.M)$ is the function that maps $x$ to $M$,
+while $(M\ N)$ is the application of function $M$ to argument $N$.
+We sometimes omit parentheses, understanding abstraction to associate to
+the right, and application to associate to the left, e.g.
+$\lambda x.\lambda y.x\ y\ x$ denotes $(\lambda x.(\lambda y.((x\ y)x)))$.
+We also join consecutive abstractions as in $\lambda x\ y.x\ y\ x$.
+
+The free variables $FV(M)$ of a term $M$ are those variables not bound
+by an enclosing abstraction. $\Lambda^0$ denotes the set of closed terms,
+i.e. with no free variables. The simplest closed term is the identity
+$\lambda x.x$.
+
+We consider two terms {\em identical} if they only differ in the names
+of bound variables, and denote this with $\equiv$, e.g.
+$\lambda y.y\ x \equiv \lambda z.z\ x$.
+The essence of $\lambda$ calculus is embodied in
+the $\beta$-conversion rule which equates
+\[(\lambda x.M)N = M[x:=N],\] where $M[x:=N]$ denotes the result
+of substituting $N$ for all free occurrences of $x$ in $M$ (taking care
+to avoid variable capture by renaming bound variables in $M$ if necessary).
+For example,
+\[(\lambda x\ y.y\ x)y \equiv (\lambda x.(\lambda z.z\ x))y
+\equiv (\lambda x\ z.z\ x)y = \lambda z.z\ y.\]
+A term with no $\beta$-redex, that is, no subterm of the form $(\lambda x.M)N$,
+is said to be in {\em normal form}. Terms may be viewed as
+denoting computations of which $\beta$-reductions form the steps,
+and which may halt with a normal form as the end result.
+
+\subsection{Some useful lambda terms}
+Define (for any $M,P,Q,\ldots,R$)
+\begin{eqnarray*}
+\CI & \equiv & \lambda x.x \\
+\Ct & \equiv & \lambda x\ y. x \\
+\Cnil \equiv \Cf & \equiv & \lambda x\ y. y \\
+%\tup{P} & \equiv & \lambda z.z\ P \\
+%\tup{P,Q} & \equiv & \lambda z.z\ P\ Q \\
+\tup{P,Q,\ldots,R} & \equiv & \lambda z.z\ P\ Q \ldots\ R \\
+%\Cnil & \equiv & \lambda x.\Ct \\
+%\Cnil & \equiv & \Cf \\
+% \Csucc & \equiv & \lambda n\ z\ s.\ s\ n \\
+%\scott{0} & \equiv & \Cnil \\
+\idx{M}{0} & \equiv & M\ \Ct \\
+\idx{M}{i+1} & \equiv & \idx{(M\ \Cf)}{i} \\
+%\Cnull& \equiv & \tup{\lambda a\ b\ c.\ \Cf, \Ct} \\
+\CY & \equiv & \lambda f.((\lambda x.x\ x)(\lambda x.f\ (x\ x))) \\
+\COm & \equiv & (\lambda x.x\ x)(\lambda x.x\ x)
+\end{eqnarray*}
+
+Note that
+\[ \Ct\ P\ Q = (\lambda x\ y.x)\ P\ Q = x[x:=P] = P \]
+\[ \Cf\ P\ Q = (\lambda x\ y.y)\ P\ Q = y[y:=Q] = Q, \]
+justifying the use of these terms as representing the booleans.
+
+A pair of terms like $P$ and $Q$ is represented by $\tup{P,Q}$, which
+allows one to retrieve its parts by applying $\tup{\Ct}$ or $\tup{\Cf}$:
+\[ \tup{\Ct} \tup{P,Q} = \tup{P,Q}\ \Ct = \Ct\ P\ Q = P\]
+\[ \tup{\Cf} \tup{P,Q} = \tup{P,Q}\ \Cf = \Cf\ P\ Q = Q.\]
+
+Repeated pairing is the standard way of representing a sequence
+of terms: \[\tup{P,\tup{Q,\tup{R,\ldots}}}.\]
+A sequence is thus represented by pairing its first element
+with its {\em tail}---the sequence of remaining elements.
+The $i$'th element of a sequence $M$ may be selected as
+$\idx{M}{i}$. To wit:
+\[ \idx{\tup{P,Q}}{0} = \Ct\ P\ Q = P, \]
+\[ \idx{\tup{P,Q}}{i+1} \equiv \idx{(\tup{P,Q}\ \Cf)}{i} = \idx{Q}{i}. \]
+
+The empty sequence, for lack of a first element, cannot be
+represented by any pairing, and is instead represented by $\Cnil$.
+A finite sequence $P,Q,\ldots, R$ can thus be represented as
+$\tup{P,\tup{Q,\tup{\ldots,\tup{R,\Cnil}\ldots}}}$.
+%which equals $[P,Q,\ldots,R]\Cnil$. We call $[P,Q,\ldots,R]$
+%a {\em prefix} since it prefixes the elements
+%$P,Q,\ldots,R$ before a given sequence.
+%Note that $\tup{} \equiv [] \equiv \CI$.
+
+Our choice of $\Cnil$ allows for the processing
+of a possible empty list $s$ with the expression
+\[ s\ M\  N, \]
+which for $s\equiv \Cnil$ reduces to $N$, and for
+$s\equiv \tup{P,Q}$ reduces to $M\ P\ Q\ N$.
+%(normally $c$ does not occur free in $M$, but it can be convenient at times).
+%This is simpler than the expression
+%\[ \Cnull\ s\ N (s\ (\lambda a\ b.\ M)), \]
+%which achieves the same effect with the help of the null-test function $\Cnull$.
+%(also note that $s\ (\lambda a\ b\ c.\ \Ct)\ s$ tests whether $s$ is non-null.)
+In contrast, Barendregt~\cite{baay} chose $\CI$ to represent the empty list,
+which requires a more complicated list processing expression like
+like $s\ (\lambda a\ b\ c.c\ a\ b)\ M X N$,
+which for $s= \Cnil$ reduces to $N\ M\ X$, and for
+$s\equiv \tup{P,Q}$ reduces to $M\ P\ Q\ X\ N$.
+
+$\CY$ is the {\em fixpoint} operator, that
+satisfies \[\CY f = (\lambda x.f\ (x\ x))(\lambda x.f\ (x\ x)) = f\ (\CY\ f).\]
+This allows one to transform a recursive definition $f= \ldots f \ldots$
+into $f = \CY(\lambda f. (\ldots f \ldots))$, which behaves exactly as desired.
+
+$\COm$ is the prime example of a term with no normal form, the equivalence
+of an infinite loop.
+
+\subsection{Binary strings}
+Binary strings are naturally represented by boolean sequences,
+where $\Ct$ represents $0$ and $\Cf$ represents $1$.
+\begin{definition}
+For a binary string $s$ and lambda term $M$, $\pref{s}{M}$ denotes the
+list of booleans corresponding to $s$, terminated with $M$.
+Thus, $\pref{s}{\Cnil}$ is the standard representation of string $s$.
+\end{definition}
+For example, $\pref{011}{\Cnil} \equiv \tup{\Ct,\tup{\Cf,\tup{\Cf,\Cnil}}}$
+represents the string $011$.
+We represent an unterminated string, such as part of an input stream,
+as an open term $\pref{s}{z}$, where the free variable $z$ represents the remainder of input.
+
+\subsection{de Bruijn notation}
+In~\cite{bruijn}, de Bruijn proposed an alternative notation for closed
+lambda terms using natural numbers rather than variable names.
+Abstraction is simply written
+$\lambda M$ while the variable bound by the $n$'th enclosing
+$\lambda$ is written as the index $n$. In this notation,
+$\lambda x\ y\ z.z\ x\ y \equiv \lambda\ \lambda\ \lambda\ 0\ 2\ 1$.
+It thus provides a canonical notation for all identical terms.
+Beta-conversion in this notation avoids variable capture,
+but instead requires {\em shifting} the indices, i.e. adjusting them
+to account for changes in the lambda nesting structure.
+Since variable/index exchanges don't affect each other,
+it's possible to mix both forms of notation, as we'll do later.
+
+\subsection{Binary Lambda Calculus}
+
+\begin{definition}
+The code for a term in de Bruijn notation is defined
+inductively as follows:
+\begin{eqnarray*}
+\widehat{n} & \equiv & 1^{n+1} 0 \\
+\widehat{\lambda M} & \equiv & 0 0 \widehat{M} \\
+\widehat{M N} & \equiv & 0 1 \widehat{M}\ \widehat{N} \\
+\end{eqnarray*}
+We call $|\widehat{M}|$ the {\em size} of $M$.
+\end{definition}
+
+For example
+$\widehat{\CI} \equiv 0010$,
+$\widehat{\Cf} \equiv 000010$,
+$\widehat{\Ct} \equiv 0000110$ and
+$\widehat{\lambda x.x\ x} \equiv 00011010$,
+$\widehat{\lambda x.\Cf} \equiv 00000010$,
+of sizes 4,6,7,8 and 8 bits respectively,
+are the 5 smallest closed terms.
+
+The main result of this paper is the following
+\begin{theorem}
+There is a self-interpreter $\CE$ of size 210
+(which happens to be the product of the smallest four primes),
+such that for every closed term $M$ and terms $C,N$ we have
+\[ \CE\ C\ \pref{\widehat{M}}{N} = C\ (\lambda z.M)\ N \]
+\label{int210}
+\end{theorem}
+The interpreter works in continuation passing style~\cite{fwh}.
+Given a continuation and a bitstream containing an encoded term,
+it returns the continuation applied to the abstracted decoded term 
+and the remainder of the stream. The reason for the abstraction
+becomes evident in the proof.
+
+The theorem is a special case of a stronger
+one that applies to arbitrary de Bruijn terms.
+Consider a de Bruijn term $M$
+in which an index $n$ occurs at a depth of
+$i \leq n$ nested lambda's. E.g., in $M \equiv \lambda 3$,
+the index $3$ occurs at depth $1$. This index is like
+a free variable in that it is not bound within $M$.
+The interpreter (being a closed term) applied to other closed terms,
+cannot produce anything but a closed term. So it cannot possibly
+reproduce $M$. Instead, it produces
+terms that expect a list of bindings for free indices.
+These take the form $\bnd{M}{z}$, which is defined
+as the result of replacing every free index in $M$, say $n$
+at depth $i\leq n$, by $\idx{z}{n-i}$. 
+For example, $\bnd{(\lambda 3)}{z} = \lambda \idx{z}{3-1} =
+\lambda (z\ \Cf\ \Cf\ \Ct)$,
+selecting binding number $2$ from binding list $z$.
+
+The following claim (using mixed notation) will be needed later.
+\begin{claim}
+For any de Bruijn term $M$, we have
+$\bnd{(\lambda M)}{z} = \lambda y.\bnd{M}{\tup{y,z}}$
+\label{lift}
+\end{claim}
+
+\begin{proof}
+A free index $n$ at depth $i \leq n$ in $M$,
+gets replaced by $\idx{\tup{y,z}}{n-i}$ on the right.
+If $i<n$ then $n$ is also free in $\lambda M$ at
+depth $i+1$ and gets replaced by $\idx{z}{n-i-1} = \idx{\tup{y,z}}{n-i}$.
+If $i=n$ then $n$ is bound by the front $\lambda$, while
+$\idx{\tup{y,z}}{n-i} = \idx{\tup{y,z}}{0} = y$.
+\end{proof}
+
+To prove Theorem~\ref{int210} it suffices to prove the more general:
+\begin{theorem}
+There is a self-interpreter $\CE$ of size 210,
+such that for all terms $M,C,N$ we have
+\[ \CE\ C\ \pref{\widehat{M}}{N} = C\ (\lambda z.\bnd{M}{z})\ N \]
+\label{gen210}
+\end{theorem}
+
+\begin{proof}
+We take
+\begin{eqnarray*}
+\CE & \equiv & \CY\ (\lambda e\ c\ s.s\ (\lambda a\ t.t\ (\lambda b.a\ \CE_0\ \CE_1))) \\
+\CE_0 & \equiv & e\ (\lambda x.b\ (c\ (\lambda z\ y.x\ \tup{y,z}))
+         (e\ (\lambda y.c\ (\lambda z.x\ z\ (y\ z))))) \\
+\CE_1 & \equiv & 
+(b\ (c\ (\lambda z.z\ b))(\lambda s.e\ (\lambda x.c\ (\lambda z.x\ (z\ b)))\ t))
+\end{eqnarray*}
+of size 217 and note that the beta reduction from
+$\CY\ M$ to $(\lambda x.x\ x)(\lambda x.M\ (x\ x))$
+saves 7 bits.
+
+Recall from the discussion of $\CY$ that the above is a transformed
+recursive definition where $e$ will take the value of $\CE$.
+
+Intuitively, $\CE$ works as follows. Given a continuation $c$ and
+sequence $s$, it extracts the leading bit $a$ and tail $t$ of $s$,
+extracts the next bit $b$, and selects $\CE_0$ to deal with $a=\Ct$
+(abstraction or application), or $\CE_1$ to deal with $a=\Cf$ (an index).
+
+$\CE_0$ calls $\CE$ recursively, extracting a decoded term $x$.
+In case $b=\Ct$ (abstraction), it prepends a new variable $y$ to
+bindings list $z$, and returns the continuation applied to the decoded
+term provided with the new bindings.
+In case $b=\Cf$ (application), it calls $\CE$ recursively again,
+extracting another decoded term $y$, and returns the continuation
+applied to the application of the decoded terms provided with shared bindings.
+
+$\CE_1$, in case $b=\Ct$, decodes to the $0$ binding selector.
+In case $b=\Cf$, it calls $\CE$ recursively on $t$ (coding for an
+index one less) to extract a binding selector $x$, which is provided with
+the tail $z\ b$ of the binding list to obtain the correct selector.
+
+We continue with the formal proof, using induction on $M$.
+
+Consider first the case where $M=0$. Then
+\begin{eqnarray*}
+\CE\ C\ \pref{\widehat{M}}{N} & = & \CE\ C\ \pref{10}{N} \\
+& = & \tup{\Cf,\tup{\Ct,N}}\ (\lambda a\ t.t\ (\lambda b.a\ \CE_0\ \CE_1)) \\
+& = & \tup{\Ct,N}\ (\lambda b.\Cf\ \CE_0\ \CE_1) \\
+& = & (\CE_1\ N)[b:=\Ct] \\
+& = & C\ (\lambda z.z\ \Ct)\ N,
+\end{eqnarray*}
+as required.
+Next consider the case where $M=n+1$. Then, by induction,
+\begin{eqnarray*}
+ \CE\ C\ \pref{\widehat{M}}{N} & = & \CE\ C\ \pref{1^{n+2}0}{N} \\
+& = & \tup{\Cf,\tup{\Cf,\pref{1^n0}{N}}}\ (\lambda a\ t.t\ (\lambda b.a\ \CE_0\ \CE_1)) \\
+& = & (\lambda s.e\ (\lambda x.C\ (\lambda z.x\ (z\ \Cf))) \pref{1^{n+1}0}{N})\pref{1^n0}{N} \\
+& = & \CE\ (\lambda x.C\ (\lambda z.x\ (z\ \Cf)))\ \pref{\widehat{n}}{N} \\
+& = & (\lambda x.C\ (\lambda z.x\ (z\ \Cf)))\ (\lambda z.\bnd{n}{z})\ N \\
+& = & C\ (\lambda z.\bnd{n}{(z\ \Cf)})\ N \\
+& = & C\ (\lambda z.\idx{(z\ \Cf)}{n}))\ N \\
+& = & C\ (\lambda z.\idx{z}{n+1}))\ N \\
+& = & C\ (\lambda z.\bnd{(n+1)}{z})\ N,
+\end{eqnarray*}
+as required.
+Next consider the case $M=\lambda M'$. Then, by induction and claim~\ref{lift},
+\begin{eqnarray*}
+\CE\ C\ (\pref{\widehat{\lambda M'}}{N}) & = & \CE\ C\ \pref{00\widehat{M'}}{N} \\
+& = & \tup{\Ct,\tup{\Ct,\pref{\widehat{M'}}{N}}}\ (\lambda a\ t.t\ (\lambda b.a\ \CE_0\ \CE_1)) \\
+& = & e\ (\lambda x.(C\ (\lambda z\ y.x\tup{y,z})))\ \pref{\widehat{M'}}{N} \\
+& = & (\lambda x.(C\ (\lambda z\ y.x\ \tup{y,z}))) (\lambda z.\bnd{M'}{z})\ N \\
+& = & C\ (\lambda z\ y.(\lambda z.\bnd{M'}{z})\ \tup{y,z})\ N \\
+& = & C\ (\lambda z. (\lambda y.\bnd{M'}{\tup{y,z}}))\ N \\
+& = & C\ (\lambda z. \bnd{(\lambda M')}{z}))\ N,
+\end{eqnarray*}
+as required.
+Finally consider the case $M=M'\ M''$. Then, by induction,
+\begin{eqnarray*}
+\CE\ C\ \pref{\widehat{M'\ M''}}{N} & = & \CE\ C\ \pref{01\widehat{M'}\ \widehat{M''}}{N} \\
+& = & \tup{\Ct,\tup{\Cf,\pref{\widehat{M'}\ \widehat{M''}}{N}}}(\lambda a\ t.t\ (\lambda b.a\ \CE_0\ \CE_1)) \\
+& = & e\ (\lambda x.(e\ (\lambda y.C\ (\lambda z.x\ z\ (y\ z)))))\ \pref{\widehat{M'}\ \widehat{M''}}{N} \\
+& = & (\lambda x.(e\ (\lambda y.C\ (\lambda z.x\ z\ (y\ z))))) (\lambda z.\bnd{M'}{z})\ \pref{\widehat{M''}}{N} \\
+& = & e\ (\lambda y.C\ (\lambda z.(\lambda z.\bnd{M'}{z})\ z\ (y\ z))) \pref{\widehat{M''}}{N} \\
+& = & (\lambda y.C\ (\lambda z.\bnd{M'}{z}\ (y\ z))) (\lambda z.\bnd{M''}{z})\ N \\
+& = & C\ (\lambda z.\bnd{M'}{z}\ \bnd{M''}{z})\ N \\
+& = & C\ (\lambda z.\bnd{(M'\ M'')}{z})\ N,
+\end{eqnarray*}
+as required. This completes the proof of Theorem~\ref{int210}.
+\end{proof}
+
+% 206: (\1 1) (\\\1   (\\\\3 (\5 (3 (\2 (3 (\\3 (\1 2 3))) (4 (\4 (\3 1 (2 1)))))) (1 (2 (\1 2)) (\4 (\4 (\2 (1 4))) 5))))  (3 3) 2)
+% 210: (\1 1) (\(\\\1 (\\  1 (\3 (6 (\2 (6 (\\3 (\1 2 3))) (7 (\7 (\3 1 (2 1)))))) (1 (5 (\1 2)) (\7 (\7 (\2 (1 4))) 3))))) (1 1))
+
+In private communication, Bertram Felgenhauer pointed out that replacing $\CE$ by
+$\CY\ (\lambda e\ c\ s.s\ (\lambda a\ t\ e\ c.t\ (\lambda b.a\ \CE_0\ \CE_1))e c)$
+and doing one more beta reduction of $(\lambda x.M\ (x\ x))$, saves another 4 bits to get 206.
+We conjecture that any self-interpreter for any binary representation of lambda calculus must be at
+least 24 bytes in size, which would make $E$ close to optimal.
+
+\section{Combinatory Logic}
+
+Combinatory Logic (CL) is the equational theory of {\em combinators}---terms
+built up, using application only, from the two constants $\CK$ and $\CS$,
+which satisfy
+\begin{eqnarray*}
+\CS\ M\ N\ L & = & M\ L\ (N\ L) \\
+\CK\ M\ N & = & M
+\end{eqnarray*}
+CL may be viewed as a subset of lambda calculus, in which
+$\CK\equiv \lambda x\ y.x$,
+$\CS\equiv \lambda x\ y\ z.x\ z\ (y\ z)$,
+and where the beta conversion rule can only be applied groupwise,
+either for an $\CS$ with 3 arguments, or for a $\CK$ with 2 arguments.
+Still, the theories are largely the same, becoming equivalent in the
+presence of the rule of extensionality (which says $M=M'$ if $M\ N= M'\ N$
+for all terms $N$).
+
+A process known as {\em bracket abstraction} allows for the translation
+of any lambda term to a {\em combination}---a CL term
+containing variables in addition to $\CK$ and $\CS$.
+It is based on the following identities, which are easily verified:
+\begin{eqnarray*}
+\lambda x.x = \CI & = & \CS\ \CK\ \CK \\
+\lambda x.M & = & \CK\ M \,\,\,\,\,\,\,\,\,\,(x \mbox{ not free in } M) \\
+\lambda x.M\ N & = & \CS\ (\lambda x.M)\ (\lambda x.N)
+\end{eqnarray*}
+
+$\lambda$'s can thus be successively eliminated, e.g.:
+\begin{eqnarray*}
+\lambda x\ y.y\ x & \equiv & \lambda x\ (\lambda y.y\ x) \\
+& = & \lambda x\ (\CS\ \CI (\CK\ x)) \\
+& = & \CS\ (\CK\ (\CS\ \CI)) (\CS\ (\CK\ \CK)\ \CI),
+\end{eqnarray*}
+where $\CI$ is considered a shorthand for $\CS\ \CK\ \CK$.
+
+Bracket abstraction is an operation $\lambda^0$ on combinations $M$
+with respect to a variable $x$, such that the resulting combination
+contains no occurrence of $x$ and behaves as $\lambda x.M$:
+\begin{eqnarray*}
+\baz{x}x & \equiv & \CI \\
+\baz{x}M & \equiv & \CK\ M \,\,\,\,\,\,\,\,(x \not\in M) \\
+\baz{x}(M\ N) & \equiv & \CS\ (\baz{x}M)\ (\baz{x}N)
+\end{eqnarray*}
+
+\subsection{Binary Combinatory Logic}
+Combinators have a wonderfully simple
+encoding as binary strings:
+encode $\CS$ as $00$, $\CK$ as $01$, and application as $1$.
+
+\begin{definition}
+We define the encoding $\widetilde{C}$ of a combinator $C$ as
+\begin{eqnarray*}
+\widetilde{\CK} & \equiv & 00 \\
+\widetilde{\CS} & \equiv & 01 \\
+\widetilde{C\ D} & \equiv & 1\ \widetilde{C}\ \widetilde{D}
+\end{eqnarray*}
+Again we call $|\widetilde{C}|$ the {\em size} of combinator $C$.
+\end{definition}
+
+For instance, the combinator $\CS(\CK\CS\CS)\equiv(\CS((\CK\CS)\CS))$
+is encoded as $1 01 1 1 00 01 01$.
+The size of a combinator with $n$ $\CK/\CS$'s, which necessarily
+has $n-1$ applications, is thus $2n+n-1=3n-1$.
+
+For such a simple language we expect a similarly simple interpreter.
+\begin{theorem}
+There is a cross-interpreter $\CF$ of size 119,
+such that for every combinator $M$ and terms $C,N$ we have
+\[ \CF\ C\ \pref{\widetilde{M}}{N} = C\ M\ N \]
+\label{int119}
+\end{theorem}
+
+\begin{proof}
+We take
+\begin{eqnarray*}
+\CF & \equiv & \CY\ (\lambda e\ c\ s.s(\lambda a.a\ \CF_0\ \CF_1)) \\
+\CF_0 & \equiv & \lambda t.t\ (\lambda b.c\ (b\ \CK\ \CS)) \\
+\CF_1 & \equiv & e\ (\lambda x.e\ (\lambda y.(c\ (x\ y))))
+\end{eqnarray*}
+of size 131 and note that a toplevel beta reduction saves 7 bits in size,
+while replacing $\CK$ by $b$ saves another 5 bits (we don't define $\CF$ that way
+because of its negative impact on bracket abstraction).
+
+Given a continuation $c$ and
+sequence $s$, it extracts the leading bit $a$ of $s$,
+and tail $t$ extracts the next bit $b$,
+and selects $\CF_0$ to deal with $a=\Ct$
+($\CK$ or $\CS$), or $\CF_1$ to deal with $a=\Cf$ (application).
+Verification is straightforward and left as an exercise to the reader.
+\end{proof}
+
+We conjecture that any self-interpreter for any binary representation of combinatory logic must be at least 14 bytes in size.
+The next section considers translations of $F$ which yield
+a self-interpreter of CL.
+
+\subsection{Improved bracket abstraction}
+
+The basic form of bracket abstraction is not particularly
+efficient. Applied to $\CF$, it produces a combinator of size 536.
+
+A better version is $\lambda^1$, which uses the additional rule
+\[ \basz{x}(M\ x) \equiv M \,\,\,\,\,\,\,\,(x \not\in M) \]
+whenever possible.
+Now the size of $\CF$ as a combinator is only 281, just over half as big.
+
+Turner~\cite{t} noticed that repeated use of bracket abstraction
+can lead to a quadratic expansion on terms such as
+\[ \CX \equiv \lambda a\ b\ \ldots\ z.(a\ b\ \ldots\ z)\ (a\ b\ \ldots\ z), \]
+and proposed new combinators to avoid such behaviour.
+We propose to achieve a similar effect with the following
+set of 9 rules in decreasing order of applicability:
+%of which only the first is to take precedence
+%over rule $\baz{x}M \equiv \CK\ M$:
+\begin{eqnarray*}
+\bassz{x}(\CS\ \CK\ M) & \equiv & \CS\ \CK\,\,\,\,(\mbox{for all $M$}) \\
+\bassz{x}M & \equiv & \CK\ M \,\,\,\,\,\,\,\,(x \not\in M) \\
+\bassz{x}x & \equiv & \CI \\
+\bassz{x}(M\ x) & \equiv & M \,\,\,\,\,\,\,\,(x \not\in M) \\
+\bassz{x}(x\ M\ x) & \equiv & \bassz{x}(\CS\ \CS\ \CK\ x\ M) \\
+\bassz{x}(M\ (N\ L)) & \equiv & \bassz{x}(\CS\ (\bassz{x}M)\ N\ L)\,\,\,\,(\mbox{$M,N$ combinators}) \\
+\bassz{x}((M\ N)\ L) & \equiv & \bassz{x}(\CS\ M\ (\bassz{x}L)\ N)\,\,\,\,(\mbox{$M,L$ combinators}) \\
+\bassz{x}((M\ L)\ (N\ L)) & \equiv & \bassz{x}(\CS\ M\ N\ L)\,\,\,\,(\mbox{$M,N$ combinators}) \\
+\bassz{x}(M\ N) & \equiv & \CS\ (\bassz{x}M)\ (\bassz{x}N)
+\end{eqnarray*}
+The first rule exploits the fact that $\CS\ \CK\ M$ behaves as identity,
+whether $M$ equals $\CK,x$ or anything else.
+The fifth rule avoids introduction of two $\CI s$.
+The sixth rule prevents occurrences of $x$ in $L$ from becoming too
+deeply nested, while the seventh does the same for occurrences of $x$ in $N$.
+The eighth rule abstracts an entire expression $L$ to avoid duplication.
+The operation $\bassz{x}M$ for combinators $M$
+will normally evaluate to $\CK\ M$,
+but takes advantage of the first rule by considering any $\CS\ \CK\ M$
+a combinator.
+Where $\lambda^1$ gives an $\CX$ combinator of size 2030, $\lambda^2$ brings
+this down to 374 bits.
+
+For $\CF$ the improvement is more modest, to 275 bits.
+For further improvements we turn our attention to the unavoidable
+fixpoint operator.
+
+$\CY$, due to Curry, is of minimal size in the $\lambda$ calculus.
+At 25 bits, it's 5 bits shorter than Turing's alternative fixpoint operator
+\[ \CY' \equiv (\lambda z.z\ z)(\lambda z.\lambda f.f\ (z\ z\ f)). \]
+But these translate to combinators of size 65 and 59 bits respectively.
+
+In comparison, the fixpoint operator
+\[ \CY'' \equiv (\lambda x\ y.x\ y\ x)(\lambda y\ x. y(x\ y\ x)) \]
+translates to combinator \[\CS\ \CS\ \CK\ (\CS\ (\CK\ (\CS\ \CS\ (\CS\ (\CS\ \CS\ \CK))))\ \CK)\]
+of size 35, the smallest possible fixpoint combinator as verified by
+exhaustive search by computer.
+
+(The situation is similar for $\COm$ which yields a combinator of size $41$,
+while $\CS\ \CS\ \CK\ (\CS\ (\CS\ \CS\ \CK))$, of size $20$, is the smallest
+{\em unsolvable} combinator---the equivalent of an undefined result,
+see~\cite{b}).
+
+Using $\CY''$ instead of $\CY$ gives us the following
+\begin{theorem}
+There is a self-interpreter $\CF$ for Combinatory Logic of size 263.
+\label{int263}
+\end{theorem}
+
+Comparing theorems~\ref{int119} and \ref{int263}, we conclude that
+$\lambda$-calculus is a much more concise language than CL. Whereas
+in binary $\lambda$-calculus, an abstraction takes only 2 bits plus
+$i+1$ bits for every occurrence of the variable at depth $i$, in binary
+CL the corresponding bracket abstraction typically introduces at least one,
+and often several $\CS$'s and $\CK$'s (2 bits each)
+per level of depth per variable occurrence.
+
+\section{Program Size Complexity}
+
+Intuitively, the amount of information in an object
+is the size of the shortest program that outputs the object.
+The first billion digits of $\pi$ for example, contain little information,
+since they can be calculated by a program of a few lines only.
+Although information content may seem to be highly dependent on
+choice of programming language,
+the notion is actually invariant up to an additive constant.
+
+The theory of program size complexity, which has become known as
+{\em Algorithmic Information Theory} or {\em Kolmogorov complexity}
+after one of its founding fathers,
+has found fruitful application in many fields such as combinatorics,
+algorithm analysis, machine learning, machine models, and logic.
+
+In this section we propose a concrete definition of Kolmogorov complexity
+that is (arguably) as simple as possible, by turning the above interpreters
+into a `universal computer'.
+
+Intuitively, a computer is any device that can read bits from an input stream,
+perform computations, and (possibly) output a result.
+Thus, a computer is a method of description in the sense that the string
+of bits read from the input describes the result.
+A universal computer
+is one that can emulate the behaviour of any other computer when
+provided with its description.
+Our objective is to define, concretely, for any object $x$,
+a measure of complexity of description $C(x)$ that shall be the length
+of its shortest description. This requires
+fixing a description method, i.e. a computer.
+By choosing a universal computer, we achieve invariance: the complexity
+of objects is at most a constant greater than under any other description
+method.
+
+Various types of computers have been considered in the past as
+description methods.
+
+Turing machines are an obvious choice, but turn out to be less than ideal:
+The operating logic of a Turing machine---its {\em finite control}---is
+of an irregular nature, having no straightforward encoding into a bitstring.
+This makes construction of a universal Turing machine that has to parse and
+interpret a finite control description quite challenging.
+Roger Penrose takes up this challenge in his book~\cite{pen},
+at the end of Chapter~2, resulting in a 
+universal Turing machine whose own encoding is an impressive 5495 bits in size,
+over 26 times that of $\CE$.
+
+The ominously named language `Brainfuck' which advertises itself as
+``An Eight-Instruction Turing-Complete Programming Language''~\cite{bf},
+can be considered a streamlined form of Turing machine. Indeed,
+Oleg Mazonka and Daniel B. Cristofani~\cite{mc} managed to write a very clever
+BF self-interpreter of only 423 instructions, which translates to
+$423 \cdot \log(8)=1269$ bits
+(the alphabet used is actually ASCII at 7 or 8 bits per symbol,
+but the interpreter could be redesigned to use 3-bit symbols
+and an alternative program delimiter).
+
+In \cite{lev}, Levin stresses the importance of a (descriptional complexity)
+measure, which, when
+compared with other natural measures, yields small
+constants, of at most a few hundred bits. His approach is based on
+{\em constructive objects} (c.o.'s) which are functions from and to
+lower ranked c.o.'s. Levin stops short of exhibiting a specific
+universal computer though, and the abstract, almost topological,
+nature of algorithms in the model complicates a study of the constants
+achievable.
+
+In~\cite{ch}, Gregory Chaitin paraphrases John McCarthy about his
+invention of LISP,
+as ``This is a better universal Turing machine.
+Let's do recursive function theory that way!''
+Later, Chaitin continues with ``So I've done that using LISP because LISP is
+simple enough, LISP is in the intersection between
+theoretical and practical programming.
+Lambda calculus is even simpler and more elegant than LISP,
+but it's unusable. Pure lambda calculus with combinators S and K,
+it's beautifully elegant, but you
+can't really run programs that way, they're too slow.''
+
+There is however nothing intrinsic to $\lambda$ calculus or CL that is slow;
+only such choices as Church numerals for arithmetic
+can be said to be slow,
+but one is free to do arithmetic in binary rather than in unary.
+Frandsen and Sturtivant~\cite{fs} amply demonstrate the efficiency
+of $\lambda$ calculus with a linear time implementation of $k$-tree
+Turing Machines.
+Clear semantics should be a primary concern, and Lisp is somewhat
+lacking in this regard~\cite{mul}.
+This paper thus develops the approach suggested but
+discarded by Chaitin.
+
+\subsection{Functional Complexity}
+
+By providing the appropriate continuations to the
+interpreters that we constructed, they become
+universal computers describing functional terms modulo equality.
+%or equivalently, describing normal forms.
+Indeed, for
+\begin{eqnarray*}
+\CU & \equiv & \CE\ \tup{\COm} \\
+\CU' & \equiv & \CF\ \CI
+\end{eqnarray*}
+of sizes $|\widehat{\CU}|=236$ and $|\widetilde{\CU'}|=272$,
+Theorems~\ref{int210} and \ref{int119} give
+\begin{eqnarray*}
+\CU\ \pref{\widehat{M}}{N} & = & M\ N \\
+\CU'\ \pref{\widetilde{M}}{N} & = & M\ N
+\end{eqnarray*}
+for every closed $\lambda$-term or combinator $M$ and arbitrary $N$,
+immediately establishing their universality.
+
+The universal computers essentially define new binary languages,
+which we may call {\em universal binary lambda calculus} and
+{\em universal combinatory logic}, whose programs comprise two parts.
+The first part is a program in one of the original binary languages,
+while the second part is all the binary data that is consumed when
+the first part is interpreted.
+It is precisely this ability to embed
+arbitrary binary data in a program that allows for universality.
+
+Note that by Theorem~\ref{gen210},
+the continuation $\tup{\COm}$ in $U$ results in a term
+$\bnd{M}{\COm}$. For closed $M$, this term is identical to $M$,
+but in case $M$ is not closed,
+a free index $n$ at $\lambda$-depth $n$ is now bound to
+$\idx{\COm}{n-n}$, meaning that any attempt to apply free indices diverges.
+Thus the universal computer essentially forces programs to be closed terms.
+
+% Alternatively, one could exploit free indices to extend the language.
+% For example, a continuation $\tup{\tup{P,\tup{Q,\tup{R,\COm}}}}$
+% would yield a universal machine $\CU^{P,Q,R}$ satisfying
+% $\CU^{P,Q,R}\ \pref{\widehat{M}}{N} = (\lambda \lambda \lambda M)\ R\ Q\ P\ N$
+% (assuming that $\lambda \lambda \lambda M$ is closed),
+% thus providing access to functions $P,Q,R$
+% without paying the price of $12+|\widehat{P}|+|\widehat{Q}|+|\widehat{R}|$.
+% This might prove useful in certain specific applications, but for general theorems
+% like we prove in this paper, the pure $\CU$ is to be preferred.
+
+We can now define the Kolmogorov complexity of a term $x$,
+which comes in three flavors.
+In the {\em simple} version, programs are terminated with
+$N=\Cnil$ and the result must equal $x$.
+In the {\em prefix} version, programs are not terminated,
+and the result must equal the pair of $x$ and the remainder of the input.
+In both cases the complexity is conditional on zero or more terms $y_i$.
+
+\begin{definition}
+\begin{eqnarray*}
+KS(x|y_1,\ldots,y_{k}) & = &
+\min \{ l(p)\ |\ \CU\ \pref{p}{\Cnil}\ y_1\ \ldots\ y_{k} =      x    \} \\
+KP(x|y_1,\ldots,y_{k}) & = &
+\min \{ l(p)\ |\ \CU\ \pref{p}{ z   }\ y_1\ \ldots\ y_{k} = \tup{x,z} \}
+\end{eqnarray*}
+\label{defait}
+\end{definition}
+
+The definition also applies to infinite terms according to the {\em infinitary lambda calculus}
+of \cite{KKSV97}.
+
+In the special case of $k=0$ we obtain the unconditional complexities
+$KS(x)$ and $KP(x)$.
+
+Finally, for a binary string $s$, we can define its {\em monotone} complexity
+as
+\[ KM(s|y_1,\ldots,y_{k}) =
+\min \{ l(p)\ |\ \exists M:
+   \CU\ \pref{p}{\COm }\ y_1\ \ldots\ y_{k} = \pref{s}{M} \}.\] 
+In this version, we consider the partial outputs produced by increasingly
+longer prefixes of the input, and the complexity of $s$ is the shortest
+program that causes the output to have prefix $s$.
+
+\subsection{Monadic IO}
+The reason for preserving the remainder of input in the prefix casse
+is to facilitate the processing of concatenated descriptions,
+in the style of monadic IO~\cite{spj}.
+Although a pure functional language like $\lambda$ calculus cannot
+define functions with side effects, as traditionally used to implement IO,
+it can express an abstract data type representing IO actions; the IO monad.
+In general, a monad consists of a type constructor and two functions,
+{\em return} and {\em bind} (also written \verb% >>=% in infix notation)
+which need to satisfy
+certain axioms~\cite{spj}. IO actions can be seen as functions operating
+on the whole state of the world, and returning a new state of the world.
+Type restrictions ensure that IO actions can be combined only through
+the bind function, which according to the axioms,
+enforces a sequential composition in which the world is single-threaded.
+Thus, the state of the world is never duplicated or lost.
+In our case, the world of the universal machine consists of only the
+input stream. The only IO primitive needed is {\bf readBit}, which maps
+the world onto a pair of the bit read and the new world.
+But a list is exactly that; a pair of the first element and the remainder.
+So {\bf readBit} is simply the identity function!
+The {\bf return} function, applied to some $x$, should map the
+world onto the pair of $x$ and the unchanged world, so it is defined by
+${\bf return} \equiv \lambda x\ y. \tup{x,y}$.
+Finally, the bind function, given an action $x$ and a function $f$,
+should subject the world $y$ to action $x$ (producing some $\tup{a,y'}$)
+followed by action $f a$, which is defined by
+${\bf bind} \equiv \lambda x\ f\ y. x\ y\ f$
+(note that $\tup{a,y'}f=f\ a\ y'$)
+One may readily verify that these definitions satisfy the monad axioms.
+Thus, we can wite programs for $U$ either by processing the input stream
+explicitly, or by writing the program in monadic style.
+The latter can be done in the pure functional language `Haskell'~\cite{hk},
+which is essentially typed lambda calculus with a lot of syntactic sugar.
+
+\subsection{An Invariance Theorem}
+
+The following theorem is the first concrete instance of the
+Invariance Theorem, 2.1.1 in~\cite{lv}.
+
+\begin{theorem}
+Define $KS'(x|y_1,\ldots,y_{k})$ and $KP'(x|y_1,\ldots,y_{k})$
+analogous to Definition~\ref{defait} in terms of $\CU'$.
+Then $KS(x) \leq KS'(x)+125$ and $KP(x) \leq KP'(x)+125$.
+\end{theorem}
+
+The proof is immediate from
+Theorem~\ref{int119} by using $\widehat{\CU'}$ of length 125 as
+prefix to any program for $\CU'$.
+We state without proof that
+a redesigned $\CU$ translates to a combinator of size 617,
+which thus forms an upper bound in the other direction.
+
+Now that complexity is defined for as rich a class of objects as
+terms (modulo equality), it is easy to extend it to other
+classes of objects by mapping them into $\lambda$ terms.% in normal form.
+
+For binary strings, this means mapping string $s$ onto the term
+$\pref{s}{\Cnil}$. And for a tuple of binary strings $s_0,\ldots,s_k$,
+we take $\tup{\pref{s_0}{\Cnil},\ldots,\pref{s_k}{\Cnil}}$.
+
+We next look at numbers in more detail, revealing a link with
+self-delimiting strings.
+
+\subsection{Numbers and Strings}
+
+Consider the following correspondence between
+natural numbers, binary strings, and strings over $\{1,2\}$:
+\[
+\begin{array}{rccccccccccc}
+n \in {\mathbb N}:    &        0 & 1 & 2 &  3 &  4 &  5 &  6 &   7 &   8 &   9 & \ldots \\
+x \in \{0,1\}^{\ast}: & \epsilon & 0 & 1 & 00 & 01 & 10 & 11 & 000 & 001 & 010 & \ldots \\
+y \in \{1,2\}^{\ast}: & \epsilon & 1 & 2 & 11 & 12 & 21 & 22 & 111 & 112 & 121 & \ldots
+\end{array}
+\]
+in which the number $n$ corresponds to
+\begin{itemize}
+\item the $n$-th binary string $x$in lexicographic order
+\item the string $x$ obtained by stripping the leading 1 from $(n+1)_2$,
+the binary representation of $n+1$
+\item the string $y=n_{\{1,2\}}$, the base 2 positional system using digits $\{1,2\}$.
+\end{itemize}
+
+Indeed, $n+1=2^l+\sum_{i=0}^{l-1}x_i 2^i$ iff $n=\sum_{i=0}^{l-1}2^i + \sum_{i=0}^{l-1}x_i 2^i$
+iff $n=\sum_{i=0}^{l-1} (x_i+1) 2^i$.
+
+\subsection{Prefix codes}
+
+Another way to tie the natural numbers and binary strings together
+is by what we shall call the {\em binary natural tree} shown in Figure~\ref{natree}.
+It has the set of natural numbers as vertices,
+and the set of binary strings as edges,
+such that the $2^n$ length-$n$ strings
+are the edges leading from vertex $n$.
+Edge $w$ leads from vertex $|w|$ to $w+1$, which in binary is $1w$.
+
+In~\cite{L68}, Vladimir Levenshtein defines a universal code for
+the natural numbers that corresponds to
+concatenating the edges on the path from $0$ to $n$, % which we'll denote by $p(n)$,
+prefixed with a unary encoding of the depth of vertex $n$ in the tree.
+%The importance of the binary natural tree lies in the observation that
+The resulting set of codewords is {\em prefix-free}.
+meaning that no string is a proper prefix of another,
+which is the same as saying that the strings in the set are self-delimiting.
+Prefix-free sets satisfy the {\em Kraft inequality}: $\sum_{s} 2^{-|s|} \leq 1$.
+We've already seen two important examples of prefix-free sets, namely
+the set of $\lambda$ term encodings $\widehat{M}$ and the
+set of combinator encodings $\widetilde{M}$.
+%For $p(m)$ to be a proper prefix of $p(n)$ requires
+%$m$ to be an ancestor of $n$, which implies that $n$ is exponentially
+%bigger than $m$.
+%To turn $p(n)$ into a prefix code, it suffices
+%to prepend the depth of vertex $n$ in the tree, i.e.
+%the number of times we have to map $n$ to $|n-1|$ before we get to $\epsilon$.
+The Levenshtein code $\brr{n}$ of a number $n$ can be defined recursively as
+%\[\brr{n} = 1^{l^{\ast}(n)}0\ p(n), \] or, equivalently,
+\[\brr{0} = 0\ \ \ \ \ \ \ \ \brr{n+1} = 1\ \brr{l(n)}\ n. \]
+
+and satisfies the following nice properties:
+
+\begin{itemize}
+\item prefix-free and complete: $\sum_{n \geq 0} 2^{-|\brr{n}|} = 1$.
+\item identifies lexicographic with numeric order: $\brr{m}$ lexicographically precedes $\brr{n}$ if and only if $m<n$.
+\item simple to encode and decode
+\item efficient in that for every $k$:
+$|\brr{n}| \leq l(n)+l(l(n))+\cdots+ l^{k-1}(n) + O(l^k(n))$,
+where $l(s)$ denotes the length of a string $s$.
+\end{itemize}
+
+\begin{figure}
+\epsfxsize=8cm \epsfbox{natree.eps}
+\caption{binary natural tree}
+\label{natree}
+\end{figure}
+
+\begin{figure}
+\epsfxsize=13cm \epsfbox{kraft.eps}
+\caption{codes on the unit interval;
+$\brr{0} = 0, \brr{1} = 10, \brr{2} = 110\ 0, \brr{3} = 110\ 1, \brr{4} = 1110\ 0\ 00, \brr{5} = 1110\ 0\ 01, \brr{6} = 1110\ 0\ 10, \brr{7} = 1110\ 0\ 11, \brr{8} = 1110\ 1\ 000, etc.$.}
+\label{kraft}
+\end{figure}
+
+Figure~\ref{kraft} shows the codes as segments of the unit interval,
+where code $x$ covers all the real numbers whose binary expansion starts
+as $0.x$, and lexicographic order translates into left-to-right order.
+%With a width of only $2^{-12}$, the code for 16 is too narrow to see, so we just
+%indicate its location along with some later codes. 
+
+%Compared to unary, this code is two bits longer on 4, one bit longer on 2 and
+%5, equally long on 0,1,3 and 6, and becomes exponentially shorter in the limit.
+
+\section{Upper bounds on complexity}
+Having provided concrete definitions of all key ingredients of algorithmic
+information theory, it is time to prove some concrete results about
+the complexity of strings.
+
+The simple complexity of a string is upper bounded by its length:
+\[ KS(x) \leq |\widehat{\CI}|+l(x) = l(x)+4 \]
+
+%The prefix complexity of a string given its length is also
+%upper bounded by its length:
+%\[ KP(x|l(x)) \leq |\widehat{{\bf readbits}}|+l(x) = l(x)+235, \]
+The prefix complexity of a string is
+upper bounded by the length of its delimited version:
+\[ KP(x) \leq |\widehat{{\bf delimit}}|+l(\brr{x}) = l(\brr{x})+338. \]
+
+where {\bf delimit} is an optimized translation
+of the following code
+{\small
+\begin{verbatim}
+let
+ id = \x x;
+ nil = \x\y y;
+ -- readbit cont church_(n+1) list returns cont church_(n_list+1)
+ -- where n_list is the number corresponding to the concatenation of n and list
+ readbit = \cont\n\list list (\bit cont (\f\x (n f (n f (bit x (f x))))));
+ -- dlmt cont list returns cont church_n rest_list
+ dlmt = \cont\list list (\bit bit (cont nil) (dlmt (\len len readbit cont id)));
+ -- incc cont done list return either cont (if carry) or done (if no carry) of incremented list
+ incc = \cont\done\list list (\msb incc (\r\_ msb done cont (\z z (\x\y msb y x) r))
+                                        (\r\_     done      (\z z       msb      r))
+                             ) (cont list);
+ -- inc list returns incremented list
+ inc = incc (\r\z z (\x\y x) r) id;
+in dlmt (\n\l\z z (n inc nil) l)
+\end{verbatim}
+}
+
+The prefix complexity of a pair is upper bounded by the sum of
+individual prefix complexities, one of which is conditional on
+the shortest program of the other:
+\[  K(x,y) \leq K(x) + K(y|x^{\ast}) + 657. \]
+
+This is the easy side of the fundamental ``Symmetry of information''
+theorem $K(x)-K(x|y^{\ast}) = K(y)-K(y|x^{\ast}) + O(1)$, which
+says that $y$ contains as much information about $x$ as $x$ does about $y$.
+
+In~\cite{ch01}, Chaitin proves the same theorem using a resource bounded evaluator,
+which in his version of LISP comes as a primitive called "try".
+His proof is embodied in the program gamma:
+
+{\small
+\begin{verbatim}
+((' (lambda (loop) ((' (lambda (x*) ((' (lambda (x) ((' (lambda (y) (cons x
+(cons y nil)))) (eval (cons (' (read-exp)) (cons (cons ' (cons x* nil))
+nil)))))) (car (cdr (try no-time-limit (' (eval (read-exp))) x*)))))) (loop
+nil)))) (' (lambda (p) (if(= success (car (try no-time-limit (' (eval
+(read-exp))) p))) p (loop (append p (cons (read-bit) nil)))))))
+\end{verbatim}
+}
+
+of length 2872 bits.
+
+We constructed an equivalent of "try" from scratch.
+The constant 657 is the size of the term {\tt pairup} defined below,
+containing a monadic lambda calculus interpreter that tracks the input bits read so far
+(which due to space restrictions is only sparsely commented):
+
+{\small
+\begin{verbatim}
+let
+  id = \x x;
+  true = \x \y x;
+  false = \x \y y;
+  nil = false;
+  -- monadic parser
+  uni = \abs \app let uni0 = \cnt \ps \xs
+    xs (\b0 let ps0 = \ts ps (\p p b0 ts) in
+      \ys \uni0 \cnt ys (\b1
+        let ps1 = \ts ps0 (\p p b1 ts) in
+          b0 (uni0 (\v1 (b1 (cnt (\ctx abs (\v2 v1 (\p p v2 ctx))))
+                           (uni0 (\v2 cnt (\ctx app (v1 ctx) (v2 ctx)))))))
+             (b1 (cnt (\ctx ctx b1))
+                 (\d \d uni0 (\v cnt (\ctx v (ctx b1))) ps0 ys)) ps1)) uni0 cnt
+  in uni0;
+  -- this monad pairs up lambdas with some attribute
+  abs = \v \p v; app = \ca ca false;
+  -- pair each suffix with a prefix attribute
+  list = \x \xs \ys
+     let mx = abs (\e abs (x e));
+         mxs = xs list (\rs ys (\p p x rs)) in
+     \p p ys (\e e false mx false mxs);
+  pairup = uni abs app (\prog \ps \pi
+    let pspi = \d (
+          prog d             -- provide ctx
+          d                  -- monadic apply
+          (pi list ps)       -- to monadic input, expect monadic <poM,qsM>
+          false              -- get <poM,qsM>; can't use d here in case prog is id
+          (\p \e \p \e e) )  -- monadic tail
+          true               -- head of qsM is difflist of bits read
+          nil);              -- terminate list
+        -- Direct evaluator, using the identity monad.
+        eval = uni id id id pi
+    in eval (ps pi) (\po \qs eval qs (pspi qs) (\qo \rs \p p (\p p po qo) rs))) id;
+in pairup
+\end{verbatim}
+}
+
+Although more involved, our program is less than a quarter the size of Chaitin's
+when measured in bits. Chaitin also offered a program of size 2104 bits,
+at the cost of introducing yet another primitive into his language,
+which is still 220\% longer than ours.
+
+%%\[ KP(x,y) \leq |\widehat{M}| + KP(x) + KP(y) = KP(x) + KP(y) +  ,\]
+%%where $M \equiv (\lambda u\ . )U$ corresponds to the Haskell program
+%[  Proof that H(x,y) <= H(x) + H(y|x) + 2872.  ]
+%[  The 2872-bit prefix gamma proves this.      ]
+%   [read program p bit by bit until we get it all]
+%   let (loop p)
+%      if = success car try no-time-limit 'eval read-exp p
+%      [then] p
+%      [else] (loop append p cons read-bit nil)
+%%\begin{verbatim}
+%%pairprogram = do x <- U
+%%                 y <- U
+%%                 return (x,y)
+%%\end{verbatim}
+
+\section{Future Research}
+It would be nice to have an objective measure of the simplicity and expressiveness
+of a universal machine. Sizes of constants in fundamental theorems are an indication,
+but one that is all too easily abused. Perhaps diophantine equations can serve as
+a non-arbitrary language into which to express the computations underlying a proposed
+definition of algorithmic complexity, as Chaitin has demonstrated for relating the existence
+of infinitely many solutions to the random halting probability $\Omega$.
+Speaking of $\Omega$, our model provides a well-defined notion of halting as well,
+namely when $\CU\ \pref{p}{z} = \tup{M,z}$ for any term $M$ (we might as well allow $M$ without
+normal form). Computing upper and lower bounds on the value of $\Omega_{\lambda}$,
+as Chaitin did for his LISP-based $\Omega$, and Calude et al. for various other languages,
+should be of interest as well.
+A big task remains in finding a good constant for the other direction of
+the `Symmetry of Information' theorem, for which Chaitin has sketched a program.
+That constant is bigger by an order of magnitude, making its optimization
+an everlasting challenge.
+
+\section{Conclusion}
+The $\lambda$-calculus is a surprisingly versatile and concise language,
+in which not only standard programming constructs like bits, tests, recursion,
+pairs and lists, but also reflection, reification, and marshalling are
+readily defined, offering an elegant concrete foundation
+of algorithmic information theory.
+%Obtaining stronger results such as $KP(y|x^\ast) = KP(x,y) − KP(x) + O(1)$
+%requires a bit more work such as implementing a 
+
+An implementation of Lambda Calculus, Combinatory Logic,
+along with their binary and universal versions,
+written in Haskell, is available at~\cite{tromp}.
+
+\section{Acknowledgements}
+I am greatly indebted to Paul Vit\'{a}nyi for fostering my research into concrete definitions
+of Kolmogorov complexity, and to Robert Solovay, Christopher Hendrie and Bertram Felgenhauer
+for illuminating discussions on my definitions and improvements in program sizes.
+\begin{thebibliography}{9}
+
+\bibitem{pen}
+R. Penrose, {\it The Emperor's New Mind},
+Oxford University press, 1989.
+
+\bibitem{ch}
+G. Chaitin, {\it An Invitation to Algorithmic Information Theory},
+DMTCS'96 Proceedings, Springer Verlag, Singapore, 1997, pp. 1--23
+(http://www.cs.auckland.ac.nz/CDMTCS/chaitin/inv.html).
+
+\bibitem{ch01}
+G. Chaitin, {\it Exploring Randomness}, Springer Verlag, 2001.
+(http://www.cs.auckland.ac.nz/CDMTCS/chaitin/ait3.html)
+
+\bibitem{mul}
+R. Muller, {\it M-LISP: A representation-independent dialect of LISP
+with reduction semantics}, ACM Transactions on Programming Languages
+and Systems 14(4), 589--616, 1992.
+
+\bibitem{lev}
+L. Levin,
+{\it On a Concrete Method of Assigning Complexity Measures},
+Doklady Akademii nauk SSSR, vol. 18(3), pp. 727--731, 1977. 
+
+\bibitem{lv}
+M. Li and P. Vit\'anyi,
+{\it An Introduction to Kolmogorov Complexity and Its Applications},
+Graduate Texts in Computer Science, second edition, Springer-Verlag,
+New York, 1997.
+
+\bibitem{kl}
+S.C. Kleene,
+{\it Lambda-Definability and Recursiveness},
+Duke Mathematical Journal, 2, 340--353, 1936.
+
+\bibitem{L68}
+Vladimir Levenshtein,
+{\it On the redundancy and delay of decodable coding of natural numbers},
+Systems Theory Research, 20, 149--155, 1968.
+
+\bibitem{PE88}
+Frank Pfenning and Conal Elliot,
+{\it Higher-Order Abstract Syntax},
+ACM SIGPLAN'88 Conference on Programming Language Design and Implementation,
+199--208, 1988.
+
+\bibitem{fw}
+D. Friedman and M. Wand,
+{\it Reification: Reflection without Metaphysics},
+Proc. ACM Symposium on
+LISP and Functional Programming, 348--355, 1984.
+
+\bibitem{fs}
+Gudmund S. Frandsen and Carl Sturtivant,
+{\it What is an Efficient Implementation of the $\lambda$-calculus?},
+Proc. ACM Conference on Functional Programming and Computer Architecture
+(J. Hughes, ed.), LNCS 523, 289--312, 1991.
+
+\bibitem{SM89}
+J. Steensgaard-Madsen,
+{\it Typed representation of objects by functions},
+TOPLAS 11-1, 67--89, 1989.
+
+\bibitem{bruijn}
+N.G. de Bruijn,
+{\it Lambda calculus notation with nameless dummies, a tool for automatic
+formula manipulation},
+Indagationes Mathematicae 34, 381--392, 1972.
+
+\bibitem{baay}
+H.P. Barendregt,
+{\it Discriminating coded lambda terms},
+in (A. Anderson and M. Zeleny eds.) Logic, Meaning and Computation, Kluwer,
+275--285, 2001.
+
+\bibitem{dm}
+François-Nicola Demers and Jacques Malenfant,
+{\it Reflection in logic, functional and object-oriented programming: a Short
+Comparative Study},
+Proc. IJCAI Workshop on Reflection and Metalevel Architectures
+and their Applications in AI, 29--38, 1995.
+
+\bibitem{fwh}
+Daniel P. Friedman, Mitchell Wand, and Christopher T. Haynes,
+{\it Essentials of Programming Languages -- 2nd ed},
+MIT Press, 2001.
+
+\bibitem{mc}
+Oleg Mazonka and Daniel B. Cristofani,
+{\it A Very Short Self-Interpreter},
+\verb%http://arxiv.org/html/cs.PL/0311032%,
+2003.
+
+\bibitem{geb}
+D. Hofstadter, {\it Godel, Escher, Bach: an Eternal Golden Braid},
+Basic Books, Inc., 1979.
+
+\bibitem{b}
+H.P. Barendregt,
+{\it The Lambda Calculus, its Syntax and Semantics},
+%Studies in Logic and The Foundations of Mathematics vol. 103,
+revised edition,
+North-Holland, Amsterdam, 1984.
+
+\bibitem{KKSV97}
+J.R. Kennaway and J. W. Klop and M.R. Sleep and F.J. de Vries,
+{\it Infinitary Lambda Calculus},
+Theoretical Compututer Science, 175(1), 93--125,1997.
+
+\bibitem{spj}
+Simon Peyton Jones,
+{\it  Tackling the awkward squad: monadic input/output, concurrency, exceptions, and foreign-language calls in Haskell},
+in "Engineering theories of software construction", ed. Tony Hoare,
+Manfred Broy, Ralf Steinbruggen, IOS Press, 47--96, 2001.
+
+\bibitem{hk}
+The Haskell Home Page, \verb%http://haskell.org/%.
+
+\bibitem{bf}
+Brainfuck homepage, \verb%http://www.muppetlabs.com/~breadbox/bf/%.
+
+\bibitem{m00}
+Torben \AE. Mogensen,
+{\it Linear-Time Self-Interpretation of the Pure Lambda Calculus},
+Higher-Order and Symbolic Computation 13(3), 217-237, 2000.
+
+\bibitem{t}
+D. A. Turner, {\it Another algorithm for bracket abstraction},
+J. Symbol. Logic 44(2), 267--270, 1979.
+
+\bibitem{tromp}
+J. T. Tromp,
+\verb%http://www.cwi.nl/~tromp/cl/cl.html%, 2004.
+
+\end{thebibliography}
+\end{document}
