@@ -167,22 +167,16 @@ Bitstring functions -----------------------------------------------------
 >     pref  _   = "\xe2\x94"
 
 > toPBM :: UArray Point Char -> String
-> toPBM a = "P1\n" ++ show x ++ " " ++ show (2*y+1) ++ "\n" ++ tobmp1 0 0 where
+> toPBM a = "P1\n" ++ show x ++ " " ++ show (2*y+1) ++ "\n" ++ tobmp True 0 0 where
 >   (_,(y,x)) = bounds a
->   tobmp0 :: Int -> Int -> String
->   tobmp0 j i | i>x = tobmp1 j 0
->   tobmp0 j i = pixel0 (a!(j,i)) ++ tobmp0 j (i+1)
->   pixel0 ' ' = " 0"
->   pixel0 '_' = " 0"
->   pixel0 '|' = " 1"
->   pixel0 c = [c]
->   tobmp1 :: Int -> Int -> String
->   tobmp1 j i | i>x = if j<y then tobmp0 (j+1) 0 else []
->   tobmp1 j i = pixel1 (a!(j,i)) ++ tobmp1 j (i+1)
->   pixel1 ' ' = " 0"
->   pixel1 '_' = " 1"
->   pixel1 '|' = " 1"
->   pixel1 c = [c]
+>   tobmp :: Bool -> Int -> Int -> String
+>   tobmp False  j i | i>x = tobmp True j 0
+>   tobmp True   j i | i>x = if j<y then tobmp False (j+1) 0 else []
+>   tobmp bottom j i = pixel bottom (a!(j,i)) ++ tobmp bottom j (i+1)
+>   pixel _      ' ' = " 0"
+>   pixel bottom '_' = if bottom then " 1" else " 0"
+>   pixel _      '|' = " 1"
+>   pixel _      c = [c]
 
 > uni :: String -> String -> String -> [String] -> String
 > uni opn progtext inp args = let
