@@ -114,13 +114,11 @@ Bitstring functions -----------------------------------------------------
 >   num = foldl (\x y -> 2*x + (digitToInt y)) 0 $ pad8 byte
 >   pad8 = take 8 . (++ repeat '0')
 
-> usesBytes :: String -> Maybe String
-> usesBytes action = if last action=='8' then Just (init action) else Nothing
-
 > type Point = (Int,Int)
 
 > diagram :: Bool -> DB -> UArray Point Char
 > diagram alt = diagArray . runWriter . diagWrite 0 0 where
+>   dy = if alt then 0 else 1
 >   diagWrite :: Int -> Int -> DB -> Writer (DL.DList (Point,Char)) (Point, Point)
 >   diagWrite y x (DBLam e) = do
 >     dim@((_,x1),_) <- diagWrite (y+1) x e
@@ -130,23 +128,24 @@ Bitstring functions -----------------------------------------------------
 >     ((fy,fx),(fxl,fxr)) <- diagWrite y x f
 >     let fx1 = if alt then fxr else fxl
 >     ((ay,ax),(axl,_)) <- diagWrite y (fx+2) a
->     let my = 1 + max fy ay
->     tell $        DL.fromList [((i,fx1),'|') | i <- [fy+1..my]]
+>     let my = 1-dy + max fy ay
+>     tell $        DL.fromList [((i,fx1),'|') | i <- [fy+1..my+dy]]
 >       `DL.append` DL.fromList [((i,axl),'|') | i <- [ay+1..my]]
 >       `DL.append` DL.fromList [((my,i),'_') | i <- [fx1+1..axl-1]]
->     return ((my,ax),(fx1,axl))
+>     return ((my+dy,ax),(fx1,axl))
 >   diagWrite y x (DBVar n) = do
->     tell $ DL.fromList [((y-i,x+1),'|') | i <- [0..n]]
->     return ((y-1,x+2),(x+1,x+1))
+>     tell $ DL.fromList [((y-i,x+1),'|') | i <- [1-dy..n]]
+>     return ((y-1+dy,x+2),(x+1,x+1))
 >   diagArray :: ((Point,Point),DL.DList (Point,Char)) -> UArray (Int,Int) Char
 >   diagArray (((y,x),_),pc) = accumArray (const id) ' ' ((0,0),(y,x+1))
 >                  $ [((j,x+1),'\n') | j <- [0..y]] ++ reverse (DL.toList pc)
 
-> boxChar :: UArray Point Char -> String
-> boxChar a = boxer 0 1 >>= boxUtf8 where
+> boxChar :: Bool -> UArray Point Char -> String
+> boxChar alt a = boxer 0 1 >>= boxUtf8 where
 >   (_,(y,x)) = bounds a
 >   boxer :: Int -> Int -> String
->   boxer j i | i>x = if j<y then boxer (j+1) 1 else []
+>   boxer j i | i>x = if j<y' then boxer (j+1) 1 else [] where
+>                        y' = if alt then y else y-1
 >   boxer j i = boxVar (a!(j,i-1)) (a!(j,i)) (a!(j,i+1)) (j<y && a!(j+1,i)=='|') : boxMid (a!(j,i+2)) : boxer j (i+4) where
 >     boxMid '_' = '\x80'
 >     boxMid c = c
@@ -179,29 +178,27 @@ Bitstring functions -----------------------------------------------------
 >   pixel _      c = [c]
 
 > uni :: String -> String -> String -> [String] -> String
-> uni opn progtext inp args = let
->   (op,input) = case usesBytes opn of
->     Just op' -> (op',bytestoLC inp)
->     Nothing  -> (opn, bitstoLC inp)
+> uni op progtext input args = let
 >   prog = read progtext :: LC Id
->   machine = foldl (\p -> App p . bitstoLC) (App prog input) args
+>   machine = \inp -> foldl (\p -> App p . bitstoLC) (App prog inp) args
 >   tex = concatMap (\c -> if c=='\\' then "\\lambda " else [c])
 >   nl = (++ "\n")
 >  in case op of
->   "m" -> nl .                    bshow . nf . toDB $ machine
->   "p" -> nl .                     show             $ prog
->   "f" -> nl .                     show . nf . toDB $ prog
->   "e" -> nl .        show . strongCL . toCL . toDB $ prog
->   "c" -> nl .        show . toCL . optimize . toDB $ prog
->   "x" -> nl .      encode . toCL . optimize . toDB $ prog
->   "d" -> elems   . diagram False . optimize . toDB $ prog
->   "a" -> elems   . diagram  True . optimize . toDB $ prog
->   "D" -> boxChar . diagram False . optimize . toDB $ prog
->   "A" -> boxChar . diagram  True . optimize . toDB $ prog
->   "g" -> toPBM   . diagram False . optimize . toDB $ prog
->   "G" -> toPBM   . diagram  True . optimize . toDB $ prog
->   "t" -> nl .         tex . show . optimize . toDB $ prog
->   "b" ->                  encode . optimize . toDB $ prog
->   "B" -> toBytes .        encode . optimize . toDB $ prog
->   "s" -> nl .        show . size . optimize . toDB $ prog
->   a   -> "Action " ++ a ++ " not recognized.\n"
+>   "uni"     -> nl .   bshow . nf . toDB $ machine $  bitstoLC input
+>   "uni8 "   -> nl .   bshow . nf . toDB $ machine $ bytestoLC input
+>   "print"   -> nl .                     show             $ prog
+>   "nf"      -> nl .                     show . nf . toDB $ prog
+>   "comb_nf" -> nl .        show . strongCL . toCL . toDB $ prog
+>   "comb"    -> nl .        show . toCL . optimize . toDB $ prog
+>   "bcl"     -> nl .      encode . toCL . optimize . toDB $ prog
+>   "diagram" -> elems   . diagram False . optimize . toDB $ prog
+>   "alt_diagram" -> elems   . diagram  True . optimize . toDB $ prog
+>   "boxchar" -> boxChar False . diagram False . optimize . toDB $ prog
+>   "alt_boxchar" -> boxChar True . diagram  True . optimize . toDB $ prog
+>   "pbm"     -> toPBM   . diagram False . optimize . toDB $ prog
+>   "alt_pbm" -> toPBM   . diagram  True . optimize . toDB $ prog
+>   "tex"     -> nl .         tex . show . optimize . toDB $ prog
+>   "blc"     ->                  encode . optimize . toDB $ prog
+>   "Blc"     -> toBytes .        encode . optimize . toDB $ prog
+>   "size"    -> nl .        show . size . optimize . toDB $ prog
+>   a         -> "Action " ++ a ++ " not recognized.\n"
