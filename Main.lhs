@@ -1,6 +1,6 @@
-> import System(getArgs)
+> import System.Environment(getArgs)
 > import System.IO
-> import AIT(uni)
+> import AIT
 
 > main :: IO ()
 > main = do
@@ -13,4 +13,4 @@
 >       progtext <- readFile progfile
 >       input    <- getContents
 >       putStr $ uni action progtext input strings
->     _ -> putStrLn "Usage: blc action progfile [args]..."
+>     _ -> mapM_ putStrLn usage

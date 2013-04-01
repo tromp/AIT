@@ -1,4 +1,4 @@
-> module AIT(uni) where
+> module AIT(uni,usage) where
 > import Lambda
 > import Data.List(unfoldr)
 > import Data.Char(chr,ord,intToDigit,digitToInt)
@@ -184,21 +184,45 @@ Bitstring functions -----------------------------------------------------
 >   tex = concatMap (\c -> if c=='\\' then "\\lambda " else [c])
 >   nl = (++ "\n")
 >  in case op of
->   "uni"     -> nl .   bshow . nf . toDB $ machine $  bitstoLC input
->   "uni8 "   -> nl .   bshow . nf . toDB $ machine $ bytestoLC input
+>   "run"     -> nl .   bshow . nf . toDB . machine $  bitstoLC input
+>   "run8 "   -> nl .   bshow . nf . toDB . machine $ bytestoLC input
 >   "print"   -> nl .                     show             $ prog
 >   "nf"      -> nl .                     show . nf . toDB $ prog
 >   "comb_nf" -> nl .        show . strongCL . toCL . toDB $ prog
 >   "comb"    -> nl .        show . toCL . optimize . toDB $ prog
 >   "bcl"     -> nl .      encode . toCL . optimize . toDB $ prog
 >   "diagram" -> elems   . diagram False . optimize . toDB $ prog
->   "alt_diagram" -> elems   . diagram  True . optimize . toDB $ prog
+>   "Diagram" -> elems   . diagram  True . optimize . toDB $ prog
 >   "boxchar" -> boxChar False . diagram False . optimize . toDB $ prog
->   "alt_boxchar" -> boxChar True . diagram  True . optimize . toDB $ prog
+>   "Boxchar" -> boxChar True . diagram  True . optimize . toDB $ prog
 >   "pbm"     -> toPBM   . diagram False . optimize . toDB $ prog
->   "alt_pbm" -> toPBM   . diagram  True . optimize . toDB $ prog
+>   "Pbm"     -> toPBM   . diagram  True . optimize . toDB $ prog
 >   "tex"     -> nl .         tex . show . optimize . toDB $ prog
 >   "blc"     ->                  encode . optimize . toDB $ prog
 >   "Blc"     -> toBytes .        encode . optimize . toDB $ prog
 >   "size"    -> nl .        show . size . optimize . toDB $ prog
+>   "help"    -> unlines usage
 >   a         -> "Action " ++ a ++ " not recognized.\n"
+
+> usage :: [String]
+> usage = [
+>   "Usage: blc action progfile [args]...",
+>   "run\trun given program applied to standard input bits and args",
+>   "run8\trun given program applied to standard input bytes and args",
+>   "print\tshow program",
+>   "nf\tshow normal form",
+>   "comb_nf\tnormal form through SK reduction",
+>   "comb\tshow translation to combinatory logic",
+>   "bcl\tencode in binary combinatory logic",
+>   "diagram\tshow ascii diagram",
+>   "Diagram\tshow alternative ascii diagram",
+>   "boxchar\tshow boxdrawing character diagram",
+>   "Boxchar\tshow boxdrawing character alternative diagram",
+>   "pbm\tshow diagram in portable bitmap format",
+>   "Pbm\tshow alternative diagram in portable bitmap format",
+>   "tex\tshow program as TeX",
+>   "blc\tencode as binary lambda calculus bits",
+>   "Blc\tencode as Binary lambda calculus bytes",
+>   "size\tshow size in bits",
+>   "help\tshow this text"
+>   ]
