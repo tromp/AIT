@@ -4,7 +4,7 @@ let
 in halfquine
 
 -- these should all produce same output:
--- cat quine.blc quine.blc | ./blc m uni.lam
--- cat quine.blc quine.blc | ./blc m id.lam
--- ./blc m quine.lam < quine.blc
+-- cat quine.blc quine.blc | ./blc run uni.lam
+-- cat quine.blc quine.blc | ./blc run id.lam
+-- ./blc run quine.lam < quine.blc
 -- cat quine.blc quine.blc; echo

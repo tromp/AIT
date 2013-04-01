@@ -4,13 +4,13 @@ FILES = README Makefile Lambda.lhs AIT.lhs Main.lhs arithmetic.lam delimit.lam p
 
 .SUFFIXES : .lhs .lam .blc .Blc
 
-.lam.blc :
-	./blc b $< > $*.blc
+%.lam: %.blc blc
+	./blc blc $< > $*.blc
 
-.lam.Blc :
-	./blc B $< > $*.Blc
+%.lam: %.Blc blc
+	./blc Blc $< > $*.Blc
 
-blc:	*.lhs
+blc:	AIT.lhs Lambda.lhs Main.lhs
 	$(GHC) -O2 -Wall --make Main.lhs -o blc
 
 tar:	$(FILES)

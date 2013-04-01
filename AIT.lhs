@@ -185,7 +185,7 @@ Bitstring functions -----------------------------------------------------
 >   nl = (++ "\n")
 >  in case op of
 >   "run"     -> nl .   bshow . nf . toDB . machine $  bitstoLC input
->   "run8 "   -> nl .   bshow . nf . toDB . machine $ bytestoLC input
+>   "run8"    -> nl .   bshow . nf . toDB . machine $ bytestoLC input
 >   "print"   -> nl .                     show             $ prog
 >   "nf"      -> nl .                     show . nf . toDB $ prog
 >   "comb_nf" -> nl .        show . strongCL . toCL . toDB $ prog

@@ -3,11 +3,11 @@ binary lambda calculus as a vehicle for Algorithmic Information Theory.
 
 To run a lambda calculus machine:
 
-  ./blc m program_file
+  ./blc run program_file
 
 where program_file holds the programa text, e.g.
 
-  ./blc m id.lam
+  ./blc run id.lam
 
 The machine takes its input from stdin, so this works just like cat with no argument.
 
@@ -19,11 +19,11 @@ to compile programs for universal machine uni.lam or the byte oriented uni8.lam
 
 Run the bit-oriented universal machine with
 
-  ./blc m uni.lam [conditional data]
+  ./blc run uni.lam [conditional data]
 
 and the byte-oriented universal machine
 
-  ./blc m8 uni8.lam [conditional data]
+  ./blc run8 uni8.lam [conditional data]
 
 Other actions besides m are:
 
@@ -48,8 +48,8 @@ See the lambda source files *.lam for more examples.
 
 In the absence of a Haskell runtime environment, one can use
 the perl blc interpreter blc.pl to run blc programs;
-perl blc.pl is equivalent to ./blc m uni.lam, while perl blc.pl -8 is the byte
-oriented verion, equivalent to ./blc m8 uni.lam.
+perl blc.pl is equivalent to ./blc run uni.lam, while perl blc.pl -8 is the
+byte oriented verion, equivalent to ./blc run8 uni.lam.
 This interpreter doesn't support conditional arguments though.
 
 See http://en.wikipedia.org/wiki/Binary_lambda_calculus

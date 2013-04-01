@@ -9,4 +9,4 @@
    main = consz (consz (primes zeroS))
 in main
 
--- test with ./blc m primes.lam
+-- test with ./blc run primes.lam
