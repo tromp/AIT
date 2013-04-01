@@ -198,6 +198,7 @@ Bitstring functions -----------------------------------------------------
 >   "pbm"     -> toPBM   . diagram False . optimize . toDB $ prog
 >   "Pbm"     -> toPBM   . diagram  True . optimize . toDB $ prog
 >   "tex"     -> nl .         tex . show . optimize . toDB $ prog
+>   "printlc" -> nl .               show . optimize . toDB $ prog
 >   "blc"     ->                  encode . optimize . toDB $ prog
 >   "Blc"     -> toBytes .        encode . optimize . toDB $ prog
 >   "size"    -> nl .        show . size . optimize . toDB $ prog
@@ -221,6 +222,7 @@ Bitstring functions -----------------------------------------------------
 >   "pbm\tshow diagram in portable bitmap format",
 >   "Pbm\tshow alternative diagram in portable bitmap format",
 >   "tex\tshow program as TeX",
+>   "printlc\tshow lambda calculus program with de Bruijn indices",
 >   "blc\tencode as binary lambda calculus bits",
 >   "Blc\tencode as Binary lambda calculus bytes",
 >   "size\tshow size in bits",
