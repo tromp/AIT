@@ -13,7 +13,7 @@ let
 in pairlen
 
 -- test with
--- echo -n 0011010100 | ./blc m readlen.lam 10
+-- echo -n 0011010100 | ./blc run readlen.lam 10
 -- which should output
 -- <00110,10100>
 

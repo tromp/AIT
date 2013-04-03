@@ -58,7 +58,7 @@ let
 in pairup
 
 -- test with
--- (cat delimit.blc; echo -n 1111000111001; cat pairlen.blc) | ./blc m pairup.lam
+-- (cat delimit.blc; echo -n 1111000111001; cat pairlen.blc) | ./blc run pairup.lam
 -- recall that pairlen = \list\prog\z.z (countlen prog) list
 -- which should output
 -- <<11010,11010110>,>

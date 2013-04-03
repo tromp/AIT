@@ -91,7 +91,7 @@ let
   main = IFCPS pairupC pairupP
 in main
 
--- (cat delimit.blc; echo -n  1111000111001; cat pairlen.blc) | ./blc m pairup2.lam
+-- (cat delimit.blc; echo -n  1111000111001; cat pairlen.blc) | ./blc run pairup2.lam
 -- <<11010,11010110>,>
--- (cat delimit2.blc; echo -n 1110101110000000000; cat pairlen.blc; echo -n 1010) | ./blc m pairup2.lam
+-- (cat delimit2.blc; echo -n 1110101110000000000; cat pairlen.blc; echo -n 1010) | ./blc run pairup2.lam
 -- <<10000000000,00000000>,1010>

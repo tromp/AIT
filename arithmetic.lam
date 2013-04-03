@@ -27,7 +27,7 @@ let
 in test
 
 -- test with
--- ./blc f arithmetic.lam
+-- ./blc nf arithmetic.lam
 -- which should output
 -- \\2
 -- i.e. True
