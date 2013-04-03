@@ -4,10 +4,10 @@ FILES = README Makefile Lambda.lhs AIT.lhs Main.lhs arithmetic.lam delimit.lam p
 
 .SUFFIXES : .lhs .lam .blc .Blc
 
-%.lam: %.blc blc
+%.blc: %.lam blc
 	./blc blc $< > $*.blc
 
-%.lam: %.Blc blc
+%.Blc: %.lam blc
 	./blc Blc $< > $*.Blc
 
 blc:	AIT.lhs Lambda.lhs Main.lhs
