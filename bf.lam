@@ -6,28 +6,38 @@ let
   not = \b\x\y.b y x;
 
   -- increment or decrement a bigendian fixed width number, ccps version
-  step = \down\cont\done\list.list (\msb.step down
+  step = \down.let step = \cont\done\list.list (\msb.step
              (\r\dummy.let nmsb=not msb in down msb nmsb cont done (\z.z nmsb r))
              (\r\dummy.                                       done (\z.z  msb r))
-         ) (cont list);
+         ) (cont list) in step;
+  op = \down. step down id id;
+
+  -- this version is 4 bits shorter
+  alu = \down.let alu = \list\cont.list
+         (\msb\r\dummy.alu r (\ret\f.cont (\p.p (f msb) ret)
+          (down (msb f id) (msb id f))))
+         (cont list not) in alu;
+  op = \down\cell. alu down cell true;
+  -- iszero = \cell. alu true cell false false;
 
   -- foo post-applied to a list, returns body.loop body if all 0s, else id
-  loop = \body\cont\cell.cell (let foo=\b\l.b (l foo) (\c.body (loop body c)) in foo) cont cell;
+  loop = \body.let loop = \cont\cell.
+    cell (let foo = \b\l.b (l foo) (\c.body (loop c)) in foo) cont cell in loop;
 
   parse = \cont\bfs.bfs (\bf.let fls=false in bf fls fls fls (\b4\bf4.bf4 fls fls(\b1\bf1.bf1 (\b0\bla.
      let more=\sim1.parse (\sim2.cont (\cont.sim1 (sim2 cont))) in b4 (more (
-      b0 (\cont\cell\left\right\input.b1 (input (\b.cont b left right))            -- ,
-                                         (\z.z cell (cont cell left right input))) -- .
-         (\cont\cell.cont (step b1 id id cell))))(                                -- -/+
-      b0 (more (\cont\cell\left\right.b1 (left  (\b.cont b) (\z.z cell right))     -- <
-                                         (right (\b.cont b  (\z.z cell left)))))(  -- >
+      b0 (\cont\cell\right\left\input.b1 (input (\b.cont b right left))            -- ,
+                                         (\z.z cell (cont cell right left input))) -- .
+         (\cont\cell.cont (op b1 cell))))(                                         -- -/+
+      b0 (more (\cont\cell\right\left.b1 (left  (\b.cont b  (\z.z cell right)))    -- <
+                                         (right     cont    (\z.z cell left))))(   -- >
         b1 (cont id)                                                               -- ]
            (parse (\body.more (loop body))                                         -- [
     )))))));
-  
+
   byte0 = let two=\f\x.f(f x); three=\f.f(f(f(\l\z.z true l))) in three two nil;
   rpt0 = let rpt=\z.z byte0 rpt in rpt
-in parse (\sim.sim (\cell\left\right\input.nil) byte0 rpt0 rpt0)
+in parse (\sim.rpt0 (sim (\cell\right\left\input.nil)) sim)
 
 -- test with
 -- ./blc run8 bf.lam < hw.bf
