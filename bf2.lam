@@ -1,0 +1,44 @@
+-- Version of bf.lam that ignores unknown characters in brainf*ck source code,
+-- like the traditional version did.
+\io.let
+  id    = \x.x;
+  true  = \x\y.x; -- 0
+  false = \x\y.y; -- 1
+  nil   = false;
+  not   = \x\a\b.x b a;
+
+  left  = \cnt\x\rs\ls.ls (\l.cnt l (\p.p x rs));
+  right = \cnt\x\rs\ls.rs cnt (\p.p x ls);
+
+  putc  = \cnt\x\rs\ls\io.\p.p x (cnt x rs ls io);
+  getc  = \cnt\x\rs\ls\io.io (\i.cnt i rs ls);
+
+  alu   = \n.let alu = \xs\cnt.xs
+           (\x\xs\dummy.alu xs (\xs\f.cnt (\p.p (f x) xs) (n x f id)))
+           (cnt xs not) in alu;
+  arith = \n\cnt\x.cnt (alu n x true);
+
+  isz   = \x.alu id x false false;
+  loop  = \body\cnt.let loop = \x.isz x (cnt x) (body loop x) in loop;
+  loop  = \body.let loop = \cont\cell.
+    cell (let foo = \b\l.b (l foo) (\c.body (loop c)) in foo) cont cell in loop;
+
+  parse = 
+    let op = \op.\u\xs.xs parse (\cnt\xs.\p.p (\f.op (cnt f)) xs);
+        nop = op id;
+        b = \t\f\x.x (\bit\x.bit t f x);
+        0 = \t.b t nop;
+        1 = b nop
+    in
+    0(b(1(b(1(b(1(1(op (arith not))))                              -- -
+               (b(b(op getc)                                       -- ,
+                   (op (arith id)))                                -- +
+                 (0(op putc)))))                                   -- .
+           (1(1(b(0(op left))                                      -- <
+                 (0(op right)))))))                                -- >
+       (0(1(1(b(1(1(\u\xs.xs parse (\body.op (loop body) body))))  -- [
+               (0(1(\u\xs.\p.p id xs))))))));                      -- ]
+  zeros = \p.p (let two = \f\x.f (f x); three = \f.f (f (f (\xs\p.p true xs)))
+                in  three two nil) zeros;
+  cont = \p.zeros (p (\x\ls\rs\io.nil)) p
+in io parse cont
