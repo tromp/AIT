@@ -25,24 +25,9 @@ and the byte-oriented universal machine
 
   ./blc run8 uni8.lam [conditional data]
 
-Other actions besides m are:
+For a list of more actions, run
 
-  f to show the evaluated program with the bruijn indices
-  p to show the un-evaluated progran in regular notation
-  c show the program converted into Combinatory Logic
-  x show the binary encoding of c
-  e show the evaluated form of c
-  d like p but with de Bruijn indices
-  t like d but with LaTeX \lambda's
-  b to show the bit encoded optimized term
-  B like b but byte oriented
-  s to show the length of the encoding in bits
-
->   "f" -> nl .                  show . nf . toDB $ prog
->   "e" -> nl .     show . strongCL . toCL . toDB $ prog
->   "c" -> nl .     show . toCL . optimize . toDB $ prog
->   "x" -> nl .   encode . toCL . optimize . toDB $ prog
-
+  ./blc help
 
 See the lambda source files *.lam for more examples.
 
