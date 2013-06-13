@@ -37,7 +37,7 @@
 
 %\title{Binary Lambda Calculus and Combinatory Logic}
 %\title{Binary Lambda Calculus and Algorithmic Information Theory}
-\title{Functional Information Theory}
+\title{Functional Bits: basing Algorithmic Information Theory on Lambda Calculus}
 \author{John Tromp}
 
 \begin{document}
@@ -45,15 +45,15 @@
 \maketitle
 
 \begin{abstract}
-This paper aims to provide the simplest possible concrete definition
-of descriptional complexity---the length in bits of a shortest description
-we introduce binary representations of both lambda calculus
+%This paper aims to provide the simplest possible concrete definition
+%of descriptional complexity---the length in bits of a shortest description
+We introduce binary representations of both lambda calculus
 and combinatory logic terms, and demonstrate their simplicity
 by providing very compact parser-interpreters for these binary
 languages.
-Along the way we also present new results on
-list representations, bracket abstraction,
-and fixpoint combinators.
+Along the way we present a new graphical notation for lambda calculus,
+a new representation of the empty list, improved bracket abstraction,
+and a new fixpoint combinator.
 In the second part
 we review Algorithmic Information Theory, for which
 these interpreters provide a convenient vehicle.
@@ -261,11 +261,10 @@ are the 5 smallest closed terms.
 
 The main result of this paper is the following
 \begin{theorem}
-There is a self-interpreter $\CE$ of size 210
-(which happens to be the product of the smallest four primes),
+There is a self-interpreter $\CE$ of size 206
 such that for every closed term $M$ and terms $C,N$ we have
 \[ \CE\ C\ \pref{\widehat{M}}{N} = C\ (\lambda z.M)\ N \]
-\label{int210}
+\label{int206}
 \end{theorem}
 The interpreter works in continuation passing style~\cite{fwh}.
 Given a continuation and a bitstream containing an encoded term,
@@ -307,9 +306,9 @@ If $i=n$ then $n$ is bound by the front $\lambda$, while
 $\idx{\tup{y,z}}{n-i} = \idx{\tup{y,z}}{0} = y$.
 \end{proof}
 
-To prove Theorem~\ref{int210} it suffices to prove the more general:
+To prove Theorem~\ref{int206} it suffices to prove the more general:
 \begin{theorem}
-There is a self-interpreter $\CE$ of size 210,
+There is a self-interpreter $\CE$ of size 206,
 such that for all terms $M,C,N$ we have
 \[ \CE\ C\ \pref{\widehat{M}}{N} = C\ (\lambda z.\bnd{M}{z})\ N \]
 \label{gen210}
@@ -326,7 +325,10 @@ We take
 \end{eqnarray*}
 of size 217 and note that the beta reduction from
 $\CY\ M$ to $(\lambda x.x\ x)(\lambda x.M\ (x\ x))$
-saves 7 bits.
+saves 7 bits, while\cite{bertram} replacing $\CE$ by
+$\CY\ (\lambda e\ c\ s.s\ (\lambda a\ t\ e\ c.t\ (\lambda b.a\ \CE_0\ \CE_1))e c)$
+and doing one more beta reduction of $(\lambda x.M\ (x\ x))$,
+saves another 4 bits.
 
 Recall from the discussion of $\CY$ that the above is a transformed
 recursive definition where $e$ will take the value of $\CE$.
@@ -395,17 +397,14 @@ Finally consider the case $M=M'\ M''$. Then, by induction,
 & = & C\ (\lambda z.\bnd{M'}{z}\ \bnd{M''}{z})\ N \\
 & = & C\ (\lambda z.\bnd{(M'\ M'')}{z})\ N,
 \end{eqnarray*}
-as required. This completes the proof of Theorem~\ref{int210}.
+as required. This completes the proof of Theorem~\ref{int206}.
 \end{proof}
 
 % 206: (\1 1) (\\\1   (\\\\3 (\5 (3 (\2 (3 (\\3 (\1 2 3))) (4 (\4 (\3 1 (2 1)))))) (1 (2 (\1 2)) (\4 (\4 (\2 (1 4))) 5))))  (3 3) 2)
 % 210: (\1 1) (\(\\\1 (\\  1 (\3 (6 (\2 (6 (\\3 (\1 2 3))) (7 (\7 (\3 1 (2 1)))))) (1 (5 (\1 2)) (\7 (\7 (\2 (1 4))) 3))))) (1 1))
 
-In private communication, Bertram Felgenhauer pointed out that replacing $\CE$ by
-$\CY\ (\lambda e\ c\ s.s\ (\lambda a\ t\ e\ c.t\ (\lambda b.a\ \CE_0\ \CE_1))e c)$
-and doing one more beta reduction of $(\lambda x.M\ (x\ x))$, saves another 4 bits to get 206.
-We conjecture that any self-interpreter for any binary representation of lambda calculus must be at
-least 24 bytes in size, which would make $E$ close to optimal.
+We conjecture that any self-interpreter for any binary representation of lambda calculus
+must be at least 24 bytes in size, which would make $E$ close to optimal.
 
 \section{Combinatory Logic}
 
@@ -682,8 +681,8 @@ Indeed, for
 \CU & \equiv & \CE\ \tup{\COm} \\
 \CU' & \equiv & \CF\ \CI
 \end{eqnarray*}
-of sizes $|\widehat{\CU}|=236$ and $|\widetilde{\CU'}|=272$,
-Theorems~\ref{int210} and \ref{int119} give
+of sizes $|\widehat{\CU}|=232$ and $|\widetilde{\CU'}|=272$,
+Theorems~\ref{int206} and \ref{int119} give
 \begin{eqnarray*}
 \CU\ \pref{\widehat{M}}{N} & = & M\ N \\
 \CU'\ \pref{\widetilde{M}}{N} & = & M\ N
@@ -1138,6 +1137,9 @@ H.P. Barendregt,
 {\it Discriminating coded lambda terms},
 in (A. Anderson and M. Zeleny eds.) Logic, Meaning and Computation, Kluwer,
 275--285, 2001.
+
+\bibitem{bertram}
+Bertram Felgenhauer, private communication, aug 27, 2011.
 
 \bibitem{dm}
 François-Nicola Demers and Jacques Malenfant,
