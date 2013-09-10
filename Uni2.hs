@@ -4,7 +4,7 @@ import Data.List
 import Data.Maybe
 import Text.Parsec
 import Control.Applicative hiding ((<|>), many)
-data WHNF a = WHNF { ann :: Maybe a, fun :: (WHNF a -> WHNF a) }
+data WHNF a = WHNF { ann :: Maybe a, fun :: WHNF a -> WHNF a }
 expr = char '0' *> (buildLambda <$ char '0' <*> expr
                <|>  buildApply  <$ char '1' <*> expr <*> expr)
    <|> buildVar <$> pred.length <$> many (char '1') <* char '0'
@@ -20,7 +20,7 @@ whnfToString = map whnfToChar . whnfToList where
      niltest = whnfConst . whnfConst $ whnfAnn undefined
    in const (l `fun` whnfTrue, l `fun` whnfFalse) <$> ann (l `fun` niltest)
   whnfToChar iw = fromJust . ann $ iw `fun` whnfAnn '0' `fun` whnfAnn '1'
-stringToWhnf = foldr pairToWhnf whnfFalse . map (bitToWhnf . fromEnum) where
+stringToWhnf = foldr (pairToWhnf .bitToWhnf . fromEnum) whnfFalse where
   bitToWhnf n = if even n then whnfTrue else whnfFalse
   pairToWhnf fw gw = WHNF Nothing $ \hw -> hw `fun` fw `fun` gw
 buildIO prog = whnfToString . (prog [] `fun` ) . stringToWhnf
