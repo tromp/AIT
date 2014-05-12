@@ -12,7 +12,7 @@ type Env = [Closure]
 
 instance Show Term where
     showsPrec d (Abs t) = showParen (d>7) $
-        showString "\\" . showsPrec 0 t
+        showString "\\" . shows t
     showsPrec d (App l r) = showParen (d>8) $
         showsPrec 8 l . showString " " . showsPrec 9 r
     showsPrec d (Var i) = shows (i+1)
@@ -30,11 +30,11 @@ parse ('1' : xs) = do
     return (Var (length os), xs')
 
 whnf :: Term -> Env -> Term'
-whnf (Var i) env = case env !! i of
+whnfr (Var i) env = case env !! i of
   i@(IDX _) -> Return i
   TE t e -> whnf t e
 whnf t@(Abs _) env = Return (TE t env)
-whnf (App l r) env = case (whnf l env) of
+whnf (App l r) env = case whnf l env of
   Return (TE (Abs l') env') -> whnf l' (TE r env : env')
   l' -> Apply l' r env
 
@@ -56,19 +56,19 @@ encode = foldr (\x -> Abs . (App . App (Var 0) . code $ x)) nil where
 
 decode :: Term -> String
 decode (Abs (Abs (Var 0))) = "" -- empty
-decode (Abs ((Var 0) `App` (Abs (Abs (Var 0))) `App` y)) = '1':(decode y)
-decode (Abs ((Var 0) `App` (Abs (Abs (Var 1))) `App` y)) = '0':(decode y)
-decode (Abs ((Var 0) `App` (Abs ((Var 0) `App` (Abs (Abs (Var b0)))
-                    `App` (Abs ((Var 0) `App` (Abs (Abs (Var b1)))
-                    `App` (Abs ((Var 0) `App` (Abs (Abs (Var b2)))
-                    `App` (Abs ((Var 0) `App` (Abs (Abs (Var b3)))
-                    `App` (Abs ((Var 0) `App` (Abs (Abs (Var b4)))
-                    `App` (Abs ((Var 0) `App` (Abs (Abs (Var b5)))
-                    `App` (Abs ((Var 0) `App` (Abs (Abs (Var b6)))
-                    `App` (Abs ((Var 0) `App` (Abs (Abs (Var b7)))
+decode (Abs (Var 0 `App` (Abs (Abs (Var 0))) `App` y)) = '1':decode y
+decode (Abs (Var 0 `App` (Abs (Abs (Var 1))) `App` y)) = '0':decode y
+decode (Abs (Var 0 `App` (Abs (Var 0 `App` (Abs (Abs (Var b0)))
+                    `App` (Abs (Var 0 `App` (Abs (Abs (Var b1)))
+                    `App` (Abs (Var 0 `App` (Abs (Abs (Var b2)))
+                    `App` (Abs (Var 0 `App` (Abs (Abs (Var b3)))
+                    `App` (Abs (Var 0 `App` (Abs (Abs (Var b4)))
+                    `App` (Abs (Var 0 `App` (Abs (Abs (Var b5)))
+                    `App` (Abs (Var 0 `App` (Abs (Abs (Var b6)))
+                    `App` (Abs (Var 0 `App` (Abs (Abs (Var b7)))
                     `App` (Abs (Abs (Var 0))))))))))))))))))) `App` y))
   = chr (foldr (\x z->2*z+1-x) 0 [b7,b6,b5,b4,b3,b2,b1,b0]):(decode y)
-decode (Abs ((Var 0) `App` x `App` y)) = "<"++(decode x)++","++(decode y)++">"
+decode (Abs (Var 0 `App` x `App` y)) = "<" ++ decode x ++ "," ++ decode y ++ ">"
 decode x = '(': shows x ")"
 
 main = do
