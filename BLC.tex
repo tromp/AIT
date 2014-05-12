@@ -49,10 +49,10 @@
 %of descriptional complexity---the length in bits of a shortest description
 In the first part we introduce binary representations of both lambda calculus
 and combinatory logic, together with very concise interpreters that witness
-their simplicity. Along the way we present a simple graphical notation for lambda calculus,
-a new empty list representation, improved bracket abstraction, and a new fixpoint combinator.
-In the second part
-we review Algorithmic Information Theory, for which
+their simplicity. Along the way we present a simple graphical notation
+for lambda calculus, a new empty list representation, improved bracket
+abstraction, and a new fixpoint combinator.
+In the second part we review Algorithmic Information Theory, for which
 these interpreters provide a convenient vehicle.
 We demonstrate this with several concrete upper bounds
 on program-size complexity.
@@ -73,8 +73,8 @@ In~\cite{kl}, Kleene was the first to propose an encoding of lambda terms,
 mapping them to G\"{o}del numbers, which can in turn be represented as
 so called Church numerals.
 Decoding such numbers is somewhat cumbersome, and not particularly efficient.
-In search of simpler constructions, various alternative encodings have been proposed using
-higher-order abstract syntax~\cite{PE88}
+In search of simpler constructions, various alternative encodings
+have been proposed using higher-order abstract syntax~\cite{PE88}
 combined with the standard lambda representation of signatures \cite{SM89}.
 A particularly simple encoding was proposed by Mogensen~\cite{m00},
 for which the term $\lambda m.m(\lambda x.x)(\lambda x.x)$ acts as a
@@ -91,7 +91,7 @@ measured in bits.
 More importantly, it provides a way to describe arbitrary
 data with, in a sense, the least number of bits possible.
 We review the notion of how a computer reading bits and outputting
-some result constitutes a description method, and how universal computer
+some result constitutes a description method, and how universal computers
 correspond to optimal description methods.
 We then pick specific universal computers based on our interpreters
 and prove several of the basic results of Algorithmic Information Theory
@@ -218,7 +218,8 @@ Thus, $\pref{s}{\Cnil}$ is the standard representation of string $s$.
 For example, $\pref{011}{\Cnil} \equiv \tup{\Ct,\tup{\Cf,\tup{\Cf,\Cnil}}}$
 represents the string $011$.
 We represent an unterminated string, such as part of an input stream,
-as an open term $\pref{s}{z}$, where the free variable $z$ represents the remainder of input.
+as an open term $\pref{s}{z}$, where the free variable $z$ represents
+the remainder of input.
 
 \subsection{de Bruijn notation}
 In~\cite{bruijn}, de Bruijn proposed an alternative notation for closed
@@ -234,6 +235,9 @@ to account for changes in the lambda nesting structure.
 Since variable/index exchanges don't affect each other,
 it's possible to mix both forms of notation, as we'll do later.
 
+\subsection{graphical notation}
+{\em Lambda Diagrams} are a graphical notation for closed lambda terms,
+in which abstractions are represented by horizontal lines, variables by vertical lines emanating down from their binding lambda, and applications by horizontal links connecting the leftmost variables. In the alternative style, applications link the nearest deepest variables, for a more stylistic, if less uniform, look
 \subsection{Binary Lambda Calculus}
 
 \begin{definition}

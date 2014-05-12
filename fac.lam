@@ -1,0 +1,11 @@
+let
+  id = \x.x;
+  two = \f\x.f(f x);
+  three = \f\x.f(f(f x));
+  false = \y.id;
+  succ = \n\f\x.n f (f x);
+  myF = \c\sn\nf.c(succ sn)(\x.sn(nf x));
+  myfac = \n.n myF false id id;
+  F = \f\n.n(f(succ n));
+  fac = \n\f.n F(\x.f)id
+in fac
