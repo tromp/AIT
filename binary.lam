@@ -1,0 +1,33 @@
+-- binary arithmetic
+\io. let
+  id = \x.x;
+  true = \x\y.x;
+  false = \x\y.y;
+  not = \b\x\y.b y x;
+  nil = false;
+  cons = \a\b\p.p a b;
+  -- fold: xs (fold f) <==> foldr f id xs
+  fold  = \f.(let go = \x\xs.f x    (xs go) in go);
+  -- variant of 'fold' with access to tail
+  fold_ = \f.(let go = \x\xs.f x xs (xs go) in go);
+  -- digits
+  0 = true;
+  1 = false;
+  -- small numbers
+  n0 = nil;
+  n1 = cons false nil;
+  n10 = cons 0 (cons 1 (cons 0 (cons 1 nil)));
+  -- successor
+  succ = \n. n (fold_ (\b\n_\f\i. cons (not b) (b n_ (f i)))) n1;
+  -- addition
+  add = \n. n
+    (fold (\b\f\m.
+      let d = m (\d\_\_.d) 0; m_ = m (\_\m_\_.m_) m in
+      d id succ (cons b (f m_))));
+  -- multiplication
+  mul = \n\m. n (fold (\b\f\n0. b id (add m) (cons 0 (f n0)))) n0;
+  -- iteration
+  church = \n\f. n (fold (\b\g\x. b id f (g (g x))));
+  -- factorial
+  fac = \n. church n (\c\n. let n_ = succ n in mul (c n_) n_) (\c.n1) n0
+in fac (mul n10 n10)
