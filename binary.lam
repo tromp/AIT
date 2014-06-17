@@ -35,21 +35,20 @@
   t3 = cons 0 (cons 0 nil);
   t10 = cons 1 (cons 1 (cons 0 nil));
   -- successor
-  succ  = \n. n (fold_ (\b\n_\n1_\i. cons (not b) (b n_ (n1_ i)))) n1;
-  tsucc = \n. n (fold_ (\b\n_\n1_\i. cons (not b) (b n_ (n1_ i)))) t1;
+  succ_ = \z\n. n (fold_ (\b\n_\n1_\i. cons (not b) (b n_ (n1_ i)))) z;
+  succ  = succ_ n1;
+  tsucc = succ_ t1;
   -- addition
-  add = \n. n
+  add_ = \d\n. n
     (fold (\b\f\m.
       let m_ = m (\_\m_\_.m_) m
-      in m (\b\_.b id succ) (cons b (f m_))));
-  tadd = \n. n
-    (fold (\b\f\m.
-      let m_ = m (\_\m_\_.m_) m
-      in m (\b\_.b id succ) (cons b (f m_))));
+      in m d (cons b (f m_))));
+  add  = add_ (\b\_.b id succ);
+  tadd = add_ (\c\_.(\s\x.s (c x (s x))) tsucc);
   -- multiplication
   mul = \n\m. n (fold (\b\f\n0. b id (add m) (cons 0 (f n0)))) n0;
   -- iteration
   church = \n\f. n (fold (\b\g\x. b id f (g (g x))));
   -- factorial
   fac = \n. church n (\c\n. let n_ = succ n in mul (c n_) n_) (\c.n1) n0
-in add
+in tadd
