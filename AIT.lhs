@@ -57,6 +57,7 @@ Interpret an expression as a list of binary strings.
 > bshow x = '(': (shows x ")")
 
 Substitute an expression for all variables binding to o'th enclosing lambda
+Also applies substituted lambdas in head position
 
 > subst :: Int -> DB -> DB -> DB
 > subst o x v@(DBVar i) | i==o = adjust 0 x
@@ -67,17 +68,24 @@ Substitute an expression for all variables binding to o'th enclosing lambda
 >         adjust n (DBLam body) = DBLam (adjust (succ n) body)
 >         adjust n (DBApp fun arg) = DBApp (adjust n fun) (adjust n arg)
 > subst o x (DBLam body) = DBLam (subst (succ o) x body)
-> subst o x (DBApp fun arg) = DBApp (subst o x fun) (subst o x arg)
+> subst o x (DBApp fun arg) = optApp (subst o x fun) (subst o x arg) where
+>   optApp (DBLam body) a | nocc 0 body <= 1 = subst 0 a body
+>   optApp f            a                    = DBApp f a
+>   nocc :: Int -> DB -> Int
+>   nocc k (DBVar i) = if i==k then 1 else 0
+>   nocc k (DBLam body) = nocc (succ k) body
+>   nocc k (DBApp f a) = nocc k f + nocc k a
 
 Optimize an expression; repeatedly contract redexes that reduce in size
 
 > optimize :: DB -> DB
-> optimize x = let ox = opt x in if ox == x then x else optimize ox where
->   opt (DBLam body) = DBLam (opt body)
->   opt t@(DBApp (DBLam body) arg) | size s < size t = opt s where
->     s = subst 0 arg body
->   opt (DBApp fun arg) = DBApp (opt fun) (opt arg)
->   opt e = e
+> optimize v@(DBVar _) = v
+> optimize (DBLam body) = DBLam (optimize body)
+> optimize (DBApp fun arg) = opt (optimize fun) (optimize arg) where
+>   opt (DBLam body) a | size new < oldsize = optimize new where
+>     oldsize = 4 + size body + size a
+>     new = subst 0 arg body
+>   opt f a = DBApp f a
 
 Bitstring functions -----------------------------------------------------
 
