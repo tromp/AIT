@@ -15,13 +15,6 @@ It has constructors for variables, $\lambda$-abstraction, and application.
 > data LC v = Var v | Lam v (LC v) | App (LC v) (LC v)
 >    deriving (Eq)
 
-Compute the free variables of an expression.
-
-> freeVars :: (Eq v) => LC v -> [v]
-> freeVars (Var v) = [v]
-> freeVars (Lam v e) = freeVars e \\ [v]
-> freeVars (App f a) = freeVars f `union` freeVars a
-
 The Read instance for the LC type reads $\lambda$ term with the normal
 syntax.
 
@@ -67,6 +60,13 @@ as a syntactic sugar for $\lambda$ and application.
 > letrec :: (Eq v, Read v) => v -> LC v -> LC v
 > letrec x e | x `elem` freeVars e = App fix (Lam x e)
 >            | otherwise = e
+
+Compute the free variables of an expression.
+
+> freeVars :: (Eq v) => LC v -> [v]
+> freeVars (Var v) = [v]
+> freeVars (Lam v e) = freeVars e \\ [v]
+> freeVars (App f a) = freeVars f `union` freeVars a
 
 > lcLet :: (Eq v, Read v) => (v, LC v) -> LC v -> LC v
 > lcLet (x,e) b = App (Lam x b) (letrec x e)
@@ -183,6 +183,17 @@ Convert to de-Bruijn form. The variables are looked up in a dictionary
 >         from vs (Lam v t) = DBLam $ from (v:vs) t
 >         from vs (App l r) = DBApp (from vs l) (from vs r)
 
+convenience function for constructing LC Int directly
+from http://pchiusano.github.io/2014-06-20/simple-debruijn-alternative.html
+
+> lam :: (LC Int -> LC Int) -> LC Int
+> lam f = Lam n body where
+>   body = f (Var n)
+>   n = 1 + maxBV body
+>   maxBV :: LC Int -> Int
+>   maxBV (App f a) = maxBV f `max` maxBV a
+>   maxBV (Lam n _) = n
+
 Convert back from higher order abstract syntax. Do this by inventing
 a new variable at each $\lambda$.
 
@@ -191,7 +202,6 @@ a new variable at each $\lambda$.
 >   where to _ (HVar   v) = Var v
 >         to n (HLam   b) = Lam n (to (succ n) (b (HVar n)))
 >         to n (HApp f a) = App (to n f) (to n a)
-
 
 
 The CL type of combinatory expressions has constructors for index variables, primitive combinators S and K, and application.
