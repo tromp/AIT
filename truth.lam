@@ -1,0 +1,7 @@
+let
+  nil = \x\y.y;
+  truth = \xs.xs(\x\d\z.z x (x nil (truth xs)))
+in truth
+
+-- truth 0... = 0
+-- truth 1... = 1:1:...

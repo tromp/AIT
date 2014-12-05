@@ -51,4 +51,4 @@ let
   church = \n\f. n (fold (\b\g\x. b id f (g (g x))));
   -- factorial
   fac = \n. church n (\c\n. let n_ = succ n in mul (c n_) n_) (\c.n1) n0
-in \io. fac n10
+in fac
