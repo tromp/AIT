@@ -2,8 +2,10 @@ let
   nil = \x\y.y;
   ones = \z.z (\x\y.y) ones;
   truth = \xs.xs(\x\d\z.z x (x nil (truth xs)));
-  truth2 = \xs.xs (\x\_. x (\z.z x nil) ones)
-in truth
+  truth2 = \xs.xs (\x\_. x (\z.z x nil) ones);
+  loop = \x.\z. z x (x nil (loop x));
+  truth3 = \io. io (\x\_. loop x)
+in truth3
 
 -- truth 0... = 0
 -- truth 1... = 1:1:...
