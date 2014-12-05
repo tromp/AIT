@@ -5,7 +5,7 @@ let
   truth2 = \xs.xs (\x\_. x (\z.z x nil) ones);
   loop = \x.\z. z x (x nil (loop x));
   truth3 = \io. io (\x\_. loop x);
-  truth4 = \io. io (\x\_. let loop = \z. z x (x nil (loop x)) in loop)
+  truth4 = \io. io (\x\_. let loop = \z. z x (x nil loop) in loop)
 in truth4
 
 -- truth 0... = 0
