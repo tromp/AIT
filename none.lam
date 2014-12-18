@@ -1,5 +1,5 @@
 -- outputs characteristic sequence of empty set
 let
-  false = \f\t.f;
-  none = \z.z false none
+  zero = \x\y.x;
+  none = \z.z zero none
 in \x.none
