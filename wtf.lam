@@ -1,12 +1,12 @@
 let
   rec = \x\xs\ys\p.p x (xs rec ys);
   cat1 = \xs.xs rec;
-  cat2 = \xs.xs (let rec2 = \x\xs\ys\p.p x (xs rec2 ys) in rec2);
+  cat2 = \xs.xs (let rec = \x\xs\ys\p.p x (xs rec ys) in rec);
   halfquine1 = \x.cat1 x x;
   halfquine2 = \x.cat2 x x;
   halfquine3 = \x.x rec x;
-  halfquine4 = \x.x (let rec4 = \x\xs\ys\p.p x (xs rec4 ys) in rec4) x
-in halfquine1
+  halfquine4 = \x.x (let rec = \x\xs\ys\p.p x (xs rec ys) in rec) x
+in halfquine4
 
 -- halfquine1 73
 -- halfquine2 66
