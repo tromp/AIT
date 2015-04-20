@@ -1,0 +1,20 @@
+let
+  rec = \x\xs\ys\p.p x (xs rec ys);
+  cat1 = \xs.xs rec;
+  cat2 = \xs.xs (let rec = \x\xs\ys\p.p x (xs rec ys) in rec);
+  halfquine1 = \x.cat1 x x;
+  halfquine2 = \x.cat2 x x;
+  halfquine3 = \x.x rec x;
+  halfquine4 = \x.x (let rec = \x\xs\ys\p.p x (xs rec ys) in rec) x
+in halfquine4
+
+-- halfquine1 73
+-- halfquine2 66
+-- halfquine3 73
+-- halfquine4 66
+
+-- these should all produce same output:
+-- cat quine.blc quine.blc | ./blc run uni.lam
+-- cat quine.blc quine.blc | ./blc run id.lam
+-- ./blc run quine.lam < quine.blc
+-- cat quine.blc quine.blc; echo

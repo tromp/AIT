@@ -1,6 +1,6 @@
 -- outputs characteristic sequence of odd numbers
 let
-  false = \f\t.f;
-  true = \f\t.t;
-  odd = \z.z false (\z.z true odd)
+  zero = \x\y.x;
+  one  = \x\y.y;
+  odd  = \z.z zero (\z.z one odd)
 in \x.odd

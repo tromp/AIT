@@ -1,6 +1,6 @@
 -- outputs characteristic sequence of even numbers
 let
-  false = \f\t.f;
-  true = \f\t.t;
-  even = \z.z true (\z.z false even)
+  zero = \x\y.x;
+  one  = \x\y.y;
+  even = \z.z one (\z.z zero even)
 in \x.even

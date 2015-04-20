@@ -1,5 +1,6 @@
 let
-  cat = \xs.xs (let rec = \x\xs\ys\p.p x (xs rec ys) in rec);
+  rec = \x\xs\ys\p.p x (xs rec ys);
+  cat = \xs.xs rec;
   halfquine = \x.cat x x
 in halfquine
 

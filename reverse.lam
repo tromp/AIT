@@ -1,0 +1,6 @@
+let
+  nil = \x\y.y;
+  R = \x\xs\t.xs R (\z z x t);
+  -- xs R tail returns reverse(xs) ++ tail
+  rev = \xs.xs R nil
+in rev
