@@ -10,6 +10,12 @@ let
   three = Succ two;
   snd = \ab.ab (\a\b.b);
   add = \x\y. x y (\n  Succ (add n y));
+
+  myF = \c\sn\nf.c(succ sn)(\x.sn(nf x));
+  myfac = \n.n myF false id id;
+  F = \f\n.n(f(succ n));
+  fac = \n\f.n F(\x.f)id
+
   pref0 = \l\z.z True l;
   laver 
   test = laver three five pref0
