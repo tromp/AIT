@@ -1,0 +1,16 @@
+let
+  true = \t\f.t;
+  false = \t\f.f;
+  zero = false;
+  succ = \n\f\x.f(n f x);
+  Zero = false;
+  Succ = \n\z\s.s n;
+  one = Succ Zero;
+  two = Succ one;
+  three = Succ two;
+  snd = \ab.ab (\a\b.b);
+  add = \x\y. x y (\n  Succ (add n y));
+  pref0 = \l\z.z True l;
+  laver 
+  test = laver three five pref0
+in test
