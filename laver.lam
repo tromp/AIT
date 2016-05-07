@@ -2,24 +2,24 @@ let
   true = \t\f.t;
   false = \t\f.f;
   zero = false;
+  one = \x.x;
   succ = \n\f\x.f(n f x);
-  Zero = false;
-  Succ = \n\z\s.s n;
-  one = Succ Zero;
-  two = Succ one;
-  three = Succ two;
-  snd = \ab.ab (\a\b.b);
-  add = \x\y. x y (\n  Succ (add n y));
-
-  myF = \c\sn\nf.c(succ sn)(\x.sn(nf x));
-  myfac = \n.n myF false id id;
-  F = \f\n.n(f(succ n));
-  fac = \n\f.n F(\x.f)id
-
-  pref0 = \l\z.z True l;
-  laver 
-  test = laver three five pref0
+  two = succ one;
+  three = succ two;
+  four = succ three;
+  five = succ four;
+  six = succ five;
+  seven = succ six;
+  tail = \l.l false;
+  F = \f\n\z.z n (f (succ n));
+  sm = \n.n F (\x.\z.z zero false) one;
+  raver = \y\x.let z=x tail (sm seven) true in y (raver z) z;
+  laver = \x\y.raver y x;
+  pref0 = \l\z.z true l;
+  test = laver zero seven pref0;
 in test
+
+-- n:=5; while table(n,1,32)=2^n do n:=n+1; od;
 
 --  y 0 1 2 3 4 5 6 7
 -- x
@@ -37,8 +37,6 @@ in test
 -- if x=2^n-1 then return y
 -- elif y=0 then return RemInt(x+1,2^n)
 -- else return table(n,table(n,x,y-1),x+1);fi;end;
-
--- T 
 
 -- n:=5; while table(n,1,32)=2^n do n:=n+1; od;
 
