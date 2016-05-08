@@ -22,10 +22,12 @@
     -- swap argument order to simplify iterated laver
     let laver = \b\a. a (\_. mx (b (laver (pred a))) zero) b
     in laver;
-  go1 = \n\p. p
-    (laver n sixteen n (\_. false) true)
-    (go1 (\f\x. n f (n f (f x))));
-  go2 = \n. laver n sixteen n (\_. one) (go2 (\f\x. n f (n f (f x))));
+  sweet = sixteen;
+  dblmin1 = \n\f\x. n f (n f (f x)); -- map n to 2*n-1
+  go1 = \mx\p. p
+    (laver mx sweet mx (\_. false) true)
+    (go1 (dblmin1 mx));
+  go2 = \mx. laver mx sweet mx (\_. mx) (go2 (dblmin1 mx));
 in
   -- output: list of bits; the n-th bit is true if P(n) divides 16 (n=1,2,...)
   -- go1 one
