@@ -11,26 +11,23 @@
   -- exploiting the fact that a |> mx = a-1 = 0 |> a-1 = f_a 0
   -- and (modulo 2^n) 1+mx-b = -b = -1 * b = mx*b
 
-  zero = \f\x.x;
-  one = \x.x;
-  true = \t\f.t;
-  false = \t\f.f;
-  two = \f\x.f (f x);
-  sixteen = (\x.x x) two;
+  zero = \f\x. x;
+  one = \x. x;
+  true = \t\f. t;
+  false = \t\f. f;
+  two = \f\x. f (f x);
+  sixteen = (\x. x x) two;
   pred = \n\f\x. n (\g\h. h (g f)) (\h. x) (\x. x);
   laver = \mx.
     -- swap argument order to simplify iterated laver
     let laver = \b\a. a (\_. mx (b (laver (pred a))) zero) b
     in laver;
   go1 = \n\p. p
-    (laver n sixteen n (\_.false) true)
+    (laver n sixteen n (\_. false) true)
     (go1 (\f\x. n f (n f (f x))));
-  go2 = \n. laver n sixteen n (\_.one) (go2 (\f\x. n f (n f (f x))));
+  go2 = \n. laver n sixteen n (\_. one) (go2 (\f\x. n f (n f (f x))));
 in
   -- output: list of bits; the n-th bit is true if P(n) divides 16 (n=1,2,...)
   -- go1 one
   -- version without output that halts if a counterexample is found
   go2 one
-
-
-   
