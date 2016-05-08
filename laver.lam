@@ -1,25 +1,31 @@
 let
   true = \t\f.t;
   false = \t\f.f;
-  zero = false;
-  one = \x.x;
+  c0 = false;
   succ = \n\f\x.f(n f x);
-  two = succ one;
-  three = succ two;
-  four = succ three;
-  five = succ four;
-  six = succ five;
-  seven = succ six;
+  c1 = \x.x;
+  c2 = succ c1;
+  c3 = succ c2;
+  c4 = succ c3;
+  c5 = succ c4;
+  c6 = succ c5;
+  c7 = succ c6;
+  c8 = c3 c2;
+  c9 = c2 c3;
+  c15 = \x.c5 (c3 x);
+  c30 = \x.c5 (c6 x);
+  c31 = succ c30;
   tail = \l.l false;
   F = \f\n\z.z n (f (succ n));
-  sm = \n.n F (\x.\z.z zero false) one;
-  raver = \y\x.let z=x tail (sm seven) true in y (raver z) z;
+  sm = \n.n F (\x.\z.z c0 false) c1;
+  raver = \y\x.let z=x tail (sm c6) true in y (raver z) z;
   laver = \x\y.raver y x;
   pref0 = \l\z.z true l;
-  test = laver zero seven pref0;
+  find = \n.laver c0 c31;
+  test = laver c0 c6 pref0
 in test
 
--- n:=5; while table(n,1,32)=2^n do n:=n+1; od;
+-- n:=5; while table(n,0,31)=2^n- do n:=n+1; od;
 
 --  y 0 1 2 3 4 5 6 7
 -- x
@@ -32,6 +38,16 @@ in test
 -- 6  7 7 7 7 7 7 7 7
 -- 7  0 1 2 3 4 5 6 7
 
+--  y 1 2 3 4 5 6 7 8
+-- x
+-- 1  2 4 6 8 2 4 6 8
+-- 2  3 4 7 8 3 4 7 8
+-- 3  4 8 4 8 4 8 4 8
+-- 4  5 6 7 8 5 6 7 8
+-- 5  6 8 6 8 6 8 6 8
+-- 6  7 8 7 8 7 8 7 8
+-- 7  8 8 8 8 8 8 8 8
+-- 8  1 2 3 4 5 6 7 8
 
 -- table:=function(n,x,y)
 -- if x=2^n-1 then return y
