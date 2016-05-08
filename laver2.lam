@@ -1,0 +1,29 @@
+\io. let
+
+  -- Let mx = 2^n - 1. We consider a dual version of the shelf, determined
+  -- by a |> mx = a-1 (mod 2^n), which satisfies
+  --   0 |> b  = b
+  --   a |> 0  = 0
+  --   a |> mx = a-1
+  --   a |> b  = (a |> (b+1)) |> (a - 1)
+  -- Note that the latter two equations iterate f_a = \x. x |> (a - 1).
+  -- In fact, we implement them by a |> b = f_a^{mx b}(0) 
+
+  sixteen = (\x.x x x) (\f\x.f (f x));
+  pred = \n\f\x. n (\g\h. h (g f)) (\h. x) (\x. x);
+  laver = \mx.
+    let laver = \n\m. n (\_. mx (m (\t. laver t (pred n))) (\f\x. x)) m
+    in laver;
+  go1 = \n\p. p
+    (laver n n sixteen (\_\x\y. y) (\x\y. x))
+    (go1 (\f\x. n f (n f (f x))));
+  go2 = \n. laver n n sixteen (\_\x.x) (go2 (\f\x. n f (n f (f x))));
+in
+  -- output: list of bits; the n-th bit is true if P(n) divides 16 (n=1,2,...)
+  go1 (\f. f)
+
+  -- version without output that halts if a counterexample is found
+  -- go2 (\f. f)
+
+
+   
