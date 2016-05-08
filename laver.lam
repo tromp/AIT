@@ -16,7 +16,7 @@
   true = \t\f. t;
   false = \t\f. f;
   two = \f\x. f (f x);
-  sixteen = (\x. x x) two;
+  sixteen = (\x. x x x) two;
   pred = \n\f\x. n (\g\h. h (g f)) (\h. x) (\x. x);
   laver = \mx.
     -- swap argument order to simplify iterated laver
