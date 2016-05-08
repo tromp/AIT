@@ -1,29 +1,69 @@
-\io. let
+let
+  true = \t\f.t;
+  false = \t\f.f;
+  c0 = false;
+  succ = \n\f\x.f(n f x);
+  c1 = \x.x;
+  c2 = succ c1;
+  c3 = succ c2;
+  c4 = succ c3;
+  c5 = succ c4;
+  c6 = succ c5;
+  c7 = succ c6;
+  c8 = c3 c2;
+  c9 = c2 c3;
+  c12 = \x.c4 (c3 x);
+  c13 = succ c12;
+  c14 = \x.c7 (c2 x);
+  c15 = \x.c5 (c3 x);
+  c30 = \x.c5 (c6 x);
+  c31 = succ c30;
+  tail = \l.l false;
+  F = \f\n\z.z n (f (succ n));
+  sm = \n.n F (\x.\z.z c0 false) c1;
+  raver = \y\x.let z=x tail (sm c15) true in y (raver z) z;
+  laver = \x\y.raver y x;
+  pref0 = \l\z.z true l;
+  find = \n.laver c0 c31;
+  test = laver c9 c5 pref0
+in test
 
-  -- Let mx = 2^n - 1. We consider a dual version of the shelf, determined
-  -- by a |> mx = a-1 (mod 2^n), which satisfies
-  --   0 |> b  = b
-  --   a |> 0  = 0
-  --   a |> mx = a-1
-  --   a |> b  = (a |> (b+1)) |> (a - 1)
-  -- Note that the latter two equations iterate f_a = \x. x |> (a - 1).
-  -- In fact, we implement them by a |> b = f_a^{mx b}(0) 
+-- n:=5; while table(n,0,31)=2^n- do n:=n+1; od;
 
-  sixteen = (\x.x x x) (\f\x.f (f x));
-  pred = \n\f\x. n (\g\h. h (g f)) (\h. x) (\x. x);
-  laver = \mx.
-    let laver = \n\m. n (\_. mx (m (\t. laver t (pred n))) (\f\x. x)) m
-    in laver;
-  go1 = \n\p. p
-    (laver n n sixteen (\_\x\y. y) (\x\y. x))
-    (go1 (\f\x. n f (n f (f x))));
-  go2 = \n. laver n n sixteen (\_\x.x) (go2 (\f\x. n f (n f (f x))));
-in
-  -- output: list of bits; the n-th bit is true if P(n) divides 16 (n=1,2,...)
-  go1 (\f. f)
+--  y 0 1 2 3 4 5 6 7
+-- x
+-- 0  1 3 5 7 1 3 5 7
+-- 1  2 3 6 7 2 3 6 7
+-- 2  3 7 3 7 3 7 3 7
+-- 3  4 5 6 7 4 5 6 7
+-- 4  5 7 5 7 5 7 5 7
+-- 5  6 7 6 7 6 7 6 7
+-- 6  7 7 7 7 7 7 7 7
+-- 7  0 1 2 3 4 5 6 7
 
-  -- version without output that halts if a counterexample is found
-  -- go2 (\f. f)
+--  y 1 2 3 4 5 6 7 8
+-- x
+-- 1  2 4 6 8 2 4 6 8
+-- 2  3 4 7 8 3 4 7 8
+-- 3  4 8 4 8 4 8 4 8
+-- 4  5 6 7 8 5 6 7 8
+-- 5  6 8 6 8 6 8 6 8
+-- 6  7 8 7 8 7 8 7 8
+-- 7  8 8 8 8 8 8 8 8
+-- 8  1 2 3 4 5 6 7 8
 
+-- table:=function(n,x,y)
+-- if x=2^n-1 then return y
+-- elif y=0 then return RemInt(x+1,2^n)
+-- else return table(n,table(n,x,y-1),x+1);fi;end;
 
-   
+-- n:=5; while table(n,1,32)=2^n do n:=n+1; od;
+
+-- test:=true; n:=0;
+-- while test=true do
+--   for m in [0..n] do
+--     if table(n,2,2^m)=2^n and not table(n,2,2^m)=2^n then
+--       test:=false;
+--     fi
+--   od
+-- od
