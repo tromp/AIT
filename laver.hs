@@ -60,5 +60,6 @@ main = do
         forM_ [0..mx] $ \i -> do
             putStrLn $ unwords [showW (laver i j) | j <- [0..mx]]
         putStrLn ""
-    w = length (show mx)
-    showW = reverse . take w . (++ repeat ' ') . reverse . show
+      where
+        w = length (show mx)
+        showW = reverse . take w . (++ repeat ' ') . reverse . show
