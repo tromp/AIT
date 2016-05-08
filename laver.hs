@@ -37,9 +37,9 @@ laver1 a b
 -- a |> b is computed by mx - b iterations of the map \x -> x |> (a - 1),
 -- starting with a - 1; since (a |> 0) |> (a - 1) = 0 |> (a - 1) = a - 1,
 -- so we can also iterate the map mx + 1 - b times starting with 0.
--- The period of the map must divide mx + 1 for |> to be well-defined,
--- so the following definition is justified. Note that it does not
--- depend on mx anymore.
+-- The period of the iterated sequence must divide mx + 1 for |> to be
+-- well-defined, so the following definition is justified. Note that it
+-- does not depend on mx.
 
 -- | memoized version of `laver1`
 laver 0 b = b
