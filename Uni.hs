@@ -30,7 +30,7 @@ parse ('1' : xs) = do
     return (Var (length os), xs')
 
 whnf :: Term -> Env -> Term'
-whnfr (Var i) env = case env !! i of
+whnf (Var i) env = case env !! i of
   i@(IDX _) -> Return i
   TE t e -> whnf t e
 whnf t@(Abs _) env = Return (TE t env)

@@ -80,6 +80,7 @@ Compute the free variables of an expression.
 >          return (v, e)
 >     sstring "let"
 >     bs <- sepBy pDef (schar ';')
+>     optional (schar ';')
 >     sstring "in"
 >     e <- pLC
 >     return $ foldr lcLet e bs
