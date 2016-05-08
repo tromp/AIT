@@ -12,17 +12,20 @@ let
   c7 = succ c6;
   c8 = c3 c2;
   c9 = c2 c3;
+  c12 = \x.c4 (c3 x);
+  c13 = succ c12;
+  c14 = \x.c7 (c2 x);
   c15 = \x.c5 (c3 x);
   c30 = \x.c5 (c6 x);
   c31 = succ c30;
   tail = \l.l false;
   F = \f\n\z.z n (f (succ n));
   sm = \n.n F (\x.\z.z c0 false) c1;
-  raver = \y\x.let z=x tail (sm c6) true in y (raver z) z;
+  raver = \y\x.let z=x tail (sm c15) true in y (raver z) z;
   laver = \x\y.raver y x;
   pref0 = \l\z.z true l;
   find = \n.laver c0 c31;
-  test = laver c0 c6 pref0
+  test = laver c9 c5 pref0
 in test
 
 -- n:=5; while table(n,0,31)=2^n- do n:=n+1; od;
