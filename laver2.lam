@@ -1,69 +1,35 @@
-let
-  true = \t\f.t;
-  false = \t\f.f;
-  c0 = false;
-  succ = \n\f\x.f(n f x);
-  c1 = \x.x;
-  c2 = succ c1;
-  c3 = succ c2;
-  c4 = succ c3;
-  c5 = succ c4;
-  c6 = succ c5;
-  c7 = succ c6;
-  c8 = c3 c2;
-  c9 = c2 c3;
-  c12 = \x.c4 (c3 x);
-  c13 = succ c12;
-  c14 = \x.c7 (c2 x);
-  c15 = \x.c5 (c3 x);
-  c30 = \x.c5 (c6 x);
-  c31 = succ c30;
-  tail = \l.l false;
-  F = \f\n\z.z n (f (succ n));
-  sm = \n.n F (\x.\z.z c0 false) c1;
-  raver = \y\x.let z=x tail (sm c15) true in y (raver z) z;
-  laver = \x\y.raver y x;
-  pref0 = \l\z.z true l;
-  find = \n.laver c0 c31;
-  test = laver c9 c5 pref0
-in test
+\io. let
 
--- n:=5; while table(n,0,31)=2^n- do n:=n+1; od;
+  -- Let mx = 2^n - 1. We consider a dual version of the shelf, determined
+  -- by a |> mx = a-1 (mod 2^n), which satisfies
+  --   0 |> b  = b
+  --   a |> 0  = 0
+  --   a |> mx = a-1
+  --   a |> b  = (a |> b+1) |> a-1
+  -- Note that the latter two equations iterate f_a = \x. x |> (a-1).
+  -- In fact, we implement a |> b = f_a^{mx-b} (a-1) as f_a^{mx*b} 0,
+  -- exploiting the fact that a |> mx = a-1 = 0 |> a-1 = f_a 0
+  -- and (modulo 2^n) 1+mx-b = -b = -1 * b = mx*b
 
---  y 0 1 2 3 4 5 6 7
--- x
--- 0  1 3 5 7 1 3 5 7
--- 1  2 3 6 7 2 3 6 7
--- 2  3 7 3 7 3 7 3 7
--- 3  4 5 6 7 4 5 6 7
--- 4  5 7 5 7 5 7 5 7
--- 5  6 7 6 7 6 7 6 7
--- 6  7 7 7 7 7 7 7 7
--- 7  0 1 2 3 4 5 6 7
-
---  y 1 2 3 4 5 6 7 8
--- x
--- 1  2 4 6 8 2 4 6 8
--- 2  3 4 7 8 3 4 7 8
--- 3  4 8 4 8 4 8 4 8
--- 4  5 6 7 8 5 6 7 8
--- 5  6 8 6 8 6 8 6 8
--- 6  7 8 7 8 7 8 7 8
--- 7  8 8 8 8 8 8 8 8
--- 8  1 2 3 4 5 6 7 8
-
--- table:=function(n,x,y)
--- if x=2^n-1 then return y
--- elif y=0 then return RemInt(x+1,2^n)
--- else return table(n,table(n,x,y-1),x+1);fi;end;
-
--- n:=5; while table(n,1,32)=2^n do n:=n+1; od;
-
--- test:=true; n:=0;
--- while test=true do
---   for m in [0..n] do
---     if table(n,2,2^m)=2^n and not table(n,2,2^m)=2^n then
---       test:=false;
---     fi
---   od
--- od
+  zero = \f\x. x;
+  one = \x. x;
+  true = \t\f. t;
+  false = \t\f. f;
+  two = \f\x. f (f x);
+  sixteen = (\x. x x x) two;
+  pred = \n\f\x. n (\g\h. h (g f)) (\h. x) (\x. x);
+  laver = \mx.
+    -- swap argument order to simplify iterated laver
+    let laver = \b\a. a (\b. mx (b (laver (pred a))) zero) b
+    in laver;
+  sweet = sixteen;
+  dblmin1 = \n\f\x. n f (n f (f x)); -- map n to 2*n-1
+  go1 = \mx\p. p
+    (laver mx sweet mx (\_. false) true)
+    (go1 (dblmin1 mx));
+  go2 = \mx. laver mx sweet mx (\_. mx) (go2 (dblmin1 mx));
+in
+  -- output: list of bits; the n-th bit is true if P(n) divides 16 (n=1,2,...)
+  -- go1 one
+  -- version without output that halts if a counterexample is found
+  go2 one

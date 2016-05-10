@@ -20,7 +20,7 @@
   pred = \n\f\x. n (\g\h. h (g f)) (\h. x) (\x. x);
   laver = \mx.
     -- swap argument order to simplify iterated laver
-    let laver = \b\a. a (\_. mx (b (laver (pred a))) zero) b
+    let laver = \b\a. a (\b. mx (b (laver (pred a))) zero) b
     in laver;
   sweet = sixteen;
   dblmin1 = \n\f\x. n f (n f (f x)); -- map n to 2*n-1
