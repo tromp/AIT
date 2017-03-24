@@ -1,6 +1,10 @@
--- This works as a ghc plugin:
+-- Purpose: compile Haskell to BLC using ghc.
+--
+-- This code works as a ghc plugin:
 -- # ghc -dynamic -c BLC.hs -package ghc
 -- # ghc -package ghc -dynamic -c -fplugin=BLC Sample.hs
+--
+-- Author: Bertram Felgenhauer <int-e@gmx.de>
 
 {-# LANGUAGE BangPatterns #-}
 
