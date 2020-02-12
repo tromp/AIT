@@ -1,14 +1,49 @@
-let
-    -- ints
-    succ = \n.\f\x. n f (f x);
+let -- Direct translation from Haskell source, but with permuted arguments
+    -- nats
+    succ = \n\s\z. n s (s z);
     1 = \f. f;
+  
     -- ordinal type: O = forall r. r -> (r -> r) -> ((N -> r) -> r) -> r
     Z = \z\s\l. z;
-    -- S = \n.\z\s\l. s (n z s l);
-    -- L = \f.\z\s\l. l (\n.f n z s l);
-    add = \n\m. \z\s\l. m (n z s l) s l;
-    expw = \n.\z\s\l. n s (\m\z. l (\n. n (\n\z. m (n z)) m z)) (\f\z. l (\n. f n z)) z;
-    -- addexpw = \n\m.\z\s\l. m (n s (\m\z. l (\n. n (\n\z. m (n z)) m z)) (\f\z. l (\n. f n z)) z) s l;
+    S = \n.\z\s\l. s (n z s l);
+    L = \f.\z\s\l. l (\n. (f n) z s l);
+  
+    -- arithmetic
+    add = \n\m. m n S L;
+    mul = \n\m. m Z (\x. add x n) L;
+    w = L (\n. n S Z);
+    expw = \n. n (S Z) (\x. mul x w) L;
+  
+    goodstein = \o. o (\x. x) (\n\m. n (succ m)) (\f\m. f (succ (succ m)) m) 1
+in
+let -- Prepare optimization: Fold to values with z, s, l pre-applied
+    add = \n\m.\z\s\l. m (n z s l) (\n. S (\_\_\_. n) z s l) (\f. L (\n\_\_\_. f n) z s l);
+    mul = \n\m.\z\s\l. m (Z z s l) (\x. add (\_\_\_. x) n z s l) (\f. L (\n\_\_\_. f n) z s l);
+    w = L (\n.\z\s\l. n (\n. S (\_\_\_. n) z s l) (Z z s l));
+    expw = \n.\z\s\l. n (\z. S Z z s l) (\x\z. mul (\z\_\_. x z) w z s l) (\f\z. L (\n\z\_\_. f n z) z s l) z
+in
+let -- Inline away
+    add = \n\m.\z\s\l. m (n z s l) s l;
+    mul = \n\m.\z\s\l. m z (\x. add (\_\_\_. x) n z s l) l;
+    w = \z\s\l. l (\n. n s z);
+    expw = \n.\z\s\l. n s (\x\z. mul (\z\_\_. x z) w z s l) (\f\z. l (\n. f n z)) z;
+    id = \x.x
+in
+let -- More inlining
+    expw = \n.\z\s\l. n s (\x\z. l (\n. n x z)) (\f\z. l (\n. f n z)) z
+in
+let -- Complete code
+    -- nats
+    succ = \n.\f\x. n f (f x);
+    1 = \f. f;
+
+    -- ordinal type: O = forall r. r -> (r -> r) -> ((N -> r) -> r) -> r
+    Z = \z\s\l. z;
+
+    -- arithmetic
+    add = \n\m.\z\s\l. m (n z s l) s l;
+    expw = \n.\z\s\l. n s (\x\z. l (\n. n x z)) (\f\z. l (\n. f n z)) z;
+
     -- foldr lists
     nil = \c\n. n;
     cons = \x\xs.\c\n. c x (xs c n);
@@ -16,13 +51,20 @@ let
     tl = \xs\c\n. xs (\x\xs\f. f x (xs c)) (\_. n) (\x\y. y);
     map = \f\xs\c. xs (\x. c (f x));
     app = \xs\ys.\c\n. xs c (ys c n);
+
+    -- binary to ordinal conversion
     go = \n.\lf\xs. n (\xs. lf (tl xs)) (app xs (map (add (expw (lf xs))) xs));
-    -- go = \n.\lf\xs. n (\xs. lf (tl xs)) (app xs (map (addexpw (lf xs)) xs));
     base2 = \n. n go (\x.x) hd (cons Z nil);
-    goodstein = \n. base2 n
-       (\x.x)
+
+    -- goodstein function
+    goodstein = \o. o
+       (\x. x)
        (\n\m. n (succ m))
-       (\f\m. f (succ m) m)
-       1
+       (\f\m. f (succ (succ m)) m)
+       1;
+
+    -- programs
+    main = \n. goodstein (base2 n);
+    g16 = goodstein (expw (expw (expw (expw Z))))
 in
-    goodstein
+    main
