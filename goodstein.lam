@@ -17,6 +17,11 @@ let -- Direct translation from Haskell source, but with permuted arguments
     goodstein = \o. o (\x. x) (\n\m. n (succ m)) (\f\m. f (succ (succ m)) m) 1
 in
 let -- Prepare optimization: Fold to values with z, s, l pre-applied
+
+    -- Caveat: This step is technically unsound; we are promising that the
+    -- discarded arguments inside the folds are equal to the pre-applied
+    -- ones from outside. There's probably a cleaner way of doing this.
+
     add = \n\m.\z\s\l. m (n z s l) (\n. S (\_\_\_. n) z s l) (\f. L (\n\_\_\_. f n) z s l);
     mul = \n\m.\z\s\l. m (Z z s l) (\x. add (\_\_\_. x) n z s l) (\f. L (\n\_\_\_. f n) z s l);
     w = L (\n.\z\s\l. n (\n. S (\_\_\_. n) z s l) (Z z s l));
