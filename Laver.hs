@@ -49,17 +49,17 @@ laver a b = let ls = lavers !! a in ls !! ((-b) `mod` length ls)
 lavers = [0] : map go [0..] where
     go a = 0 : takeWhile (/= 0) (iterate (\b -> laver b a) a)
 
+table mx name laver = do
+    putStrLn name
+    forM_ [0..mx] $ \i -> do
+        putStrLn $ unwords [showW (laver i j) | j <- [0..mx]]
+    putStrLn ""
+  where
+    w = length (show mx)
+    showW = reverse . take w . (++ repeat ' ') . reverse . show
+
 main = do
     table mx "laver0" laver0
     table mx "laver1" laver1
     table 15 "laver"  laver
     mapM_ print [(length l, l) | l <- [lavers !! (2^n-1) | n <- [0..12]]]
- where
-    table mx name laver = do
-        putStrLn name
-        forM_ [0..mx] $ \i -> do
-            putStrLn $ unwords [showW (laver i j) | j <- [0..mx]]
-        putStrLn ""
-      where
-        w = length (show mx)
-        showW = reverse . take w . (++ repeat ' ') . reverse . show
