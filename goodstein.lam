@@ -68,8 +68,16 @@ let -- Complete code
        (\f\m. f (succ (succ m)) m)
        1;
 
+    -- hardy o = goodstein o + 2
+    hardy = \o. o
+       (\x. x)
+       (\n\m. n (succ m))
+       (\f\m. f m m)
+       (\f\x. f (f (f x)));
+
     -- programs
     main = \n. goodstein (base2 n);
-    g16 = goodstein (expw (expw (expw (expw Z))))
+    g16 = goodstein (expw (expw (expw (expw Z))));
+    h16 = hardy (expw (expw (expw (expw Z))))
 in
     main
