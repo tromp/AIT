@@ -453,15 +453,14 @@ contains no occurrence of $x$ and behaves as $\lambda x.M$:
 \end{eqnarray*}
 
 \subsection{Binary Combinatory Logic}
-Combinators have a wonderfully simple
-encoding as binary strings:
+Combinators have a wonderfully simple encoding as binary strings:
 encode $\CS$ as $00$, $\CK$ as $01$, and application as $1$.
 
 \begin{definition}
 We define the encoding $\widetilde{C}$ of a combinator $C$ as
 \begin{eqnarray*}
-\widetilde{\CK} & \equiv & 00 \\
-\widetilde{\CS} & \equiv & 01 \\
+\widetilde{\CS} & \equiv & 00 \\
+\widetilde{\CK} & \equiv & 01 \\
 \widetilde{C\ D} & \equiv & 1\ \widetilde{C}\ \widetilde{D}
 \end{eqnarray*}
 Again we call $|\widetilde{C}|$ the {\em size} of combinator $C$.

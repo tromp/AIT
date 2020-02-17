@@ -6,7 +6,7 @@
 
 module BLC (plugin) where
 
-import GhcPlugins
+import GhcPlugins hiding (mkLet)
 import TyCon
 import DataCon
 import FastString (fsLit)
@@ -19,9 +19,7 @@ plugin :: Plugin
 plugin = defaultPlugin{ installCoreToDos = install }
 
 install :: [CommandLineOption] -> [CoreToDo] -> CoreM [CoreToDo]
-install _ todo = do
-    reinitializeGlobals
-    return (todo ++ [CoreDoPluginPass "generate blc" pass])
+install _ todo = return (todo ++ [CoreDoPluginPass "generate blc" pass])
 
 pass :: ModGuts -> CoreM ModGuts
 pass mg = do

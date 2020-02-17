@@ -16,6 +16,8 @@
   true = \t\f. t;
   false = \t\f. f;
   two = \f\x. f (f x);
+  three = \f\x. f (f (f x));
+  eight = three two;
   sixteen = (\x. x x x) two;
   pred = \n\f\x. n (\g\h. h (g f)) (\h. x) (\x. x);
   laver = \mx.
@@ -23,11 +25,11 @@
     let laver = \b\a. a (\_. mx (b (laver (pred a))) zero) b
     in laver;
   sweet = sixteen;
-  dblmin1 = \n\f\x. n f (n f (f x)); -- map n to 2*n-1
+  dblp1 = \n\f\x. n f (n f (f x)); -- map n to 2*n+1
   go1 = \mx\p. p
     (laver mx sweet mx (\_. false) true)
-    (go1 (dblmin1 mx));
-  go2 = \mx. laver mx sweet mx (\_. mx) (go2 (dblmin1 mx));
+    (go1 (dblp1 mx));
+  go2 = \mx. laver mx sweet mx (\_. mx) (go2 (dblp1 mx));
 in
   -- output: list of bits; the n-th bit is true if P(n) divides 16 (n=1,2,...)
   -- go1 one
