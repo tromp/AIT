@@ -100,5 +100,29 @@ goodstein n = o_ (base2 n) l s z (nS nZ) where
     s n m = n (nS m)
     l f m = f (nS (nS m)) m
 
+-- The above is subtle. We are given an ordinal; we want to map it to
+-- a function that take a number n, treats the ordinal in hereditary
+-- base (n+2), and decrements it accordingly.
+--
+-- The zero and successor ordinal cases are easy,
+--
+--   g(0)       = \n -> n
+--   g(α + 1)   = \n -> g(α) (n+1)
+--
+-- But for a limit ordinal, we have to replace some ω by the base;
+-- for example in base 3, we have to map ω^ω to 2ω^2 + 2ω + 2.
+-- The key insight is that we can do this in several steps using the
+-- fundamental sequence evaluated at the desired base; for example,
+--
+--   (ω^ω)[3] = ω^(ω[3]) = ω^3,
+--   (ω^3)[3] = ω^2 3,
+--   (ω^2 3)[3] = ω^2 2 + ω 3,
+--   (ω^2 2 + ω 3)[3] = ω^2 2 + ω 2 + 3
+--
+-- At this point we have a successor ordinal, and the corresponding case
+-- applies. So the limit ordinal case becomes
+--
+--   g(α)      = \n -> g(α[n+2]) n
+
 test :: Integer -> Integer
 test n = n_ (goodstein (N (\f x -> iterate f x !! fromInteger n))) succ 0
