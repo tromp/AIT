@@ -12,7 +12,7 @@ mx = 7
 
 -- | shelf defined by  a |> 0 = a + 1
 laver0 a b
-    | a == mx   = b
+    | a == mx   = b -- this clause can be avoided by taking both a+1 below `mod` mx+1
     | b == 0    = a + 1
     | otherwise = laver0 (laver0 a (b - 1)) (a + 1)
 
