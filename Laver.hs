@@ -58,8 +58,16 @@ table mx name laver = do
     w = length (show mx)
     showW = reverse . take w . (++ repeat ' ') . reverse . show
 
+dlaver i j = laver i j - laver i' j' where
+  idx2 i b = let b2 = b*2 in if i < b2 then b else idx2 i b2
+  index2 i = idx2 i 1
+  i2i = index2 i
+  i2j = index2 j
+  (i',j') = if i2i <= i2j then (i,j-i2j) else (i-i2i, j)
+
 main = do
     table mx "laver0" laver0
     table mx "laver1" laver1
     table 15 "laver"  laver
+    table 63 "dlaver"  dlaver
     mapM_ print [(length l, l) | l <- [lavers !! (2^n-1) | n <- [0..12]]]

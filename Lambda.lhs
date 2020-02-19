@@ -3,7 +3,8 @@ $\lambda$-calculus together with a parser and a printer for it.
 It also exports a simple type of identifiers that parse and
 print in a nice way.
 
-> module Lambda(LC(..), DB(..), CL(..),  Id(..), nf, toCL, strongCL, toDB) where
+> module Lambda(LC(..), DB(..), CL(..),  Id(..), show2, nf, toCL, strongCL, toDB) where
+> import Prelude hiding ((<>))
 > import Data.List(union, (\\), elemIndex)
 > import Data.Char(isAlphaNum)
 > import Text.PrettyPrint.HughesPJ(Doc, renderStyle, style, text, (<>), (<+>), parens)
@@ -108,6 +109,11 @@ Pretty print $\lambda$-expressions when shown.
 > ppLC _ (Var v) = text $ show v
 > ppLC p (Lam v e) = pparens (p>0) $ text ("\\" ++ show v ++ ".") <> ppLC 0 e
 > ppLC p (App f a) = pparens (p>1) $ ppLC 1 f <+> ppLC 2 a
+
+> show2 :: Show v => LC v -> String
+> show2 (Var v) = show v
+> show2 (Lam v e) = "#"  ++ show  v ++ " " ++ show2 e
+> show2 (App f a) = "/ " ++ show2 f ++ " " ++ show2 a
 
 > pparens :: Bool -> Doc -> Doc
 > pparens True d = parens d

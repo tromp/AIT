@@ -17,6 +17,9 @@
 -- types below. This also makes a translation into Lambda Calculus
 -- straight-forward.
 
+-- An Isabelle/HOL formalization of this algorithm may be found at
+-- https://int-e.eu/~bf3/tmp/Goodstein.html
+
 ------------------------------------------------------------------------------
 -- natural numbers
 newtype N   = N { n_ :: forall r. (r -> r) -> r -> r }

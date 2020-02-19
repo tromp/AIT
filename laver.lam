@@ -7,7 +7,7 @@
   --   a |> mx = a-1
   --   a |> b  = (a |> b+1) |> a-1
   -- Note that the latter two equations iterate f_a = \x. x |> (a-1).
-  -- In fact, we implement a |> b = f_a^{mx-b} (a-1) as f_a^{mx*b} 0,
+  -- In fact, for a > 0, we implement a |> b = f_a^{mx-b} (a-1) as f_a^{mx*b} 0,
   -- exploiting the fact that a |> mx = a-1 = 0 |> a-1 = f_a 0
   -- and (modulo 2^n) 1+mx-b = -b = -1 * b = mx*b
 
@@ -16,8 +16,6 @@
   true = \t\f. t;
   false = \t\f. f;
   two = \f\x. f (f x);
-  three = \f\x. f (f (f x));
-  eight = three two;
   sixteen = (\x. x x x) two;
   pred = \n\f\x. n (\g\h. h (g f)) (\h. x) (\x. x);
   laver = \mx.
