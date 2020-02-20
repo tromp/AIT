@@ -43,11 +43,11 @@ laver1 a b
 
 -- | memoized version of `laver1`
 laver 0 b = b
-laver a b = let ls = lavers !! a in ls !! ((-b) `mod` length ls)
+laver a b = let ls = lavers !! (a-1) in ls !! (b `mod` length ls) -- same as cycle ls !! b
 
 {-# NOINLINE lavers #-}
-lavers = [0] : map go [0..] where
-    go a = 0 : takeWhile (/= 0) (iterate (\b -> laver b a) a)
+lavers = map go [0..] where
+    go a = 0 : reverse (takeWhile (/= 0) (iterate (\b -> laver b a) a))
 
 table mx name laver = do
     putStrLn name
@@ -66,8 +66,7 @@ dlaver i j = laver i j - laver i' j' where
   (i',j') = if i2i <= i2j then (i,j-i2j) else (i-i2i, j)
 
 main = do
-    table mx "laver0" laver0
-    table mx "laver1" laver1
-    table 15 "laver"  laver
-    table 63 "dlaver"  dlaver
-    mapM_ print [(length l, l) | l <- [lavers !! (2^n-1) | n <- [0..12]]]
+    -- table mx "laver0" laver0
+    -- table mx "laver1" laver1
+    table 31 "32x22 laver"  laver
+    mapM_ print [(length l, l) | l <- [lavers !! (2^n-2) | n <- [1..12]]]

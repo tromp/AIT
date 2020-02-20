@@ -1,5 +1,5 @@
-\io. let
-
+-- halts if Laver table with period beyond 16 is found
+let
   -- Let mx = 2^n - 1. We consider a dual version of the shelf, determined
   -- by a |> mx = a-1 (mod 2^n), which satisfies
   --   0 |> b  = b
@@ -11,25 +11,16 @@
   -- exploiting the fact that a |> mx = a-1 = 0 |> a-1 = f_a 0
   -- and (modulo 2^n) 1+mx-b = -b = -1 * b = mx*b
 
-  zero = \f\x. x;
-  one = \x. x;
-  true = \t\f. t;
-  false = \t\f. f;
-  two = \f\x. f (f x);
-  sixteen = (\x. x x x) two;
+  0 = \f\x. x;
+  1 = \x. x;
+  2 = \f\x. f (f x);
+  16 = (\x. x x x) 2;
   pred = \n\f\x. n (\g\h. h (g f)) (\h. x) (\x. x);
   laver = \mx.
     -- swap argument order to simplify iterated laver
-    let laver = \b\a. a (\_. mx (b (laver (pred a))) zero) b
+    let laver = \b\a. a (\_. mx (b (laver (pred a))) 0) b
     in laver;
-  sweet = sixteen;
   dblp1 = \n\f\x. n f (n f (f x)); -- map n to 2*n+1
-  go1 = \mx\p. p
-    (laver mx sweet mx (\_. false) true)
-    (go1 (dblp1 mx));
-  go2 = \mx. laver mx sweet mx (\_. mx) (go2 (dblp1 mx));
+  go = \mx. laver mx 16 mx (\_. mx) (go (dblp1 mx))
 in
-  -- output: list of bits; the n-th bit is true if P(n) divides 16 (n=1,2,...)
-  -- go1 one
-  -- version without output that halts if a counterexample is found
-  go2 one
+  go 1
