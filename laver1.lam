@@ -1,40 +1,24 @@
--- halts if Laver table with period beyond 16 is found
 let
-  -- Let mx = 2^n - 1. We consider a dual version of the shelf, determined
-  -- by a |> mx = a-1 (mod 2^n), which satisfies
-  --   0 |> b  = b
-  --   a |> 0  = 0
-  --   a |> mx = a-1
-  --   a |> b  = (a |> b+1) |> a-1
-  -- Note that the latter two equations iterate f_a = \x. x |> (a-1).
-  -- In fact, for a > 0, we implement a |> b = f_a^{mx-b} (a-1) as f_a^{mx*b} 0,
-  -- exploiting the fact that a |> mx = a-1 = 0 |> a-1 = f_a 0
-  -- and (modulo 2^n) 1+mx-b = -b = -1 * b = mx*b
-
   0 = \f\x. x;
   1 = \x. x;
   2 = \f\x. f (f x);
-  dblp1 = \n\f\x. n f (n f (f x)); -- map n to 2*n+1
-  3 = dblp1 1;
+  3 = \f\x. f (f (f x));
   6 = \f.2 (3 f);
-  7 = dblp1 3;
+  7 = \f\x.f (6 f x);
   16 = (\x. x x x) 2;
   pred = \n\f\x. n (\g\h. h (g f)) (\h. x) (\x. x);
 
-  false = \x\y.y;
-  true = \x\y.x;
-  nil = false;
   -- cons = \a\b\z.z a b;
   revfrom0 = \x\xs.x (\t. xs revfrom0 (\z.z x t));
-  iterate = \f\x\z.z x (iterate f (f x));
-  idx = \i\xs. i (\l.l false) xs true;
+  iterate = \f. let it = \x\z.z x (it (f x)) in it;
+  idx = \i\xs. i (\l.l (\h\t.t)) xs (\h\t.h);
 
 -- laver 0 b = b
 -- laver a b = cycle (go (a-1)) !! b
 -- go a = cycle (0 : reverse (takeWhile (/= 0) (iterate (\b -> laver b a) a)))
 
   laver = let 
-    go = \a.let r = \z.z 0 (iterate (\b. laver b a) a revfrom0 r) in r;
+    go = \a. let r = \z.z 0 (iterate (\b. laver b a) a revfrom0 r) in r;
     laver = \a. a (\b. idx b (go (pred a)))
   in laver
 in
