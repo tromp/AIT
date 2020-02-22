@@ -1,3 +1,5 @@
+-- computes infinite Laver table as in section 3.4 of https://arxiv.org/pdf/1810.00548.pdf
+-- except with arguments reversed, ie. p * q = laver q p
 let
   0    =   \s\z. z;
   succ = \n\s\z. s n; -- Scott numerals
