@@ -1,0 +1,38 @@
+-- halts if Laver table with period beyond 16 is found
+let
+  -- Let mx = 2^n - 1. We consider a dual version of the shelf, determined
+  -- by a |> mx = a-1 (mod 2^n), which satisfies
+  --   0 |> b  = b
+  --   a |> 0  = 0
+  --   a |> mx = a-1
+  --   a |> b  = (a |> b+1) |> a-1
+  -- Note that the latter two equations iterate f_a = \x. x |> (a-1).
+  -- In fact, for a > 0, we implement a |> b = f_a^{mx-b} (a-1) as f_a^{mx*b} 0,
+  -- exploiting the fact that a |> mx = a-1 = 0 |> a-1 = f_a 0
+  -- and (modulo 2^n) 1+mx-b = -b = -1 * b = mx*b
+
+  0    =   \s\z. z;
+  succ = \n\s\z. s z n;
+  1 = succ 0;
+  2 = succ 1;
+  3 = succ 2;
+  4 = succ 3;
+  5 = succ 4;
+  6 = succ 5;
+  7 = succ 6;
+
+  -- cons = \h\t\z.z t h;
+  revfrom0 = \xs\n.n (\t\_. xs revfrom0 (\z.z t n));
+  iterate = \f\x\z.z (iterate f (f x)) x;
+  idx = \i\t. i (\h\i1. t (idx i1));
+
+-- laver 0 b = b
+-- laver a b = cycle (go (a-1)) !! b
+-- go a = cycle (0 : reverse (takeWhile (/= 0) (iterate (\b -> laver b a) a)))
+
+  laver = let 
+    go = \a.let r = \z.z (iterate (\b. laver b a) a revfrom0 r) 0 in r;
+    laver = \a. a (\b\a1. go a1 (idx b))
+  in laver
+in
+  laver -- 7 3
