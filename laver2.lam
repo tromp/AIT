@@ -1,6 +1,6 @@
 let
   0    =   \s\z. z;
-  succ = \n\s\z. s z n; -- without the z on right these would be Scott numerals
+  succ = \n\s\z. s n; -- Scott numerals
   1 = succ 0;
   2 = succ 1;
   3 = succ 2;
@@ -9,18 +9,17 @@ let
   6 = succ 5;
   7 = succ 6;
 
-  -- cons = \h\t\z.z t h; -- applying to head last allows simplification of idx function below
-  revfrom0 = \xs\n.n (\t\_. xs revfrom0 (\z.z t n));
+  -- cons = \h\t\z.z t h; -- applying to head last gives trivial list indexing as (list n)
+  revpos = \t\h\r.h (\_. t revpos (\z.z r h)) r; -- reverse positive prefix and append r
   iterate = \f. let it = \x\z.z (it (f x)) x in it;
-  idx = \i\t. i (\_\i1. t (idx i1));
 
--- laver 0 b = b
--- laver a b = cycle (go (a-1)) !! b
--- go a = cycle (0 : reverse (takeWhile (/= 0) (iterate (\b -> laver b a) a)))
+-- laver b 0 = b
+-- laver b a = cycle (go (a-1)) !! b
+-- go a = cycle (0 : reverse (takeWhile (/= 0) (iterate (laver a) a)))
 
   laver = let 
-    go = \a.let r = \z.z (iterate (\b. laver b a) a revfrom0 r) z in r;
-    laver = \a. a (\b\a1. go a1 (idx b))
+    go = \a.let r = \z.z (iterate (laver a) a revpos r) z in r;
+    laver = \b\a. a (\a1. go a1 b) b
   in laver
 in
-  laver -- 7 3
+  laver -- 3 7

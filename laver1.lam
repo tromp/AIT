@@ -8,8 +8,8 @@ let
   16 = (\x. x x x) 2;
   pred = \n\f\x. n (\g\h. h (g f)) (\h. x) (\x. x);
 
-  -- cons = \a\b\z.z a b;
-  revfrom0 = \x\xs.x (\t. xs revfrom0 (\z.z x t));
+  -- cons = \h\t\z.z h t;
+  revfrom0 = \h\t.h (\r. t revfrom0 (\z.z h r));
   iterate = \f. let it = \x\z.z x (it (f x)) in it;
   idx = \i\xs. i (\l.l (\h\t.t)) xs (\h\t.h);
 
