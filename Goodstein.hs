@@ -18,7 +18,7 @@
 -- straight-forward.
 
 -- An Isabelle/HOL formalization of this algorithm may be found at
--- https://int-e.eu/~bf3/tmp/Goodstein.html
+-- https://www.isa-afp.org/entries/Goodstein_Lambda.html
 
 ------------------------------------------------------------------------------
 -- natural numbers
