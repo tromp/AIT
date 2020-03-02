@@ -10,5 +10,9 @@ let
   pd = \c\d\z. z (c d) d;
   false = 0;
   true = \x\y.x;
-  div = \n\m. let r = \d. m pd (\d.r (succ d)) d in n (\l.l true) (r 0) false
+  div = \n\m. let r = \d. m pd (\d.r (succ d)) d in n (\l.l true) (r 0) false;
+
+  div = \n\m. \f\x.
+    n (\n\c. c n) (\_. x)
+    (n (\t. m (\m\c. c m) (\c. f (c t)) (\c. c)) x);
 in div -- (2 2 2) 3
