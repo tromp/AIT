@@ -1,6 +1,7 @@
-> module AIT(uni,usage) where
+> module AIT(size,reduce,uni,usage) where
 > import Lambda
 > import Data.List(unfoldr)
+> import Data.Maybe
 > import Data.Char(chr,ord,intToDigit,digitToInt)
 > import qualified Data.DList as DL
 > import Data.Array.Unboxed
@@ -78,6 +79,16 @@ Optimize an expression; repeatedly contract redexes that reduce in size
 >     s = subst 0 arg body
 >   opt (DBApp fun arg) = DBApp (opt fun) (opt arg)
 >   opt e = e
+
+Reduction step
+
+> reduce :: DB -> Maybe DB
+> reduce (DBLam body) = reduce body >>= Just . DBLam
+> reduce (DBApp (DBLam body) arg) = Just $ subst 0 arg body
+> reduce (DBApp fun arg) = case reduce fun of
+>                            Just f    -> Just $ DBApp f arg
+>                            Nothing   -> reduce arg >>= Just. DBApp fun
+> reduce (DBVar _) = Nothing
 
 Bitstring functions -----------------------------------------------------
 
@@ -187,7 +198,6 @@ Bitstring functions -----------------------------------------------------
 >   "run"     -> nl .   bshow . nf . toDB . machine $  bitstoLC input
 >   "run8"    -> nl .   bshow . nf . toDB . machine $ bytestoLC input
 >   "print"   -> nl .                     show             $ prog
->   "print2"  -> nl .                     show2            $ prog
 >   "nf"      -> nl .                     show . nf . toDB $ prog
 >   "comb_nf" -> nl .        show . strongCL . toCL . toDB $ prog
 >   "comb"    -> nl .        show . toCL . optimize . toDB $ prog

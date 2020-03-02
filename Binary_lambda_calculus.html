@@ -1,0 +1,793 @@
+<!DOCTYPE HTML>
+<html lang="en">
+	<head>
+				
+
+
+	
+
+
+	
+	
+	
+	
+	 
+  
+  
+  
+	<title>Binary lambda calculus - WOW.com</title>
+    <link rel="canonical" href="http://www.wow.com/wiki/Binary_lambda_calculus">
+	<meta property="og:url" content="http://www.wow.com/wiki/Binary_lambda_calculus">
+	<meta property="robots" content="NOINDEX,NOFOLLOW">	
+	<link rel="stylesheet" href="http://o.aolcdn.com/os/aol-search/swap/css/en/ext.echo.badge_styles_monobook_1-prod.css" content="" /> 
+<link rel="stylesheet" href="http://o.aolcdn.com/os/aol-search/swap/css/en/ext.gadget.DRN_styles_monobook_1-prod.css" content="" /> 
+<link rel="stylesheet" href="http://o.aolcdn.com/os/aol-search/swap/css/en/site_styles_monobook_1-prod.css" content="" />  
+<script src="http://bits.wikimedia.org/en.wikipedia.org/load.php?debug=false&lang=en&modules=startup&only=scripts&skin=vector&*"></script> 
+<script>if(window.mw){mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"","wgTitle":"","wgCurRevisionId":0,"wgRevisionId":0,"wgArticleId":0,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":[],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"","wgIsProbablyEditable":false,"wgRestrictionEdit":["autoconfirmed"],"wgRestrictionMove":["sysop"],"wgWikiEditorEnabledModules":{"toolbar":true,"dialogs":true,"hidesig":true,"templateEditor":false,"templates":false,"preview":false,"previewDialog":false,"publish":false,"toc":false},"wgArticleFeedbackv5Permissions":{"aft-reader":true,"aft-member":false,"aft-editor":false,"aft-monitor":false,"aft-administrator":false,"aft-oversighter":false,"aft-noone":false},"wgBetaFeaturesFeatures":[],"wgVisualEditor":{"isPageWatched":false,"magnifyClipIconURL":"//bits.wikimedia.org/static-1.23wmf4/skins/common/images/magnify-clip.png","pageLanguageCode":"en","pageLanguageDir":"ltr"},"wikilove-recipient":"","wikilove-anon":0,"wgGuidedTourHelpGuiderUrl":"Help:Guided tours/guider","wgULSAcceptLanguageList":["en-gb","en","en-us"],"wgFlaggedRevsParams":{"tags":{"status":{"levels":1,"quality":2,"pristine":3}}},"wgStableRevisionId":null,"wgCategoryTreePageCategoryOptions":"{"mode":0,"hideprefix":20,"showcount":true,"namespaces":false}","Geo":{"city":"","country":""},"wgNoticeProject":"wikipedia","aftv5Article":{"id":0,"title":"","namespace":0,"categories":[],"permissionLevel":false},"wgWikibaseItemId":""})}</script>
+<script>if(window.mw){mw.loader.implement("user.options",function(){mw.user.options.set({"ccmeonemails":0,"cols":80,"date":"default","diffonly":0,"disablemail":0,"disablesuggest":0,"editfont":"default","editondblclick":0,"editsection":1,"editsectiononrightclick":0,"enotifminoredits":0,"enotifrevealaddr":0,"enotifusertalkpages":1,"enotifwatchlistpages":0,"extendwatchlist":0,"fancysig":0,"forceeditsummary":0,"gender":"unknown","hideminor":0,"hidepatrolled":0,"imagesize":2,"justify":0,"math":0,"minordefault":0,"newpageshidepatrolled":0,"nocache":0,"noconvertlink":0,"norollbackdiff":0,"numberheadings":0,"previewonfirst":0,"previewontop":1,"rcdays":7,"rclimit":50,"rememberpassword":0,"rows":25,"searchlimit":20,"showhiddencats":false,"shownumberswatching":1,"showtoc":1,"showtoolbar":1,"skin":"vector","stubthreshold":0,"thumbsize":4,"underline":2,"uselivepreview":0,"usenewrc":0,"vector-simplesearch":1,"watchcreations":1,"watchdefault":0,"watchdeletion":0,"watchlistdays":3,"watchlisthideanons":0,"watchlisthidebots":0,"watchlisthideliu":0,"watchlisthideminor":0,"watchlisthideown":0,"watchlisthidepatrolled":0,"watchmoves":0,"wllimit":250,"useeditwarning":1,"prefershttps":1,"flaggedrevssimpleui":1,"flaggedrevsstable":0,"flaggedrevseditdiffs":true,"flaggedrevsviewdiffs":false,"usebetatoolbar":1,"usebetatoolbar-cgd":1,"aftv5-last-filter":null,"visualeditor-enable":0,"visualeditor-enable-experimental":0,"visualeditor-enable-mwmath":0,"visualeditor-betatempdisable":0,"wikilove-enabled":1,"echo-subscriptions-web-page-review":true,"echo-subscriptions-email-page-review":false,"ep_showtoplink":false,"ep_bulkdelorgs":false,"ep_bulkdelcourses":true,"ep_showdyk":true,"echo-notify-show-link":true,"echo-show-alert":true,"echo-email-frequency":0,"echo-email-format":"html","echo-subscriptions-email-system":true,"echo-subscriptions-web-system":true,"echo-subscriptions-email-other":false,"echo-subscriptions-web-other":true,"echo-subscriptions-email-edit-user-talk":false,"echo-subscriptions-web-edit-user-talk":true,"echo-subscriptions-email-reverted":false,"echo-subscriptions-web-reverted":true,"echo-subscriptions-email-article-linked":false,"echo-subscriptions-web-article-linked":false,"echo-subscriptions-email-mention":false,"echo-subscriptions-web-mention":true,"echo-subscriptions-web-edit-thank":true,"echo-subscriptions-email-edit-thank":false,"gettingstarted-task-toolbar-show-intro":true,"uls-preferences":"","language":"en","variant-gan":"gan","variant-iu":"iu","variant-kk":"kk","variant-ku":"ku","variant-shi":"shi","variant-sr":"sr","variant-tg":"tg","variant-uz":"uz","variant-zh":"zh","searchNs0":true,"searchNs1":false,"searchNs2":false,"searchNs3":false,"searchNs4":false,"searchNs5":false,"searchNs6":false,"searchNs7":false,"searchNs8":false,"searchNs9":false,"searchNs10":false,"searchNs11":false,"searchNs12":false,"searchNs13":false,"searchNs14":false,"searchNs15":false,"searchNs100":false,"searchNs101":false,"searchNs108":false,"searchNs109":false,"searchNs446":false,"searchNs447":false,"searchNs710":false,"searchNs711":false,"searchNs828":false,"searchNs829":false,"gadget-teahouse":1,"gadget-ReferenceTooltips":1,"gadget-DRN-wizard":1,"gadget-charinsert":1,"gadget-mySandbox":1,"variant":"en"})},{},{});mw.loader.implement("user.tokens",function(){mw.user.tokens.set({"editToken":"+\","patrolToken":false,"watchToken":false})},{},{})}</script> 
+<script>if(window.mw){mw.loader.load(["mw.TMHGalleryHook.js","mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","ext.centralauth.centralautologin","ext.visualEditor.viewPageTarget.init","ext.wikimediaShopLink.core","ext.uls.init","ext.uls.interface","wikibase.client.init","ext.centralNotice.bannerController","skins.vector.js"])}</script>
+<script src="http://bits.wikimedia.org/geoiplookup"></script>
+		<meta charset="utf-8">
+		<meta property="og:image" content="http://o.aolcdn.com/os/wow/assets/images/img_share_wow.png" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="shortcut icon" href="http://o.aolcdn.com/os/wow/assets/images/favicon.ico" type="image/x-icon" />
+		<link rel="apple-touch-icon" href="http://o.aolcdn.com/os/wow/assets/images/wow_mobile_icon.png"/>
+		<link rel="apple-touch-icon-precomposed" sizes="57x57" href="http://o.aolcdn.com/os/wow/assets/images/mobile/icons/wow_icon_57.png"/>
+		<link rel="apple-touch-icon-precomposed" sizes="76x76" href="http://o.aolcdn.com/os/wow/assets/images/mobile/icons/wow_icon_76.png"/>
+		<link rel="apple-touch-icon-precomposed" sizes="120x120" href="http://o.aolcdn.com/os/wow/assets/images/mobile/icons/wow_icon_120.png"/>
+		<link rel="apple-touch-icon-precomposed" sizes="152x152" href="http://o.aolcdn.com/os/wow/assets/images/mobile/icons/wow_icon_152.png"/>
+		<link rel="apple-touch-icon-precomposed" sizes="180x180" href="http://o.aolcdn.com/os/wow/assets/images/mobile/icons/wow_icon_180.png"/>
+		<link href='http://fonts.googleapis.com/css?family=Oswald:400,700,300' rel='stylesheet' type='text/css'>
+		<link href='http://fonts.googleapis.com/css?family=Roboto:400,300' rel='stylesheet' type='text/css'>
+		<link href='http://fonts.googleapis.com/css?family=Roboto+Condensed:300italic,400italic,700italic,400,300,700' rel='stylesheet' type='text/css'>		
+		<link rel="stylesheet" type="text/css" href="http://o.aolcdn.com/os/wow/assets/css/css.0.5.108.min.css" />
+		<script>google_ad_client = 'ca-aol-us-wow-articles';google_ad_channel = 'splus-wiki';</script>
+		<script src="http://o.aolcdn.com/os/wow/assets/js/7-googleAFCAds.js"></script>
+		
+			</head>
+	<body class="">
+		<script src="http://o.aolcdn.com/ads/adsWrapper.js"></script><script type="text/javascript">adSetAdURL("http://"+window.location.hostname+"/_uac/adpage.html");</script>
+		
+		<div id="wrapper">
+			 
+									
+			<div id="page">
+				
+																
+				<div class="headerWrapper">
+																																									  
+
+      
+
+  
+
+   
+ 
+
+<div class="header">
+<div class="logoBox" data-beacon='{"p":{"mnid":"wiki-logo","plid":0}}'>
+  <a id="pageLogo" style="display:block;" class="pageLogo" href="/" data-beacon='{"p":{"lnid":"wiki-logo-click","plid":0}}'><span class="linkDesc">Home page</span></a>
+</div>
+<div class="mobileMenuIcon"></div>
+<div class="mobileSearchIcon"></div>
+<div class="flexiFormCnt">
+  <div class="searchBoxTop">
+  <form name="SearchBoxForm" target="" action="/content-search/" id="sboxform" data-beacon='{"p":{"mnid":"wiki-search","plid":0}}'>
+    <div class="SearchBoxContainer">
+    <div class="flexiCnt">
+      <div class="inputContainer" id="phInputContainer">
+      <input name="s_it" value="splus-hdr" type="hidden" />
+      <input name="v_t" value="na" type="hidden"/>
+      <label for="sboxQuery" class="acc">Search the Web</label>
+      <input type="text" placeholder="" name="q" autocomplete="off" value="" class="sbox" id="sboxQuery" />
+                        <a href="#" class="mobileCloseIcon"><span class="linkDesc">Close menu</span></a>
+      </div>
+    </div>
+      <div class="buttonContainer" id="buttonContainer">
+      <a id="sBoxbtn" class="sBoxbtn" href="#" data-beacon='{"p":{"lnid":"wiki-search-wow","plid":0}}'><div class="icon"></div> WOW</a>
+      <a id="sBoxbtnB" class="sBoxbtnB" href="#" data-beacon='{"p":{"lnid":"wiki-search-web","plid":0}}'><div class="icon"></div> Web</a>
+      <div class="searchCredit"></div>
+      </div>
+      <div class="clear"></div>
+    </div>
+    </form>
+  </div>
+</div>
+<div class="clear"></div>
+        
+        </div>
+
+                                                                                                                                                                                                         
+
+<script type="text/javascript">
+  var trendingChannels = [];
+    trendingChannels.push({'id':'mike-ilitch','name':'Mike Ilitch','score':0.97173845767975});  
+    trendingChannels.push({'id':'greece','name':'Greece','score':0.94880646467209});  
+    trendingChannels.push({'id':'new-zealand','name':'New Zealand','score':0.91360509395599});  
+    trendingChannels.push({'id':'surigao-city','name':'Surigao City','score':0.90791195631027});  
+    trendingChannels.push({'id':'shia-labeouf','name':'Shia LaBeouf','score':0.90244245529175});  
+    trendingChannels.push({'id':'ford','name':'Ford','score':0.89217412471771});  
+    trendingChannels.push({'id':'jamie-lynn-spears','name':'Jamie Lynn Spears','score':0.88741946220398});  
+    trendingChannels.push({'id':'texas','name':'Texas ','score':0.87670004367828});  
+    trendingChannels.push({'id':'angola','name':'Angola','score':0.86889356374741});  
+  </script>
+<div class="mainMenuCnt">
+  <div class="mainMenu">
+    <div class="topMenuCnt">
+          <div class="authBlock">
+              <a href="#" class="signinStatus" data-beacon='{"p":{"lnid":"wiki-signin","plid":0}}'><div class="door"></div><span class="text">Sign-In</span></a>
+        <script>var auth_user = undefined;</script>
+               <a href="#" class="mobileCloseMenu"><div class="text">Close</div><div class="icon"></div></a>
+      </div>
+      <div class="favoritesMenu auth" data-beacon='{"p":{"mnid":"wiki-favorites-dropdown","plid":0}}'>
+          
+      <a href="/my" class="favoriteButton" data-beacon='{"p":{"lnid":"wiki-favorites","plid":0}}'><div class="buttonCnt"><div class="heart"></div><span class="text">My Favorites</span></div><div class="favArrow"></div></a>
+      <div class="favoritesBox">
+        <div class="favsInnerCnt">
+          <div class="peak"></div>
+                        <div class="myLink" data-beacon='{"p":{"lnid":"wiki-myLink","plid":0}}'><a href="/my" class="viewLink"><div class="icon"></div><div class="text">View <span class="b">MY FAVORITES</span></div><div class="clear"></div></a></div>
+                     <div class="favListCnt">
+                     <span class='noFavMessage'>You have no Favorite Channels.<br/>To follow a channel click the ...<br/><img class='noFavImg' src='http://o.aolcdn.com/os/wow/assets/images/favorites/follow_new.png' /><br/>If you wish to view your Favorite Channels from anywhere on the site, click on the My Favorites link at the top of the page.</span>
+                    </div>
+                          <div class="manLink" data-beacon='{"p":{"lnid":"wiki-manage","plid":0}}'><a href="/my/manage" class="manageLink"><div class="icon"></div><div class="text">Manage <span class="b">MY FAVORITES</span></div><div class="clear"></div></a></div>
+                   </div>
+      </div>
+    </div>
+    </div>
+    
+                <ul class="level1Cnt" data-beacon='{"p":{"mnid":"wiki-topnav","plid":0}}'>
+      <li class="level1 h1-color10">
+        <div class="firstLevelItem" data-beacon='{"p":{"lnid":"wiki-home","plid":0}}'><a class="mainLink" href="/">Home</a></div>
+      </li>
+                                    <li class="level1 h1-color1">
+                          <div class="firstLevelItem" data-beacon='{"p":{"lnid":"wiki-entertainment","plid":0}}'><a class="mainLink" href="/channel/entertainment">Entertainment</a>
+                                      <div class="menuCnt"><div class="menuCntAbsolute"><hr /></div><div class="menuCloseButton"></div><div class="menuInnerCnt">
+                             <div class="level2Cnt"><a class="carouselLeft" href="#"><span class="linkDesc">Move menu left</span><div class="carouselImage"></div></a><div class="carouselWindow"><ul>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/actors">Actors</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/movie-awards">Awards</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/movies">Movies</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/music">Music </a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/television">TV</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/tv-shows">TV Shows</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/music-artists">Music Artists</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/music-genres">Music Genres</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/books">Books</a>
+                                      </li>
+                                </ul><div class="clear"></div></div><a class="carouselRight" href="#"><span class="linkDesc">Move menu right</span><div class="carouselImage"></div></a><div class="clear"></div></div>
+                
+                 
+                <div class="level3Cnt"><ul>
+                                      <li class="level3">
+                                          <span class="thirdLevelItem">You Might Also Like</span>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/celebrity-gossip">Celebrity Gossip,</a>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/game-of-thrones">Game of Thrones,</a>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/movie-titles">Movie Titles,</a>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/taylor-swift">Taylor Swift</a>
+                                        </li>
+                                  </ul></div> 
+                <div class="clear"></div>
+                            </div></div>
+                        </div></li>
+              
+                              <li class="level1 h1-color2">
+                          <div class="firstLevelItem" data-beacon='{"p":{"lnid":"wiki-health","plid":0}}'><a class="mainLink" href="/channel/health-medicine">Health</a>
+                                      <div class="menuCnt"><div class="menuCntAbsolute"><hr /></div><div class="menuCloseButton"></div><div class="menuInnerCnt">
+                             <div class="level2Cnt"><a class="carouselLeft" href="#"><span class="linkDesc">Move menu left</span><div class="carouselImage"></div></a><div class="carouselWindow"><ul>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/diets">Diets</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/diseases-conditions">Diseases</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/drugs">Drugs</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/health-law">Health Law</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/healthcare">Healthcare</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/healthy-living">Healthy Living</a>
+                                      </li>
+                                </ul><div class="clear"></div></div><a class="carouselRight" href="#"><span class="linkDesc">Move menu right</span><div class="carouselImage"></div></a><div class="clear"></div></div>
+                
+                 
+                <div class="level3Cnt"><ul>
+                                      <li class="level3">
+                                          <span class="thirdLevelItem">You Might Also Like</span>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/conditions-a-z">Conditions A-Z,</a>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/life-stages">Life Stages,</a>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/mental-health">Mental Health,</a>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/pregnancy">Pregnancy</a>
+                                        </li>
+                                  </ul></div> 
+                <div class="clear"></div>
+                            </div></div>
+                        </div></li>
+              
+                              <li class="level1 h1-color3">
+                          <div class="firstLevelItem" data-beacon='{"p":{"lnid":"wiki-tech","plid":0}}'><a class="mainLink" href="/channel/technology">Tech</a>
+                                      <div class="menuCnt"><div class="menuCntAbsolute"><hr /></div><div class="menuCloseButton"></div><div class="menuInnerCnt">
+                             <div class="level2Cnt"><a class="carouselLeft" href="#"><span class="linkDesc">Move menu left</span><div class="carouselImage"></div></a><div class="carouselWindow"><ul>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/smart-phone-applications">Apps</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/computer-hardware">Computer Hardware</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/internet">Internet</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/smart-phones">Smart Phones</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/tablet-computers">Tablets</a>
+                                      </li>
+                                </ul><div class="clear"></div></div><a class="carouselRight" href="#"><span class="linkDesc">Move menu right</span><div class="carouselImage"></div></a><div class="clear"></div></div>
+                
+                 
+                <div class="level3Cnt"><ul>
+                                      <li class="level3">
+                                          <span class="thirdLevelItem">You Might Also Like</span>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/windows-10">Windows 10,</a>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/portable-audio-video">Audio &amp; Video,</a>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/e-readers">E-Readers,</a>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/video-games">Video Games</a>
+                                        </li>
+                                  </ul></div> 
+                <div class="clear"></div>
+                            </div></div>
+                        </div></li>
+              
+                              <li class="level1 h1-color6 hideStep2">
+                          <div class="firstLevelItem" data-beacon='{"p":{"lnid":"wiki-food","plid":0}}'><a class="mainLink" href="/channel/food">Food</a>
+                                      <div class="menuCnt"><div class="menuCntAbsolute"><hr /></div><div class="menuCloseButton"></div><div class="menuInnerCnt">
+                             <div class="level2Cnt"><a class="carouselLeft" href="#"><span class="linkDesc">Move menu left</span><div class="carouselImage"></div></a><div class="carouselWindow"><ul>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/food-allergies">Allergies</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/beverages">Beverages</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/cooking">Cooking</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/food-movements">Food Movements</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/food-safety">Safety</a>
+                                      </li>
+                                </ul><div class="clear"></div></div><a class="carouselRight" href="#"><span class="linkDesc">Move menu right</span><div class="carouselImage"></div></a><div class="clear"></div></div>
+                
+                 
+                <div class="level3Cnt"><ul>
+                                      <li class="level3">
+                                          <span class="thirdLevelItem">You Might Also Like</span>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/organic-food">Organic Food,</a>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/sustainable-food">Sustainable Food,</a>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/homebrewing">Homebrewing,</a>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/winemaking">Winemaking</a>
+                                        </li>
+                                  </ul></div> 
+                <div class="clear"></div>
+                            </div></div>
+                        </div></li>
+              
+                              <li class="level1 h1-color9 hideStep2">
+                          <div class="firstLevelItem" data-beacon='{"p":{"lnid":"wiki-lifestyle","plid":0}}'><a class="mainLink" href="/channel/lifestyle">Lifestyle</a>
+                                      <div class="menuCnt"><div class="menuCntAbsolute"><hr /></div><div class="menuCloseButton"></div><div class="menuInnerCnt">
+                             <div class="level2Cnt"><a class="carouselLeft" href="#"><span class="linkDesc">Move menu left</span><div class="carouselImage"></div></a><div class="carouselWindow"><ul>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/celebrations">Celebrations</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/fashion">Fashion</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/religion-spirituality">Religion</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/style">Style</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/travel-tourism">Travel &amp; Tourism</a>
+                                      </li>
+                                </ul><div class="clear"></div></div><a class="carouselRight" href="#"><span class="linkDesc">Move menu right</span><div class="carouselImage"></div></a><div class="clear"></div></div>
+                
+                 
+                <div class="level3Cnt"><ul>
+                                      <li class="level3">
+                                          <span class="thirdLevelItem">You Might Also Like</span>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/mens-fashion">Men&#039;s Fashion,</a>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/womens-fashion">Women&#039;s Fashion,</a>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/beauty">Beauty,</a>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/travel-tips">Travel Tips</a>
+                                        </li>
+                                  </ul></div> 
+                <div class="clear"></div>
+                            </div></div>
+                        </div></li>
+              
+                              <li class="level1 h1-color4 hideStep2">
+                          <div class="firstLevelItem" data-beacon='{"p":{"lnid":"wiki-family","plid":0}}'><a class="mainLink" href="/channel/family">Family</a>
+                                      <div class="menuCnt"><div class="menuCntAbsolute"><hr /></div><div class="menuCloseButton"></div><div class="menuInnerCnt">
+                             <div class="level2Cnt"><a class="carouselLeft" href="#"><span class="linkDesc">Move menu left</span><div class="carouselImage"></div></a><div class="carouselWindow"><ul>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/adoption">Adoption &amp; Planning</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/marriage">Marriage</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/parenting">Parenting</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/pets">Pets</a>
+                                      </li>
+                                </ul><div class="clear"></div></div><a class="carouselRight" href="#"><span class="linkDesc">Move menu right</span><div class="carouselImage"></div></a><div class="clear"></div></div>
+                
+                 
+                <div class="level3Cnt"><ul>
+                                      <li class="level3">
+                                          <span class="thirdLevelItem">You Might Also Like</span>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/relationships">Relationships,</a>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/dating">Dating,</a>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/having-a-baby">Having a Baby,</a>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/baby-products">Baby Products</a>
+                                        </li>
+                                  </ul></div> 
+                <div class="clear"></div>
+                            </div></div>
+                        </div></li>
+              
+                              <li class="level1 h1-color5 hideStep1 hideStep2">
+                          <div class="firstLevelItem" data-beacon='{"p":{"lnid":"wiki-sports","plid":0}}'><a class="mainLink" href="/channel/sports">Sports</a>
+                                      <div class="menuCnt"><div class="menuCntAbsolute"><hr /></div><div class="menuCloseButton"></div><div class="menuInnerCnt">
+                             <div class="level2Cnt"><a class="carouselLeft" href="#"><span class="linkDesc">Move menu left</span><div class="carouselImage"></div></a><div class="carouselWindow"><ul>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/national-football-league">NFL</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/national-basketball-association">NBA</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/national-hockey-league">NHL</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/major-league-baseball">MLB</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/ncaa-football">NCAA FB</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/ncaa-basketball">NCAA BB</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/golf">Golf</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/boxing">Boxing</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/soccer">Soccer</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/cycling">Cycling</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/motor-sports">Motor Sports</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/swimming">Swimming</a>
+                                      </li>
+                                </ul><div class="clear"></div></div><a class="carouselRight" href="#"><span class="linkDesc">Move menu right</span><div class="carouselImage"></div></a><div class="clear"></div></div>
+                
+                 
+                <div class="level3Cnt"><ul>
+                                      <li class="level3">
+                                          <span class="thirdLevelItem">You Might Also Like</span>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/cricket">Cricket,</a>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/extreme-sports">Extreme Sports,</a>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/rugby">Rugby,</a>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/tennis">Tennis</a>
+                                        </li>
+                                  </ul></div> 
+                <div class="clear"></div>
+                            </div></div>
+                        </div></li>
+              
+                              <li class="level1 h1-color7 hideStep1 hideStep2">
+                          <div class="firstLevelItem" data-beacon='{"p":{"lnid":"wiki-money","plid":0}}'><a class="mainLink" href="/channel/money">Money</a>
+                                      <div class="menuCnt"><div class="menuCntAbsolute"><hr /></div><div class="menuCloseButton"></div><div class="menuInnerCnt">
+                             <div class="level2Cnt"><a class="carouselLeft" href="#"><span class="linkDesc">Move menu left</span><div class="carouselImage"></div></a><div class="carouselWindow"><ul>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/business">Business</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/careers">Careers</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/companies">Companies</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/economy">Economy</a>
+                                      </li>
+                                                    <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/industries">Industries</a>
+                                      </li>
+                                </ul><div class="clear"></div></div><a class="carouselRight" href="#"><span class="linkDesc">Move menu right</span><div class="carouselImage"></div></a><div class="clear"></div></div>
+                
+                 
+                <div class="level3Cnt"><ul>
+                                      <li class="level3">
+                                          <span class="thirdLevelItem">You Might Also Like</span>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/personal-finance">Personal Finance,</a>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/personal-debt">Personal Debt,</a>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/real-estate">Real Estate,</a>
+                                        </li>
+                                      <li class="level3">
+                                          <a class="thirdLevelItem" href="/channel/retirement-planning">Retirement Planning</a>
+                                        </li>
+                                  </ul></div> 
+                <div class="clear"></div>
+                            </div></div>
+                        </div></li>
+              
+                              <li class="level1 h1-color8">
+                                          <div class="firstLevelItem more" data-beacon='{"p":{"lnid":"wiki-more","plid":0}}'><a class="mainLink" href="#">More<div class="moreIcon"></div></a>
+                               
+                                      <div class="menuCnt"><div class="menuCloseButton"></div><div class="menuInnerCnt">
+                             <div class="level2Cnt"><a class="carouselLeft" href="#"><span class="linkDesc">Move menu left</span><div class="carouselImage"></div></a><div class="carouselWindow"><ul>
+                                                                                          <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/arts">Arts</a>
+                                      </li>
+                                                                                          <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/education">Education</a>
+                                      </li>
+                                                                                          <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/home-garden">Home &amp; Garden</a>
+                                      </li>
+                                                                                          <li class="level2">
+                                          <a class="secondLevelItem" href="/channel/autos">Autos</a>
+                                      </li>
+                                </ul><div class="clear"></div></div><a class="carouselRight" href="#"><span class="linkDesc">Move menu right</span><div class="carouselImage"></div></a><div class="clear"></div></div>
+                
+                            </div></div>
+                        </div></li>
+              
+                  
+                  <li class="level1 fromMore">
+            <div class="firstLevelItem"><a class="mainLink" href="/channel/arts">Arts</a></div>
+          </li>
+                  <li class="level1 fromMore">
+            <div class="firstLevelItem"><a class="mainLink" href="/channel/education">Education</a></div>
+          </li>
+                  <li class="level1 fromMore">
+            <div class="firstLevelItem"><a class="mainLink" href="/channel/home-garden">Home &amp; Garden</a></div>
+          </li>
+                  <li class="level1 fromMore">
+            <div class="firstLevelItem"><a class="mainLink" href="/channel/autos">Autos</a></div>
+          </li>
+                <li class="level1 random"><div class="firstLevelItem"><a class="mainLink" id="randomButton" href="/random/" data-beacon='{"p":{"lnid":"wiki-topnav-random","plid":0}}'><span>S</span><span>u</span><span>r</span><span>p</span><span>r</span><span>i</span><span>s</span><span>e</span> <span>M</span><span>e</span> <span>!</span></a></div></li>
+                   
+      
+    </ul>
+  </div>
+</div>					
+				</div>
+				<div class="contentWrapper">
+					<div id="content">
+						<div id="contentBox1">
+							<div class="flexiBoxCnt">
+								<div class="contentBoxCnt">
+																																																																																																				  <div class="cap wikiArticle">
+    <div class="capCnt" data-beacon='{"p":{"mnid":"wiki-content","plid":0}}'>
+      <div class="titleSection">
+        <div class="titleCnt"><h1>Binary lambda calculus</h1></div>
+        <hr />
+      </div>
+      <div class="details">
+        Source: http://en.wikipedia.org/wiki/Binary_lambda_calculus<br />Updated: 2016-12-29T22:49Z
+      </div>
+      <div class="content"><div class="swap_article_content"><table class="plainlinks metadata ambox ambox-delete" role="presentation"><tr><td class="mbox-empty-cell"></td><td class="mbox-text"><span class="mbox-text-span"><b>This article is being considered for deletion in accordance with Wikipedia's <a href="https://en.wikipedia.org/wiki/Deletion_policy" class="extiw" title="wikipedia:Deletion policy">deletion policy</a>.</b><br />Please share your thoughts on the matter at <b><a href="https://en.wikipedia.org/wiki/Articles_for_deletion/Binary_lambda_calculus" class="extiw" title="wikipedia:Articles for deletion/Binary lambda calculus">this article's entry</a></b> on the <a href="https://en.wikipedia.org/wiki/Articles_for_deletion" class="extiw" title="wikipedia:Articles for deletion">Articles for deletion</a> page.<br />Feel free to edit the article, but the article <b>must not</b> be blanked, and this notice <b>must not</b> be removed, until the discussion is closed. For more information, particularly on merging or moving the article during the discussion, read the <a href="https://en.wikipedia.org/wiki/guide_to_deletion" class="extiw" title="wikipedia:guide to deletion">guide to deletion</a>.<span id="delete-reason" style="display:none;">%5B%5BWikipedia%3AArticles+for+deletion%2FBinary+lambda+calculus%5D%5D</span><span id="delete-criterion" style="display:none;">AFD</span></span><hr /><div style="font-size: 85%;"><p><i><a href="http://en.wikipedia.org/wiki/Template:Afd_footer" title="Template:Afd footer">Steps to list an article for deletion</a>:</i></p><ol><li><code>{{<a href="http://en.wikipedia.org/wiki/Help:Substitution" title="Help:Substitution">subst</a>:<a href="http://en.wikipedia.org/wiki/Template:Article_for_deletion" title="Template:Article for deletion">Article for deletion</a>}}</code></li><li><a rel="nofollow" class="external text" href="https://en.wikipedia.org/wiki/Articles_for_deletion/Binary_lambda_calculus?action=edit&amp;preload=Template:Afd2+starter&amp;editintro=Template:Afd3+starter">Preloaded debate</a> <i>OR</i> <span class="nowrap"><code>{{<a href="http://en.wikipedia.org/wiki/Help:Substitution" title="Help:Substitution">subst</a>:<a href="http://en.wikipedia.org/wiki/Template:Afd2" title="Template:Afd2">afd2</a>|pg=Binary lambda calculus|cat=|text=}}</code> ~~~~</span> (<a href="http://en.wikipedia.org/wiki/Category:AfD_debates" title="Category:AfD debates">categories</a>)</li><li><code>{{<a href="http://en.wikipedia.org/wiki/Help:Substitution" title="Help:Substitution">subst</a>:<a href="http://en.wikipedia.org/wiki/Template:Afd3" title="Template:Afd3">afd3</a>|pg=Binary lambda calculus}}</code> (add to <b>top</b> of <a rel="nofollow" class="external text" href="https://en.wikipedia.org/wiki/Articles_for_deletion/Log/2016_December_29?action=edit">list</a>)</li><li>Please consider notifying the <a rel="nofollow" class="external text" href="http://en.wikipedia.org/wiki?title=Binary_lambda_calculus&amp;action=history">author(s)</a> by placing <span class="nowrap"><code>{{<a href="http://en.wikipedia.org/wiki/Help:Substitution" title="Help:Substitution">subst</a>:<a href="http://en.wikipedia.org/wiki/Template:Afd-notice" title="Template:Afd-notice" class="mw-redirect">Afd-notice</a>|Binary lambda calculus}}</code> ~~~~</span> on their talk page(s).</li></ol><hr /><p>Unregistered users placing this tag on an article cannot complete the deletion nomination and should leave detailed reasons for deletion on <a href="http://en.wikipedia.org/wiki?title=Talk:Binary_lambda_calculus&amp;action=edit&amp;redlink=1"" class="new" title="Talk:Binary lambda calculus (page does not exist)">Talk:Binary lambda calculus</a>. If the nomination is not completed and no message is left on the talkpage, this tag <b>may be removed</b>.</p></div></td></tr></table><table class="plainlinks metadata ambox ambox-content ambox-multiple_issues compact-ambox" role="presentation"><tr><td class="mbox-image"><div style="width:52px"><img alt="" src="http://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Ambox_important.svg/40px-Ambox_important.svg.png" width="40" height="40" srcset="http://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Ambox_important.svg/60px-Ambox_important.svg.png 1.5x, http://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Ambox_important.svg/80px-Ambox_important.svg.png 2x" /></div></td><td class="mbox-text"><div class="mw-collapsible" style="width:95%; margin: 0.2em 0;"><span class="mbox-text-span"><b>This article has multiple issues.</b> Please help <b><a rel="nofollow" class="external text" href="http://en.wikipedia.org/wiki?title=Binary_lambda_calculus&amp;action=edit">improve it</a></b> or discuss these issues on the <b><a href="http://en.wikipedia.org/wiki?title=Talk:Binary_lambda_calculus&amp;action=edit&amp;redlink=1"" class="new" title="Talk:Binary lambda calculus (page does not exist)">talk page</a></b>. <small><i>(<a href="http://en.wikipedia.org/wiki/Help:Maintenance_template_removal" title="Help:Maintenance template removal">Learn how and when to remove these template messages</a>)</i></small></span><div class="mw-collapsible-content" style="margin-top: 0.3em;"><table class="plainlinks metadata ambox ambox-content ambox-Original_research" role="presentation"><tr><td class="mbox-image"><div style="width:52px"><img alt="" src="http://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Ambox_important.svg/40px-Ambox_important.svg.png" width="40" height="40" srcset="http://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Ambox_important.svg/60px-Ambox_important.svg.png 1.5x, http://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Ambox_important.svg/80px-Ambox_important.svg.png 2x" /></div></td><td class="mbox-text"><span class="mbox-text-span">This article <b>possibly contains <a href="https://en.wikipedia.org/wiki/No_original_research" class="extiw" title="wikipedia:No original research">original research</a></b>. <span class="hide-when-compact">Please <a rel="nofollow" class="external text" href="http://en.wikipedia.org/wiki?title=Binary_lambda_calculus&amp;action=edit">improve it</a> by <a href="/wiki/WP:Verifiability" class="new" title="WP:Verifiability (page does not exist)">verifying</a> the claims made and adding <a href="https://en.wikipedia.org/wiki/Citing_sources#Inline_citations" class="extiw" title="wikipedia:Citing sources">inline citations</a>. Statements consisting only of original research should be removed.</span> <small><i>(September 2010)</i></small> <small class="hide-when-compact"><i>(<a href="http://en.wikipedia.org/wiki/Help:Maintenance_template_removal" title="Help:Maintenance template removal">Learn how and when to remove this template message</a>)</i></small></span></td></tr></table><table class="plainlinks metadata ambox ambox-content ambox-COI" role="presentation"><tr><td class="mbox-image"><div style="width:52px"><img alt="Unbalanced scales.svg" src="http://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/Unbalanced_scales.svg/45px-Unbalanced_scales.svg.png" width="45" height="40" srcset="http://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/Unbalanced_scales.svg/68px-Unbalanced_scales.svg.png 1.5x, http://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/Unbalanced_scales.svg/90px-Unbalanced_scales.svg.png 2x" /></div></td><td class="mbox-text"><span class="mbox-text-span"><b>A major contributor to this article appears to have a <a href="https://en.wikipedia.org/wiki/Conflict_of_interest" class="extiw" title="wikipedia:Conflict of interest">close connection</a> with its subject.</b> <span class="hide-when-compact">It may require <a href="https://en.wikipedia.org/wiki/cleanup" class="extiw" title="wikipedia:cleanup">cleanup</a> to comply with Wikipedia's content policies, particularly <a href="https://en.wikipedia.org/wiki/Neutral_point_of_view" class="extiw" title="wikipedia:Neutral point of view">neutral point of view</a>. Please discuss further on the <a href="http://en.wikipedia.org/wiki?title=Talk:Binary_lambda_calculus&amp;action=edit&amp;redlink=1"" class="new" title="Talk:Binary lambda calculus (page does not exist)">talk page</a>.</span> <small><i>(November 2015)</i></small> <small class="hide-when-compact"><i>(<a href="http://en.wikipedia.org/wiki/Help:Maintenance_template_removal" title="Help:Maintenance template removal">Learn how and when to remove this template message</a>)</i></small></span></td></tr></table><table class="plainlinks metadata ambox ambox-style ambox-Tone" role="presentation"><tr><td class="mbox-image"><div style="width:52px"><img alt="" src='https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Edit-clear.svg/40px-Edit-clear.svg.png' onError="this.onerror=null;this.src='https://upload.wikimedia.org/wikipedia/en/thumb/f/f2/Edit-clear.svg/40px-Edit-clear.svg.png'" width="40" height="40" srcset="http://upload.wikimedia.org/wikipedia/en/thumb/f/f2/Edit-clear.svg/60px-Edit-clear.svg.png 1.5x, https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Edit-clear.svg/80px-Edit-clear.svg.png 2x" onError="this.onerror=null;this.src='https://upload.wikimedia.org/wikipedia/en/thumb/f/f2/Edit-clear.svg/80px-Edit-clear.svg.png 2x'"" /></div></td><td class="mbox-text"><span class="mbox-text-span">This article's <b>tone or style may not reflect the <a href="/wiki/Wp:Writing_better_articles" class="new" title="Wp:Writing better articles (page does not exist)">encyclopedic tone</a> used on Wikipedia</b>. <span class="hide-when-compact">See Wikipedia's <a href="https://en.wikipedia.org/wiki/Writing_better_articles#Tone" class="extiw" title="wikipedia:Writing better articles">guide to writing better articles</a> for suggestions.</span> <small><i>(February 2016)</i></small> <small class="hide-when-compact"><i>(<a href="http://en.wikipedia.org/wiki/Help:Maintenance_template_removal" title="Help:Maintenance template removal">Learn how and when to remove this template message</a>)</i></small></span></td></tr></table><table class="plainlinks metadata ambox ambox-content ambox-Notability" role="presentation"><tr><td class="mbox-image"><div style="width:52px"><img alt="" src="http://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Ambox_important.svg/40px-Ambox_important.svg.png" width="40" height="40" srcset="http://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Ambox_important.svg/60px-Ambox_important.svg.png 1.5x, http://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Ambox_important.svg/80px-Ambox_important.svg.png 2x" /></div></td><td class="mbox-text"><span class="mbox-text-span">The topic of this article <b>may not meet Wikipedia's <a href="https://en.wikipedia.org/wiki/Notability" class="extiw" title="wikipedia:Notability">general notability guideline</a></b>. <span class="hide-when-compact">Please help to establish notability by citing <a href="https://en.wikipedia.org/wiki/Identifying_reliable_sources" class="extiw" title="wikipedia:Identifying reliable sources">reliable secondary sources</a> that are <a href="https://en.wikipedia.org/wiki/Independent_sources" class="extiw" title="wikipedia:Independent sources">independent</a> of the topic and provide significant coverage of it beyond its mere trivial mention. If notability cannot be established, the article is likely to be <a href="https://en.wikipedia.org/wiki/Merging" class="extiw" title="wikipedia:Merging">merged</a>, <a href="https://en.wikipedia.org/wiki/Redirect" class="extiw" title="wikipedia:Redirect">redirected</a>, or <a href="https://en.wikipedia.org/wiki/Deletion_policy" class="extiw" title="wikipedia:Deletion policy">deleted</a>.<br /><small><span class="plainlinks"><i>Find sources:</i>&#160;<a rel="nofollow" class="external text" href="//www.google.com/search?as_eq=wikipedia&amp;q=%22Binary+lambda+calculus%22&amp;num=50">"Binary lambda calculus"</a>&#160;–&#160;<a rel="nofollow" class="external text" href="//www.google.com/search?q=%22Binary+lambda+calculus%22&amp;tbm=nws">news</a>&#160;<b>·</b> <a rel="nofollow" class="external text" href="//www.google.com/search?&amp;q=%22Binary+lambda+calculus%22+site:news.google.com/newspapers&amp;source=newspapers">newspapers</a>&#160;<b>·</b> <a rel="nofollow" class="external text" href="//www.google.com/search?tbs=bks:1&amp;q=%22Binary+lambda+calculus%22">books</a>&#160;<b>·</b> <a rel="nofollow" class="external text" href="//scholar.google.com/scholar?q=%22Binary+lambda+calculus%22">scholar</a>&#160;<b>·</b> <a rel="nofollow" class="external text" href="http://www.jstor.org/action/doBasicSearch?Query=%22Binary+lambda+calculus%22&amp;acc=on&amp;wc=on">JSTOR</a>&#160;<b>·</b> <a rel="nofollow" class="external text" href="//www.google.com/images?safe=off&amp;tbm=isch&amp;tbs=sur:fmc&amp;q=%22Binary+lambda+calculus%22+-site:wikipedia.org+-site:wikimedia.org">free images</a></span></small></span> <small><i>(June 2016)</i></small> <small class="hide-when-compact"><i>(<a href="http://en.wikipedia.org/wiki/Help:Maintenance_template_removal" title="Help:Maintenance template removal">Learn how and when to remove this template message</a>)</i></small></span></td></tr></table></div></div><small class="hide-when-compact"><i>(<a href="http://en.wikipedia.org/wiki/Help:Maintenance_template_removal" title="Help:Maintenance template removal">Learn how and when to remove this template message</a>)</i></small></td></tr></table><p><b>Binary lambda calculus</b> (<b>BLC</b>) is a minimal, <a href="/wiki/Purely_functional_programming_language" title="Purely functional programming language" class="mw-redirect">purely functional programming language</a> invented by John Tromp in 2004,<sup id="cite_ref-RAC_1-0" class="reference"><a href="#cite_note-RAC-1">[1]</a></sup> based on a <a href="/wiki/Binary_encoding" title="Binary encoding" class="mw-redirect">binary encoding</a> of the <a href="/wiki/Untyped_lambda_calculus" title="Untyped lambda calculus" class="mw-redirect">untyped lambda calculus</a> in <a href="/wiki/De_Bruijn_index" title="De Bruijn index">De Bruijn index</a> notation.</p><p></p><div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div><ul><li class="toclevel-1 tocsection-1"><a href="#Background"><span class="tocnumber">1</span> <span class="toctext">Background</span></a></li><li class="toclevel-1 tocsection-2"><a href="#Binary_strings_in_BLC"><span class="tocnumber">2</span> <span class="toctext">Binary strings in BLC</span></a></li><li class="toclevel-1 tocsection-3"><a href="#Delimited_versus_undelimited"><span class="tocnumber">3</span> <span class="toctext">Delimited versus undelimited</span></a></li><li class="toclevel-1 tocsection-4"><a href="#Universality"><span class="tocnumber">4</span> <span class="toctext">Universality</span></a></li><li class="toclevel-1 tocsection-5"><a href="#Lambda_encoding"><span class="tocnumber">5</span> <span class="toctext">Lambda encoding</span></a></li><li class="toclevel-1 tocsection-6"><a href="#BLC_Complexity"><span class="tocnumber">6</span> <span class="toctext">BLC Complexity</span></a></li><li class="toclevel-1 tocsection-7"><a href="#Basic_Theorems"><span class="tocnumber">7</span> <span class="toctext">Basic Theorems</span></a></li><li class="toclevel-1 tocsection-8"><a href="#Halting_probability"><span class="tocnumber">8</span> <span class="toctext">Halting probability</span></a></li><li class="toclevel-1 tocsection-9"><a href="#BLC8:_byte_sized_I.2FO"><span class="tocnumber">9</span> <span class="toctext">BLC8: byte sized I/O</span></a></li><li class="toclevel-1 tocsection-10"><a href="#BLC_in_the_IOCCC_2012"><span class="tocnumber">10</span> <span class="toctext">BLC in the IOCCC 2012</span></a></li><li class="toclevel-1 tocsection-11"><a href="#References"><span class="tocnumber">11</span> <span class="toctext">References</span></a></li><li class="toclevel-1 tocsection-12"><a href="#External_links"><span class="tocnumber">12</span> <span class="toctext">External links</span></a></li></ul></div><p></p><h2><span class="mw-headline" id="Background">Background</span></h2><p>BLC is designed to provide a very simple and elegant concrete definition of descriptional complexity (<a href="/wiki/Kolmogorov_complexity" title="Kolmogorov complexity">Kolmogorov complexity</a>), where the complexity of an object is the length of its shortest description.</p><p>This is made precise by identifying a description method with a computable function that transforms bitstrings (descriptions) into objects. Objects are usually also just bitstrings, but can have additional structure as well, e.g., pairs of strings.</p><p>Originally, <a href="/wiki/Turing_machine" title="Turing machine">Turing machines</a>, the most well known formalism for computation, were used for this purpose. But they are somewhat lacking in ease of construction and composability. Another classical computational formalism, the <a href="/wiki/Lambda_calculus" title="Lambda calculus">Lambda calculus</a>, offers distinct advantages in ease of use. BLC is the result of incorporating a notion of binary I/O into lambda calculus, so as to turn it into an effective description method.</p><h2><span class="mw-headline" id="Binary_strings_in_BLC">Binary strings in BLC</span></h2><p>BLC represents bits 0 and 1 are as the standard <a href="/wiki/Lambda_calculus#Logic_and_predicates" title="Lambda calculus">lambda booleans</a> <i>B</i><sub>0</sub>&#160;= True and <i>B</i><sub>1</sub>&#160;= False:</p><dl><dd>True = <img class="mwe-math-fallback-image-inline tex" alt="\lambda x\, \lambda y.\, x" src="http://upload.wikimedia.org/math/a/c/9/ac986485e66d4afed11d5f6b95e9bfcd.png" /></dd><dd>False = <img class="mwe-math-fallback-image-inline tex" alt="\lambda x\, \lambda y.\, y" src="http://upload.wikimedia.org/math/7/c/1/7c14c1fed4e9ea424e71488b91b953a5.png" /></dd></dl><p>which can be seen to directly implement the <a href="/wiki/If-then-else" title="If-then-else" class="mw-redirect">if-then-else</a> operator.</p><p>The standard pairing function</p><dl><dd><img class="mwe-math-fallback-image-inline tex" alt="\langle,\rangle = \lambda x \,\lambda y \,\lambda z.\, z x y" src="http://upload.wikimedia.org/math/4/d/c/4dc5f3fca0f99cd02b91126ba67d3fe5.png" /></dd></dl><p>applied to two terms <i>M</i> and <i>N</i></p><dl><dd><img class="mwe-math-fallback-image-inline tex" alt="\langle M, N \rangle = \lambda z.\, z M N" src="http://upload.wikimedia.org/math/3/1/e/31e4250f216793e1f7514d9fb484c5c4.png" /></dd></dl><p>can be applied to a boolean to yield the desired component of choice.</p><p>BLC represents a string <i>s</i>&#160;= <i>b</i><sub>0</sub><i>b</i><sub>1</sub>…<i>b</i><sub>n−1</sub> by repeated pairing as</p><dl><dd><img class="mwe-math-fallback-image-inline tex" alt="\langle B_{b_0}, \langle B_{b_1} \ldots \langle B_{b_{n-1}}, z\rangle \ldots \rangle \rangle " src="http://upload.wikimedia.org/math/2/2/d/22d3010d61197a5555e16e4f0cbf93b9.png" /> which is denoted as <img class="mwe-math-fallback-image-inline tex" alt="s:z\ " src="http://upload.wikimedia.org/math/4/8/b/48b14906dfc119191a3ef4f1c7759be3.png" />.</dd></dl><p>The <i>z</i> works as a list continuation, that could be a nil list (to end the string) or another string (that would be appended to the original string).</p><h2><span class="mw-headline" id="Delimited_versus_undelimited">Delimited versus undelimited</span></h2><p>Descriptional complexity comes in two distinct flavors, depending on whether the input is considered to be delimited.</p><p>Knowing the end of your input makes it easier to describe objects. For instance, you can just copy the whole input to output. This flavor is called <i>plain</i> or <i>simple</i> complexity.</p><p>But in a sense it is additional information. A file system for instance needs to separately store the length of files. The <a href="/wiki/C_(programming_language)" title="C (programming language)">C language</a> uses the <a href="/wiki/Null_character" title="Null character">null character</a> to denote the end of a string, but this comes at the cost of not having that character available within strings.</p><p>The other flavor is called <i>prefix</i> complexity, named after <a href="/wiki/Prefix_code" title="Prefix code">prefix codes</a>, where the machine needs to figure out, from the input read so far, whether it needs to read more bits. We say that the input is self-delimiting. This works better for communication channels, since one can send multiple descriptions, one after the other, and still tell them apart.</p><p>In the I/O model of BLC, the flavor is dictated by the choice of <i>z</i>. When kept as a free variable, and required to appear as part of the output, then the machine must be working in a self-delimiting manner. If on the other hand z is a lambda term specifically designed to be easy to distinguish from any pairing, then the input becomes delimited. BLC chooses <i>False</i> for this purpose but gives it the more descriptive alternative name of <i>Nil</i>. Dealing with lists that may be Nil is straightforward: since</p><dl><dd><img class="mwe-math-fallback-image-inline tex" alt="\langle x, y \rangle\ M\ N = M\ x\ y\ N" src="http://upload.wikimedia.org/math/c/8/0/c803916f009c25ab3e87c1803674d321.png" />, and</dd><dd><img class="mwe-math-fallback-image-inline tex" alt="Nil\ M\ N = N" src="http://upload.wikimedia.org/math/3/1/c/31c08720893d4e35efc165af3de59124.png" /></dd></dl><p>one can write functions <i>M</i> and <i>N</i> to deal with the two cases, the only caveat being that <i>N</i> will be passed to <i>M</i> as its third argument.</p><h2><span class="mw-headline" id="Universality">Universality</span></h2><p>One can find a description method <i>U</i> such that for any other description method <i>D</i>, there is a constant <i>c</i> (depending only on <i>D</i>) such that no object takes more than <i>c</i> extra bits to describe with method <i>U</i> than with method <i>D</i>. BLC is designed to make these constants relatively small. In fact the constant will be the length of a binary encoding of a <i>D</i>-interpreter written in BLC, and <i>U</i> will be a lambda term that parses this encoding and runs this decoded interpreter on the rest of the input. <i>U</i> won't even have to know whether the description is delimited or not; it works the same either way.</p><p>BLC not only represents bitstrings as lambda calculus terms, but the other way around as well.</p><h2><span class="mw-headline" id="Lambda_encoding">Lambda encoding</span></h2><p>First, lambda terms are written in a particular notation using what is known as <a href="/wiki/De_Bruijn_indices" title="De Bruijn indices" class="mw-redirect">De Bruijn indices</a>. The encoding is then defined recursively as follows</p><dl><dd><img class="mwe-math-fallback-image-inline tex" alt="\widehat{\lambda M}= 00\widehat{M}" src="http://upload.wikimedia.org/math/c/0/4/c04c3b8495df50036c8e1c919653834c.png" /></dd><dd><img class="mwe-math-fallback-image-inline tex" alt="\widehat{M\ N}=01\widehat{M}\widehat{N}" src="http://upload.wikimedia.org/math/7/5/5/75541e294572029270f842cc55b58118.png" /></dd><dd><img class="mwe-math-fallback-image-inline tex" alt="\widehat{i}=1^i0" src="http://upload.wikimedia.org/math/0/b/0/0b0256be2a6bfcdc49ac51688a761805.png" /></dd></dl><p>For instance, the pairing function <img class="mwe-math-fallback-image-inline tex" alt="\lambda x\lambda y\lambda z.xzy" src="http://upload.wikimedia.org/math/8/3/a/83a7998dbe1dde18f7e25589fd7b9fb0.png" /> is written <img class="mwe-math-fallback-image-inline tex" alt="\lambda \lambda \lambda. 1 3 2" src="http://upload.wikimedia.org/math/5/a/9/5a939ad0905d250b2930738168c216ec.png" /> in De Bruijn format, which has encoding <img class="mwe-math-fallback-image-inline tex" alt="00\ 00\ 00\ 01\ 01\ 10\ 1110\ 110" src="http://upload.wikimedia.org/math/b/b/8/bb885c567559f727bb24a04a5592ae52.png" />.</p><p>A <b>closed</b> lambda term is one in which all variables are bound, i.e. without any free variables. In De Bruijn format, this means that an index <i>i</i> can only appear within at least <i>i</i> nested lambdas. The number of closed terms of size <i>n</i> bits is given by sequence <span class="nowrap"><a href="/wiki/On-Line_Encyclopedia_of_Integer_Sequences" title="OEIS"><img alt="OEIS" src="http://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/OEISicon_light.svg/11px-OEISicon_light.svg.png" width="11" height="15" srcset="http://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/OEISicon_light.svg/17px-OEISicon_light.svg.png 1.5x, http://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/OEISicon_light.svg/22px-OEISicon_light.svg.png 2x" /></a> <a href="/wiki/OEIS:A114852" class="new" title="OEIS:A114852 (page does not exist)">A114852</a></span> of the <a href="/wiki/On-Line_Encyclopedia_of_Integer_Sequences" title="On-Line Encyclopedia of Integer Sequences">On-Line Encyclopedia of Integer Sequences</a>.</p><p>The shortest possible closed term is the identity function <img class="mwe-math-fallback-image-inline tex" alt="\widehat{\lambda 1} = 0010" src="http://upload.wikimedia.org/math/3/2/7/327dc3425bb0987548e07f3c4e3e03f4.png" />. In delimited mode, this machine just copies its input to its output.</p><p>The <a href="/wiki/Universal_machine" title="Universal machine" class="mw-redirect">universal machine</a> <i>U</i> in BLC is then, in De Bruijn format (all indices are single digit):</p><dl><dd><img class="mwe-math-fallback-image-inline tex" alt="(\lambda 1 1) (\lambda \lambda \lambda 1 (\lambda \lambda \lambda \lambda 3 (\lambda 5 (3 (\lambda 2 (3 (\lambda \lambda 3 (\lambda 1 2 3))) (4 (\lambda 4 (\lambda 3 1 (2 1))))))" src="http://upload.wikimedia.org/math/4/b/3/4b3a2655a41f74acdb60cfb06a559772.png" /></dd><dd><img class="mwe-math-fallback-image-inline tex" alt="(1 (2 (\lambda 1 2)) (\lambda 4 (\lambda 4 (\lambda 2 (1 4))) 5)))) (3 3) 2) (\lambda 1 ((\lambda 1 1) (\lambda 1 1)))" src="http://upload.wikimedia.org/math/0/b/d/0bd4c10025e33ed7bb9b1a0585e6122e.png" /></dd></dl><p>This is in binary:</p><dl><dd>0101000110100000000101011000000000011110000101111110011110</dd><dd>0001011100111100000011110000101101101110011111000011111000</dd><dd>0101111010011101001011001110000110110000101111100001111100</dd><dd>0011100110111101111100111101110110000110010001101000011010</dd><dd>(only 232 bits (29 bytes) long)</dd></dl><p>A detailed analysis of machine <i>U</i> may be found in.<sup id="cite_ref-RAC_1-1" class="reference"><a href="#cite_note-RAC-1">[1]</a></sup></p><h2><span class="mw-headline" id="BLC_Complexity">BLC Complexity</span></h2><p>In general, complexity of an object can be conditional on several other objects that are provided as additional argument to the universal machine. BLC defines Plain (or simple) complexity <i>KS</i> and prefix complexity <i>KP</i> by</p><dl><dd><img class="mwe-math-fallback-image-inline tex" alt="\begin{align}KS(x|y_1,\ldots,y_{k}) &amp;= \min \{ \ell(p)\ |\ U\ (p:Nil)\ y_1\ \ldots\ y_{k} = \ \,x\ \ \ \  \}\\KP(x|y_1,\ldots,y_{k}) &amp;= \min \{ \ell(p)\ |\ U\ (p:\ z\ \ )\   y_1\ \ldots\ y_{k} = \langle x,z \rangle \}\end{align}" src="http://upload.wikimedia.org/math/5/9/4/594d27bde46bbeda1013e718f2c06ada.png" /></dd></dl><h2><span class="mw-headline" id="Basic_Theorems">Basic Theorems</span></h2><p>The identity program <img class="mwe-math-fallback-image-inline tex" alt="\lambda 1" src="http://upload.wikimedia.org/math/c/d/c/cdc8bd9ab46bcbab3a6cb9e64262910d.png" /> proves that</p><dl><dd><img class="mwe-math-fallback-image-inline tex" alt="KS(x) \leq \ell(x) + 4" src="http://upload.wikimedia.org/math/9/9/4/9940c5fa8f61ff968b53650cd8a4b2d6.png" /></dd></dl><p>The program <img class="mwe-math-fallback-image-inline tex" alt="\lambda \lambda 1 ((\lambda 1 1) (\lambda \lambda \lambda \lambda 2 (4 4) (\lambda \lambda 3 2 (3 2 (2 (5 1 (2 1))))))) (\lambda \lambda 1) (\lambda \lambda \lambda 1 (\lambda 4 (\lambda 4 (\lambda 1 3 2)))) (\lambda \lambda \lambda 1 (3 (\lambda \lambda 1)) 2) (\lambda 1) 2" src="http://upload.wikimedia.org/math/1/4/7/147ce118161941e6de99e628dc8a2925.png" /> proves that</p><dl><dd><img class="mwe-math-fallback-image-inline tex" alt="KP(x|\ell(x)) \leq \ell(x)+188" src="http://upload.wikimedia.org/math/2/8/e/28e9f58bfc0e712b84f1410e8400b0e9.png" /></dd></dl><p>The program</p><dl><dd><img class="mwe-math-fallback-image-inline tex" alt="(\lambda 1 1) (\lambda \lambda \lambda 1 (\lambda 1 (3 (\lambda \lambda 1)) (4 4 (\lambda 1 (\lambda \lambda \lambda 1 (\lambda 4 (\lambda \lambda 5 2 (5 2 (3 1 (2 1)))))) 4 (\lambda 1))))) (\lambda \lambda \lambda 1 (3 ((\lambda 1 1)" src="http://upload.wikimedia.org/math/3/d/4/3d40506d4f90c4d96eab48888b03c9ed.png" /> <img class="mwe-math-fallback-image-inline tex" alt="(\lambda \lambda \lambda \lambda 1 (\lambda 5 5 (\lambda \lambda 3 5 6 (\lambda 1 (\lambda \lambda 6 1 2) 3)) (\lambda \lambda 5 (\lambda 1 4 3))) (3 1)) (\lambda \lambda 1 (\lambda \lambda 2) 2) (\lambda 1)) (\lambda \lambda 1)) 2)" src="http://upload.wikimedia.org/math/b/8/2/b8216bcde39ec68c963ad64d99902492.png" /></dd></dl><p>proves that</p><dl><dd><img class="mwe-math-fallback-image-inline tex" alt="KP(x) \leq \ell(\overline{x})+338" src="http://upload.wikimedia.org/math/8/a/7/8a7e84e30a47618855c3e5662d0b5127.png" /></dd></dl><p>where <img class="mwe-math-fallback-image-inline tex" alt="\overline{x}" src="http://upload.wikimedia.org/math/4/d/8/4d8a563baa616b3bd56826256c46d50e.png" /> is the <a href="/wiki/Levenstein_coding" title="Levenstein coding" class="mw-redirect">Levenstein code</a> for <i>x</i> defined by</p><dl><dd><img class="mwe-math-fallback-image-inline tex" alt="\begin{array}{ll}\overline{0} &amp; = 0 \\\overline{n+1} &amp; = 1\ \overline{\ell(n)}\ n\\\end{array}" src="http://upload.wikimedia.org/math/c/d/2/cd229050f9718731eec112894b44adb4.png" /></dd></dl><p>in which we identify numbers and bitstrings according to lexicographic order. This code has the nice property that for all <i>k</i>,</p><dl><dd><img class="mwe-math-fallback-image-inline tex" alt="\ell(\overline{n}) \leq \ell(n)+\ell(\ell(n))+\cdots+ \ell^{k-1}(n) + O(\ell^k(n))" src="http://upload.wikimedia.org/math/8/c/4/8c4fd3d2ff0442eacea109ef60b5980f.png" /></dd></dl><p>Furthermore, it makes lexicographic order of delimited numbers coincide with numeric order.</p><table class="wikitable" border="1"><tr><th>Number</th><th>String</th><th>Delimited</th></tr><tr><td>0</td><td></td><td>0</td></tr><tr><td>1</td><td>0</td><td>10</td></tr><tr><td>2</td><td>1</td><td>110 0</td></tr><tr><td>3</td><td>00</td><td>110 1</td></tr><tr><td>4</td><td>01</td><td>1110 0 00</td></tr><tr><td>5</td><td>10</td><td>1110 0 01</td></tr><tr><td>6</td><td>11</td><td>1110 0 10</td></tr><tr><td>7</td><td>000</td><td>1110 0 11</td></tr><tr><td>8</td><td>001</td><td>1110 1 000</td></tr><tr><td>9</td><td>010</td><td>1110 1 001</td></tr></table><h2><span class="mw-headline" id="Halting_probability">Halting probability</span></h2><p>The <a href="/wiki/Halting_probability" title="Halting probability" class="mw-redirect">halting probability</a> of the prefix universal machine is defined as the probability it will output any term that has a closed normal form (this includes all translated strings):</p><dl><dd><img class="mwe-math-fallback-image-inline tex" alt="\Omega_{\lambda} = \sum_{\stackrel{U (p:z) = \langle x,z \rangle}{x\in NF}} 2^{-\ell(p)}" src="http://upload.wikimedia.org/math/f/2/8/f288aa1ea044609d14aed130b00a70ec.png" /></dd></dl><p>With some effort, we can determine the first 4 bits of this particular number of wisdom:</p><dl><dd><img class="mwe-math-fallback-image-inline tex" alt="\Omega_{\lambda} = .0001\ldots_2" src="http://upload.wikimedia.org/math/9/3/9/939beca1aff5b4ea0cc956af5e58e45d.png" /></dd></dl><p>where probability <span class="texhtml">.0001<sub>2</sub>&#160;= 2<sup>−4</sup></span> is already contributed by programs <span style="font-family: monospace, monospace;">00100</span> and <span style="font-family: monospace, monospace;">00101</span> for terms True and False.</p><h2><span class="mw-headline" id="BLC8:_byte_sized_I.2FO">BLC8: byte sized I/O</span></h2><p>While bit streams are nice in theory, they fare poorly in interfacing with the real world. The language BLC8 is a more practical variation on BLC in which programs operate on a stream of bytes, where each byte is represented as a delimited list of 8 bits in <a href="/wiki/Big-endian" title="Big-endian" class="mw-redirect">big-endian</a> order.</p><h2><span class="mw-headline" id="BLC_in_the_IOCCC_2012">BLC in the IOCCC 2012</span></h2><p>An implementation of both BLC and BLC8 in the <a href="/wiki/C_programming_language" title="C programming language" class="mw-redirect">C programming language</a> won the "Most Functional" award in the 2012 edition of the <a href="/wiki/International_Obfuscated_C_Code_Contest" title="International Obfuscated C Code Contest">International Obfuscated C Code Contest</a>.</p><h2><span class="mw-headline" id="References">References</span></h2><ol class="references"><li id="cite_note-RAC-1"><span class="mw-cite-backlink">^ <a href="#cite_ref-RAC_1-0"><sup><i><b>a</b></i></sup></a> <a href="#cite_ref-RAC_1-1"><sup><i><b>b</b></i></sup></a></span> <span class="reference-text">John Tromp, Binary Lambda Calculus and Combinatory Logic, in <i>Randomness And Complexity, from Leibniz To Chaitin</i>, ed. Cristian S. Calude, World Scientific Publishing Company, October 2008. (The last reference, to an initial Haskell implementation, is dated 2004) <a rel="nofollow" class="external text" href="http://tromp.github.io/cl/LC.pdf">(pdf version)</a> <a rel="nofollow" class="external text" href="https://web.archive.org/web/20160304083208/http://tromp.github.io/cl/LC.pdf">Archived</a> March 4, 2016, at the <a href="/wiki/Wayback_Machine" title="Wayback Machine">Wayback Machine</a>.</span></li></ol><h2><span class="mw-headline" id="External_links">External links</span></h2><ul><li><a rel="nofollow" class="external text" href="http://tromp.github.io/cl/cl.html">John's Lambda Calculus and Combinatory Logic Playground</a></li><li><a rel="nofollow" class="external text" href="http://www.ioccc.org/2012/tromp/hint.html">A Binary Lambda Calculus interpreter in C for the IOCCC</a></li><li><a rel="nofollow" class="external text" href="http://arxiv.org/abs/1401.0379">Counting Terms in the Binary Lambda Calculus</a></li></ul><!-- NewPP limit reportCPU time usage: 1.551 secondsReal time usage: 5.476 secondsPreprocessor visited node count: 1080/1000000Preprocessor generated node count: 3711/1000000Post‐expand include size: 66298/2097152 bytesTemplate argument size: 15539/2097152 bytesHighest expansion depth: 13/40Expensive parser function count: 4/100Lua time usage: 0.233/10.000 secondsLua memory usage: 1,000 KB/953.67 MB--><!-- Transclusion expansion time report (%,ms,calls,template)100.00% 3245.458      1 - -total 79.19% 2570.105      6 - Template:Ambox 44.75% 1452.306      1 - Template:Multiple_issues 18.80%  610.115      1 - Template:Notability 18.74%  608.144      1 - Template:Article_for_deletion/dated 11.75%  381.212      1 - Template:Find_sources_mainspace  5.97%  193.663      1 - Template:COI  5.10%  165.587      1 - Template:Tone  4.66%  151.093      1 - Template:Original_research  3.35%  108.577      4 - Template:Tlx--><!-- Saved in parser cache with key my_wiki:pcache:idhash:21924619-1!*!0!!en!5!*!math=0 and timestamp 20170111130401 and revision id 757303214 -->
+<script>/*<![CDATA[*/window.jQuery && jQuery.ready();/*]]>*/</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["ext.cite","mw.PopUpMediaTransform","ext.categoryTree","mediawiki.action.view.postEdit","mobile.desktop","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest","ext.gadget.teahouse","ext.gadget.ReferenceTooltips","ext.gadget.DRN-wizard","ext.gadget.charinsert","mw.MwEmbedSupport.style","ext.articleFeedbackv5.startup","ext.wikimediaEvents.moduleStorage","ext.navigationTiming","schema.UniversalLanguageSelector","ext.uls.eventlogger","skins.vector.collapsibleNav"],null,true);
+}</script>
+<script src="//bits.wikimedia.org/en.wikipedia.org/load.php?debug=false&amp;lang=en&amp;modules=site&amp;only=scripts&amp;skin=vector&amp;*"></script></div></div>
+      <div class="clear"></div>
+    </div>
+    <div class="clear"></div>
+    <div class="wikiCC">Text is available under the Creative Commons Attribution-ShareAlike License; additional terms may apply. By using this site, you agree to the Terms of Use and Privacy Policy. � Wikipedia is a registered trademark of the Wikimedia Foundation, Inc., a non-profit organization.</div>
+  </div>
+<script>setTimeout(function() { fbq('track', 'ViewContent'); },1000);</script>	<div class="gravityArticles" id="gravityBox"  data-beacon='{"p":{"mnid":"wiki-gravity","plid":0}}'>
+  <div class="gravityHeader">
+	<div class="gravityLogo"></div>
+    <h3>Also On Wow</h3>
+  </div>
+  <div class="gravityContent">
+    <ul class="gravityList"></ul>
+    <div class="clear"></div>
+  </div>
+</div>								</div>
+							</div>
+						</div>
+						<div id="contentBox2">
+							<div class="contentBoxCnt">
+																																																																									 	<div class="side-ad module ad_300x250">
+	<div class="adTitle">Advertisement</div>
+  <div class="module-body">
+    <script type="text/javascript">
+      <!--
+		htmlAdWH('93485935', 'RR', 'RR','f');
+	  //-->
+	</script>
+  </div>
+</div>			  <div class="dataBox relatedArticles" data-beacon='{"p":{"mnid":"wiki-populararticles","plid":0}}'>
+		<div class="dataBoxCnt">
+		  <h3>Popular Articles</h3>
+		  <ul>
+						   				<li>
+				  						<div class="popularImage">
+												<a style="font-weight:bold;" href="/article/3_PT8G/21711955" target="_blank" data-beacon='{"p":{"lnid":"wiki-populararticles-1","plid":0}}'><img src="http://o.aolcdn.com/dims5/amp:ea6dc85b1b6f474ae881141c081f39758596a16d/foc:face,interesting_points/t:60,60/q:60/?url=http%3A%2F%2Fo.aolcdn.com%2Fhss%2Fstorage%2Fmidas%2Ffa26ee3d03bba4674218a8c3a5e5e627%2F204924477%2FScreen%2BShot%2B2017-02-11%2Bat%2B11.36.07%2BAM.png" /></a>
+						  </div>
+					                
+				  <a href="https://www.aol.com/article/entertainment/2017/02/11/drew-barrymore-daughter-disneyland-photo/21711955/" target="_blank" data-beacon='{"p":{"lnid":"wiki-populararticles-1","plid":0}}'>Drew Barrymore shares photo of daughter Olive throwing a...</a>
+				  <div class="dateCredit">Feb 10, 2017 Gibson Johns</dave>
+				  <div class="clear"></div>
+				</li>
+			  						   				<li>
+				  						<div class="popularImage">
+												<a style="font-weight:bold;" href="/article/3_PT8G/21711949" target="_blank" data-beacon='{"p":{"lnid":"wiki-populararticles-2","plid":0}}'><img src="http://o.aolcdn.com/dims5/amp:647b0432e3a31cfe2f2724eaba02ab48fb0a1047/foc:face,interesting_points/t:60,60/q:60/?url=http%3A%2F%2Fo.aolcdn.com%2Fhss%2Fstorage%2Fmidas%2Ff9f55fffe75b890370acdc8ed392f570%2F204923080%2F634593688.jpg" /></a>
+						  </div>
+					                
+				  <a href="https://www.aol.com/article/news/2017/02/11/trump-on-warren-pocahontas-is-now-the-face-of-democratic-part/21711949/" target="_blank" data-beacon='{"p":{"lnid":"wiki-populararticles-2","plid":0}}'>Trump on Warren: &#039;Pocahontas is now the face&#039; of Democratic...</a>
+				  <div class="dateCredit">Feb 10, 2017 Gibson Johns</dave>
+				  <div class="clear"></div>
+				</li>
+			  						   				<li>
+				  						<div class="popularImage">
+						 						<a style="font-weight:bold;" href="/article/3_PT8G/21711920" target="_self" data-beacon='{"p":{"lnid":"wiki-populararticles-3","plid":0}}'><img src="http://o.aolcdn.com/dims5/amp:44b674fd9ceb86bff35393de18d4fb0bf9af0775/foc:face,interesting_points/t:60,60/q:60/?url=http%3A%2F%2Fo.aolcdn.com%2Fhss%2Fstorage%2Fmidas%2Fac756b207f6c05967bb8595b7dffe608%2F204924320%2F634608140.jpg" /></a>
+						  </div>
+					                
+				  <a href="/article/3_PT8G/21711920" target="_self" data-beacon='{"p":{"lnid":"wiki-populararticles-3","plid":0}}'>Where was Melania Trump? First lady breaks with tradition...</a>
+				  <div class="dateCredit">Feb 10, 2017 William Steakin</dave>
+				  <div class="clear"></div>
+				</li>                
+			   						   				<li>
+				  						<div class="popularImage">
+						 						<a style="font-weight:bold;" href="/article/3_PT8G/21711925" target="_self" data-beacon='{"p":{"lnid":"wiki-populararticles-4","plid":0}}'><img src="http://o.aolcdn.com/dims5/amp:ffe84855ba63d7ce92a78b65bef82c9607071159/foc:face,interesting_points/t:60,60/q:60/?url=http%3A%2F%2Fo.aolcdn.com%2Fhss%2Fstorage%2Fmidas%2F99963a494a6a8ca5c54ac006c1dc66ec%2F204726313%2F605939650.jpg" /></a>
+						  </div>
+					                
+				  <a href="/article/3_PT8G/21711925" target="_self" data-beacon='{"p":{"lnid":"wiki-populararticles-4","plid":0}}'>&#039;Flip or Flop&#039; stars Tarek and Christina El Moussa make...</a>
+				  <div class="dateCredit">Feb 10, 2017 Gibson Johns</dave>
+				  <div class="clear"></div>
+				</li>                
+			   						   				<li>
+				  						<div class="popularImage">
+												<a style="font-weight:bold;" href="/article/3_PT8G/21711906" target="_blank" data-beacon='{"p":{"lnid":"wiki-populararticles-5","plid":0}}'><img src="http://o.aolcdn.com/dims5/amp:b1f2541ef684e800699d181d97f2a08cd4d17608/foc:face,interesting_points/t:60,60/q:60/?url=http%3A%2F%2Fo.aolcdn.com%2Fhss%2Fstorage%2Fmidas%2F15ea5487709ac9369907c581c787a8ef%2F204807119%2F614932328.jpg" /></a>
+						  </div>
+					                
+				  <a href="https://www.aol.com/article/entertainment/2017/02/11/robin-thicke-son-julian-sushi-date/21711906/" target="_blank" data-beacon='{"p":{"lnid":"wiki-populararticles-5","plid":0}}'>Robin Thicke takes son Julian out for sushi amid custody...</a>
+				  <div class="dateCredit">Feb 10, 2017 Gibson Johns</dave>
+				  <div class="clear"></div>
+				</li>
+			  					  </ul>
+		  <div class="clear"></div>
+		</div>
+	   </div>
+		<a class="feedbackLink aol-feedback-plugin-link" href="#" data-client="wow_en_us" data-dev-id="ao1bpWJxWxNlJUN" data-beacon='{"p":{"mnid":"wiki-feedback-side","plid":0}}'><span class="linkDesc">Give feedback</span></a>							</div>
+						</div>
+						<div class="clear"></div>
+					</div>
+					<div class="clear"></div>
+				</div>
+												<div class="footerWrapper">
+																																											<div class="footerCnt">
+  <div class="footer" data-beacon='{"p":{"mnid":"wiki-footer","plid":0}}'>
+    &copy; AOL Inc. All Rights Reserved<br>
+    <a class="footerLinks" href="http://privacy.aol.com/" data-beacon='{"p":{"lnid":"wiki-footer-privacy","plid":0}}'>Privacy</a> | 
+    <a class="footerLinks" href="http://legal.aol.com/TOS" data-beacon='{"p":{"lnid":"-footer-terms","plid":0}}'>Terms of Use</a> | 
+    <a class="footerLinks" href="http://adinfo.aol.com/about-our-ads/" data-beacon='{"p":{"lnid":"wiki-footer-ads","plid":0}}'>About our Ads</a>
+    <div class="socialIconsListFooter"><div id="shareText" data-dlname="wiki">Share:</div> <a name="footer-share" class="footer-share" href="mailto:yourfriend@email.com?subject=Check this out:&body=www.wow.com/wiki/Binary_lambda_calculus" data-beacon='{"p":{"mnid":"wiki-footer-share","plid":0}}'></a></div>
+  </div>
+</div>				</div>
+			</div>
+			<!-- end of page -->
+		</div>
+		<!-- end of wrapper -->		
+																<script type='text/javascript'>
+  //<![CDATA[
+    (function(){
+    window.grvBeaconActions = window.grvBeaconActions || [];
+    window.grvBeaconActions.push(window.gravityInsightsParams = {
+      'type': 'content',
+      'action': '',
+      'site_guid': 'f9832b49f3c8dcfb187982a1835e161c',
+      'v': 2
+    });
+    var adServerReq,bUrl,cburl,doUseGravityUserGuid,extPlacementIdOpt,externalPlacementId,includeJs,jq,pfurl,ppid,ppidOpt,type,ug,wlPrefix,wlUrl,_ref,_ref1,_ref2;includeJs=function(a){var b;b=document.createElement("script");b.async=!0;b.src=a;a=document.getElementsByTagName("script")[0];return a.parentNode.insertBefore(b,a)};bUrl="https:"===document.location.protocol?"https://b-ssl.grvcdn.com/moth-min.js":"http://b.grvcdn.com/moth-min.js";
+    ug=(doUseGravityUserGuid=!0===gravityInsightsParams.useGravityUserGuid?1:0)?"":gravityInsightsParams.user_guid||(null!=(_ref=/grvinsights=([^;]+)/.exec(document.cookie))?_ref[1]:void 0)||"";wlUrl=(wlPrefix="","");bUrl&&includeJs(bUrl);wlUrl&&includeJs(wlUrl);})();
+  //]]>
+</script>		
+
+		
+		
+<script src="http://o.aolcdn.com/os_merge/?file=/aol/jquery-latest.min.js&file=/aol/jquery.getjs.min.js&file=/aol/jquery.inlinecss-1.0.min.js&file=/aol/jquery.openwindow.min.js&file=/aol/jquery.shorturl.min.js&file=/aol/jquery.aolshare.min.js&file=/aol/jquery.multiauth-2.2.min.js&file=/amp/auth/amp-jquery-multiauth.min.js&file=/aol/jquery.cookie-1.4.0.js&file=/wow/assets/js/masonry.min.js&file=/wow/assets/js/imagesLoaded.min.js&file=/wow/assets/js/jquery.mobile.min.js" type="text/javascript"></script>	
+		<script src="http://o.aolcdn.com/os/wow/assets/js/footer-share.min.js"></script>		
+		<script src="http://o.aolcdn.com/os/wow/assets/js/js.0.5.108.min.js"></script>
+		
+					
+        
+  
+
+<script type="text/javascript">
+  var bN_cfg = {
+	  h: location.hostname,
+	  p: {
+		  "dL_ch": "us.srchwowsplus",
+		  "dL_dpt": "wow",
+		  "cms_src" : "AMP",
+		  
+		  "dL_sDpt": "wiki",
+		  "dL_cmsID": "wik:Binary_lambda_calculus"
+	  }
+  };
+  function runOmni() {
+	  s_265.pfxID = "sea";
+	  s_265.pageName = "Binary lambda calculus";
+	  s_265.server = "";
+	  s_265.channel = "us.srchwowsplus";
+	  s_265.pageType = "";
+	  s_265.mmxgo = true;
+	  s_265.prop1 = "wow";
+	  s_265.prop2 = "wiki";
+	  s_265.prop8 = "bss:925";
+	  s_265.prop9 = "wik:Binary_lambda_calculus";
+	  s_265.prop12 = document.location;
+	  s_265.prop16 = "";
+              	s_265.prop54 = "blogsmith";
+  	  	s_265.prop62 = "video_novideo";
+  	  	  s_265.prop64 = "gravity";
+  	  	s_265.prop65 = "wikipedia";
+  	s_265.t();
+  }
+  var s_account = "aolsvc";
+  (function(d){
+    var s = d.createElement("script"),
+    h = d.getElementsByTagName("head")[0];
+    s.src = "http://o.aolcdn.com/os_merge/?file=/aol/beacon.min.js&file=/aol/omniture.min.js";
+    h.appendChild(s);
+  })(document);
+</script>	<script type='text/javascript'>
+  jQuery(document).ready(function() {
+	  var auth_config = {
+	    actionUrl: 'http://www.wow.com/amp_auth/openauth_action',
+	    devId: 'ao1-bpWJxWxNlJUN',
+	    authServer: 'https://api.screenname.aol.com',
+	    providers: String('facebook,twitter').split(','),
+	    hasSession: Boolean(),
+	    authCallback: function (attr) {
+		    if(attr) {
+				  userLB.onUserLogin();
+		    } else {
+			    userLB.onUserLogout();
+		    }
+	    }
+    };
+	  favs.init();
+	  window.auth_config = auth_config;
+	  if(auth_config.actionUrl) {
+	    amp.auth.multiAuth(jQuery('a.signinStatus'), auth_config);
+	  }
+	  userLB.init();
+	  if($('.startBg').length) {
+	  	getStarted.init();
+	  }
+  });
+</script>		
+		<script src="//feedback.aol.com/aol-feedback-plugin/aol-feedback-loader-latest.min.js" type="text/javascript"></script>
+		<script>socialIcons.init("aol-share");</script>
+		<script>socialIconsFooter.init("footer-share");</script>
+		<script>helpWrapper.init("contactUsLink","http://feedback.aol.com/rs/rs.php?sid=search_wow");</script>
+		<!-- Facebook Pixel Code -->
+		<script>
+		!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function()
+		{n.callMethod? n.callMethod.apply(n,arguments):n.queue.push(arguments)}
+		;if(!f._fbq)f._fbq=n;
+		n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+		t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+		document,'script','//connect.facebook.net/en_US/fbevents.js');
+		fbq('init', '1112906175403201');
+		fbq('track', "PageView");</script>
+		<noscript><img height="1" width="1" style="display:none"
+		src="https://www.facebook.com/tr?id=1112906175403201&ev=PageView&noscript=1"
+		/></noscript>
+		<!-- End Facebook Pixel Code -->		
+	</body>
+</html>

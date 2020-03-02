@@ -3,7 +3,7 @@ $\lambda$-calculus together with a parser and a printer for it.
 It also exports a simple type of identifiers that parse and
 print in a nice way.
 
-> module Lambda(LC(..), DB(..), CL(..),  Id(..), show2, nf, toCL, strongCL, toDB) where
+> module Lambda(LC(..), DB(..), CL(..),  Id(..), isnf, nf, evalLC, toLC, toCL, strongCL, toDB) where
 > import Prelude hiding ((<>))
 > import Data.List(union, (\\), elemIndex)
 > import Data.Char(isAlphaNum)
@@ -110,11 +110,6 @@ Pretty print $\lambda$-expressions when shown.
 > ppLC p (Lam v e) = pparens (p>0) $ text ("\\" ++ show v ++ ".") <> ppLC 0 e
 > ppLC p (App f a) = pparens (p>1) $ ppLC 1 f <+> ppLC 2 a
 
-> show2 :: Show v => LC v -> String
-> show2 (Var v) = show v
-> show2 (Lam v e) = "#"  ++ show  v ++ " " ++ show2 e
-> show2 (App f a) = "/ " ++ show2 f ++ " " ++ show2 a
-
 > pparens :: Bool -> Doc -> Doc
 > pparens True d = parens d
 > pparens False d = d
@@ -157,6 +152,14 @@ using Higher Order Abstract Syntax for the $\lambda$-expressions.
 This makes it possible to use the native substitution of Haskell.
 
 > data HODB = HVar Int | HLam (HODB -> HODB) | HApp HODB HODB
+
+Is a term already in normal form?
+
+> isnf :: DB -> Bool
+> isnf (DBVar   v) = True
+> isnf (DBLam   e) = isnf e
+> isnf (DBApp (DBLam e) a) = False
+> isnf (DBApp f a) = isnf f && isnf a
 
 To compute the normal form, first convert/compute to HODB, and
 convert back.

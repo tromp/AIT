@@ -4,8 +4,14 @@ let
   three = \f\x.f(f(f x));
   false = \y.id;
   succ = \n\f\x.n f (f x);
-  myF = \c\sn\nf.c(succ sn)(\x.sn(nf x));
+  myF = \c\n\m.c(succ n)(\f.n(m f));
   myfac = \n.n myF false id id;
-  F = \f\n.n(f(succ n));
-  fac = \n\f.n F(\x.f)id
+  F   = \c\n    .n (c (succ n));
+  fac =   \n\f.n F (\x.f) id
 in fac
+
+-- fac 3 = \f. F (F (F (\x.f))) one
+--       = \f. one (F (F (\x.f)) two)
+--       = \f. one (two (F (\x.f) three))
+--       = \f. one (two (three ((\x.f) four)))
+--       = \f. one (two (three f))

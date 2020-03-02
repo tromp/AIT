@@ -1,0 +1,14 @@
+let
+  0    =   \s\z. z;
+  succ = \n\f\x. n f (f x);
+  1 = succ 0;
+  2 = succ 1;
+  3 = succ 2;
+  4 = succ 3;
+  5 = succ 4;
+
+  pm = \c\m\z. z (c (succ m)) m;
+  false = 0;
+  true = \x\y.x;
+  mod = \n\m. let r = m pm (\_.r) 0 in n (\l.l true) r false
+in mod -- (3 2) 3
