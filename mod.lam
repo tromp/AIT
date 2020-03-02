@@ -10,5 +10,5 @@ let
   pm = \c\m\z. z (c (succ m)) m;
   false = 0;
   true = \x\y.x;
-  mod = \n\m. let r = m pm (\_.r) 0 in n (\l.l true) r false
+  mod = \n\m. n (\l.l true) (n (\r. m pm (\_.r) 0) m) false;
 in mod -- (3 2) 3
