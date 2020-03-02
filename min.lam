@@ -1,0 +1,8 @@
+let
+  2 = \f\x. f (f x);
+  4 = 2 2;
+
+  min = \n\m. \f\x.
+    n (\m\c. c m) (\_. x)
+    (m (\n\c. f (c n)) (\_. x));
+in min -- 4 2
