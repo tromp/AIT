@@ -12,5 +12,4 @@ let
   eq = \m\n.m scott_pred (n scott_succ 0) (\_.false) true
 in eq -- 1 3
 
--- size 74 bits
--- eq = 
+-- size 73 bits
