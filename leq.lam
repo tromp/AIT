@@ -1,0 +1,15 @@
+let
+  0 = \x\y.y;
+  id = \x.x;
+  1 = id;
+  2 = \f\x.f(f x);
+  3 = \f\x.f(f(f x));
+  4 = 2 2;
+  false = 0;
+  true = \x\y.x;
+  leq = \n\m.
+    n (\m\c. c m) (\_.true)
+    (m (\n\c. (c n)) (\_.false));
+in leq -- 2 2
+
+-- size 58 bits
