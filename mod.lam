@@ -7,8 +7,11 @@ let
   4 = succ 3;
   5 = succ 4;
 
-  pm = \c\m\z. z (c (succ m)) m;
   false = 0;
   true = \x\y.x;
-  mod = \n\m. n (\l.l true) (n (\r. m pm (\_.r) 0) m) false;
+  -- modulo, 106 bits
+  mod = \n\m. \f\z.
+    n (\l. l true)
+    (n (\r.m (\c\m\p. p (c (f m)) m) (\_. r) z) (\_. z))
+    false;
 in mod -- (3 2) 3

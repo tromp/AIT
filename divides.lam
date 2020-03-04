@@ -1,0 +1,25 @@
+let
+  0    =   \s\z. z;
+  succ = \n\f\x. n f (f x);
+  1 = succ 0;
+  2 = succ 1;
+  3 = succ 2;
+  4 = succ 3;
+  5 = succ 4;
+
+  false = \t\f.f;
+  true = \t\f.t;
+
+  -- divisiblity, 97 bits
+  dvd = \n\m.
+    n (\l. l true)
+    (let r = m (\m\b\z. z (m false) b) (\_. r) true in r)
+    false;
+
+  -- non-divisibility, 91 bits
+  ndvd = \n\m.
+    n (\l. l true)
+    (n (\r. m (\m\b\z. z (m true) b) (\_. r) false) m)
+    false;
+in
+  dvd -- (2 5) 5
