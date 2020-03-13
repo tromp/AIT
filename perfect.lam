@@ -1,0 +1,44 @@
+let
+  0 = \f\x. x;
+  1 = \f\x. f x;
+  2 = \f\x. f (f x);
+  3 = \f\x. f (f (f x));
+  4 = 2 2;
+  8 = 3 2;
+  28 = \f\x. 3 3 f (f x);
+
+  0 = \f\x. x;
+  1 = \f. f;
+  succ = \n\f\x. n f (f x);
+  add = \n\m\f\x. n f (m f x);
+
+  false = \t\f.f;
+  true = \t\f.t;
+  ndvd = \n\m.
+    n (\l. l true)
+    (n (\r. m (\m\b\z. z (m true) b) (\_. r) false) m)
+    false;
+
+  sumdiv = \n\f\x. n
+    (\c\d\s. c (succ d) (ndvd n d s (d f s)))
+    (\d\s. s)
+    1
+    x;
+
+  id = \x.x;
+  scott_succ = \n\s\z.s n;
+  scott_pred2 = \n.n id id id id;
+  -- test 2m == n
+  eq2 = \m\n\t\f. m scott_pred2 (n scott_succ 0) (\_.f) t;
+
+  perfect = \n. eq2 n (sumdiv n);
+
+  -- check perfect numbers
+  go = \n\p. p (perfect n) (go (succ n));
+  main0 = \_. go 0;
+
+  -- find first odd perfect number
+  go = \n. perfect n n (go (\f\x. n f (f (f x))));
+  main = go 1; -- try 8 here to find 28
+in
+  main
