@@ -1,0 +1,29 @@
+-- halts if odd perfect number is found
+let
+  0    =   \s\z. z;
+  succ = \n\f\x.n f (f x);
+  id = \x.x;
+  1 = id;
+  2 = succ 1;
+  3 = succ 2;
+  true = \x\y.x;
+  false = 0;
+  scott_succ = \n\s\z.s n;
+  s0 = 0;
+  s1 = scott_succ s0;
+  s2 = scott_succ s1;
+  s3 = scott_succ s2;
+  s4 = scott_succ s3;
+  s5 = scott_succ s4;
+  s6 = scott_succ s5;
+  scott_pred = \n.n id id;
+  prefix = \x\t\p.p t x;
+
+  sigma = \n. let
+    sig = \i\m.i (\i1.let m1 = succ m; r = prefix (m1 scott_pred) (m (prefix id) r) in r n (sig i1 m1)) n
+  in sig;
+
+  test = \n1.let n = (\s\z.s n1) in sigma n n1 0 (\_.false) true;
+  oddperfect = \n1.let n = (\s\z.s n1) in sigma n n1 0 (oddperfect (scott_succ n))
+-- in test (3 3 scott_succ 0)
+in oddperfect s0
