@@ -1,0 +1,19 @@
+-- possibly shortest example of non-primitive recursive function
+-- a close relative of Ackermann function
+let
+  0 = \f\x.x;
+  1 = \x.x;
+  2 = \f\x.f (f x);
+  3 = \f\x.f (f (f x));
+  ackify = \f\n.n f n;
+  ackerlike = \n.n ackify 2 n
+in ackerlike
+
+-- term of size 47 bits
+-- ackerlike 2 =
+-- ackify (ackify 2) 2 =
+-- 2 (ackify 2) 2 =
+-- ackify 2 (ackify 2 2) =
+-- ackify 2 (ackify 2 2) =
+-- ackify 2 16 =
+-- 16 ^ (2 ^ 16)

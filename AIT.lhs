@@ -1,4 +1,4 @@
-> module AIT(size,reduce,uni,usage) where
+> module AIT(size,reduce,reduct,cyclic,uni,usage) where
 > import Lambda
 > import Data.List(unfoldr)
 > import Data.Maybe
@@ -89,6 +89,26 @@ Reduction step
 >                            Just f    -> Just $ DBApp f arg
 >                            Nothing   -> reduce arg >>= Just. DBApp fun
 > reduce (DBVar _) = Nothing
+
+Reduct
+
+> reduct :: DB -> Maybe DB
+> reduct (DBLam body) = reduct body
+> reduct a@(DBApp (DBLam body) arg) = Just a
+> reduct (DBApp fun arg) = case reduct fun of
+>                            Just r    -> Just r
+>                            Nothing   -> reduct arg
+> reduct (DBVar _) = Nothing
+
+Cycling test
+
+> cyclic :: DB -> Bool
+> cyclic (DBLam body) = cyclic body
+> cyclic a@(DBApp (DBLam body) arg) = a == subst 0 arg body
+> cyclic (DBApp fun arg) = cyclic $ case reduce fun of
+>                            Just f  -> fun
+>                            Nothing -> arg
+> cyclic (DBVar _) = False
 
 Bitstring functions -----------------------------------------------------
 
