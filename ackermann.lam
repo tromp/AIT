@@ -1,19 +1,37 @@
--- possibly shortest example of non-primitive recursive function
+-- possibly shortest example ( 35 bits) of non-primitive recursive function
 -- a close relative of Ackermann function
 let
   0 = \f\x.x;
   1 = \x.x;
   2 = \f\x.f (f x);
   3 = \f\x.f (f (f x));
+  ntothen = \n.n n;
   ackify = \f\n.n f n;
-  ackerlike = \n.n ackify 2 n
+  ackerlike = \n.n ackify ntothen n
 in ackerlike
 
--- term of size 47 bits
+-- term of size 53 bits
 -- ackerlike 2 =
+-- 2 ackify ntothen 2 =
+-- ackify (ackify ntothen) 2 =
+-- 2 (ackify ntothen) 2 =
+-- ackify ntothen (ackify ntothen 2) =
+-- ackify ntothen (2 ntothen 2) =
+-- ackify ntothen (ntothen (ntothen 2)) =
+-- ackify ntothen (ntothen (2 2)) =
+-- ackify ntothen (ntothen 4) =
+-- ackify ntothen (4 4) =
+-- ackify ntothen 256 =
+-- 256 ntothen 256 =
+-- 256 ntothen 256 =
+-- HUGE
+
+-- term of size 47 bits
+-- 2 ackify 2 2 =
 -- ackify (ackify 2) 2 =
 -- 2 (ackify 2) 2 =
 -- ackify 2 (ackify 2 2) =
--- ackify 2 (ackify 2 2) =
+-- ackify 2 (2 2 2) =
 -- ackify 2 16 =
+-- 16 2 16 =
 -- 16 ^ (2 ^ 16)
