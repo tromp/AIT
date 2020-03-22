@@ -41,4 +41,4 @@ let
   go = \n. perfect n n (go (\f\x. n f (f (f x))));
   main = go 1; -- try 8 here to find 28
 in
-  main0
+  main
