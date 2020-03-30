@@ -1,4 +1,4 @@
-> module AIT(size,reduce,reduct,cyclic,uni,usage) where
+> module AIT(size,reduce,optimize,deep_optimize,contracts,expands,reduct,uni,usage) where
 > import Lambda
 > import Data.List(unfoldr)
 > import Data.Maybe
@@ -70,15 +70,41 @@ Substitute an expression for all variables binding to o'th enclosing lambda
 > subst o x (DBLam body) = DBLam (subst (succ o) x body)
 > subst o x (DBApp fun arg) = DBApp (subst o x fun) (subst o x arg)
 
+Does variable occur in term?
+
+> occurs :: Int -> DB -> Bool
+> occurs n (DBLam body) = occurs (n+1) body
+> occurs n (DBApp fun arg) = occurs n fun || occurs n arg
+> occurs n (DBVar i) = i == n
+
 Optimize an expression; repeatedly contract redexes that reduce in size
 
 > optimize :: DB -> DB
 > optimize x = let ox = opt x in if ox == x then x else optimize ox where
+>   opt (DBLam (DBApp fun (DBVar 0))) | not (occurs 0 fun) = fun -- \y. x y
 >   opt (DBLam body) = DBLam (opt body)
 >   opt t@(DBApp (DBLam body) arg) | size s < size t = opt s where
 >     s = subst 0 arg body
 >   opt (DBApp fun arg) = DBApp (opt fun) (opt arg)
 >   opt e = e
+
+A deep optimizer
+
+> deep_optimize :: DB -> DB
+> deep_optimize x = let ox = opt x in if ox == x then x else deep_optimize ox where
+>   opt (DBLam (DBApp fun (DBVar 0))) | not (occurs 0 fun) = fun -- \y. x y
+>   opt (DBLam body) = DBLam (opt body)
+>   opt t@(DBApp (DBLam body) arg) | size s < size t = opt s where
+>     s = optimize $ subst 0 arg body 
+>   opt (DBApp fun arg) = DBApp (opt fun) (opt arg)
+>   opt e = e
+
+Simpleminded strictness analyzer
+
+> strict :: Int -> DB -> Bool
+> strict n (DBLam body) = strict (n+1) body
+> strict n (DBApp fun arg) = strict n fun
+> strict n (DBVar i) = i == n
 
 Reduction step
 
@@ -100,15 +126,19 @@ Reduct
 >                            Nothing   -> reduct arg
 > reduct (DBVar _) = Nothing
 
-Cycling test
+Safe reductions (guaranteed to reach normal form)
 
-> cyclic :: DB -> Bool
-> cyclic (DBLam body) = cyclic body
-> cyclic a@(DBApp (DBLam body) arg) = a == subst 0 arg body
-> cyclic (DBApp fun arg) = cyclic $ case reduce fun of
->                            Just f  -> fun
->                            Nothing -> arg
-> cyclic (DBVar _) = False
+> contracts :: DB -> Bool
+> contracts x = case reduct x of
+>               Just t@(DBApp (DBLam body) arg) -> size (subst 0 arg body) < size t where
+>               Nothing -> True
+
+Of interest to Busy Beaver
+
+> expands :: DB -> Bool
+> expands x = x == optimize x && case reduct x of
+>               Just t@(DBApp (DBLam body) arg) -> size (subst 0 arg body) > size t where
+>               Nothing -> False
 
 Bitstring functions -----------------------------------------------------
 
