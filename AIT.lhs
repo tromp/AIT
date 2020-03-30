@@ -81,7 +81,7 @@ Optimize an expression; repeatedly contract redexes that reduce in size
 
 > optimize :: DB -> DB
 > optimize x = let ox = opt x in if ox == x then x else optimize ox where
->   opt (DBLam (DBApp fun (DBVar 0))) | not (occurs 0 fun) = fun -- \y. x y
+>   opt (DBLam (DBApp fun (DBVar 0))) | not (occurs 0 fun) = subst 0 undefined fun -- \y. x y
 >   opt (DBLam body) = DBLam (opt body)
 >   opt t@(DBApp (DBLam body) arg) | size s < size t = opt s where
 >     s = subst 0 arg body
@@ -92,7 +92,7 @@ A deep optimizer
 
 > deep_optimize :: DB -> DB
 > deep_optimize x = let ox = opt x in if ox == x then x else deep_optimize ox where
->   opt (DBLam (DBApp fun (DBVar 0))) | not (occurs 0 fun) = fun -- \y. x y
+>   opt (DBLam (DBApp fun (DBVar 0))) | not (occurs 0 fun) = subst 0 undefined fun -- \y. x y
 >   opt (DBLam body) = DBLam (opt body)
 >   opt t@(DBApp (DBLam body) arg) | size s < size t = opt s where
 >     s = optimize $ subst 0 arg body 

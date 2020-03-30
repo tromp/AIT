@@ -147,6 +147,33 @@ Pretty print de Bruijn terms when shown.
 > ppDB p (DBLam   e) = pparens (p>0) $ text ("\\") <> ppDB 0 e
 > ppDB p (DBApp f a) = pparens (p>1) $ ppDB 1 f <+> ppDB 2 a
 
+The Read instance for the DB type reads DB term with the normal
+syntax.
+
+> instance Read DB where
+>     readsPrec _ = readP_to_S pDB
+
+A ReadP parser for DeBruijn term
+
+> pDB, pDBAtom, pDBVar, pDBLam, pDBApp :: ReadP DB
+> pDB = pDBLam +++ pDBApp
+>
+> pDBVar = do
+>     skipSpaces
+>     v <- readS_to_P (readsPrec 9)
+>     return $ DBVar (v-1)
+>
+> pDBLam = do
+>     schar '\\'
+>     e <- pDB
+>     return $ DBLam e
+>
+> pDBApp = do
+>     es <- many1 pDBAtom
+>     return $ foldl1 DBApp es
+>
+> pDBAtom = pDBVar +++ (do schar '('; e <- pDB; schar ')'; return e)
+
 The following data type facilitates the Normal Form function by
 using Higher Order Abstract Syntax for the $\lambda$-expressions.
 This makes it possible to use the native substitution of Haskell.
