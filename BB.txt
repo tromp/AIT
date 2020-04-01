@@ -68,7 +68,7 @@ For this section we use ordinary lambda terms with names. Let
 Observations
 
   B ⊆ B' implies W^B ⊆ W^B'
-  W'^({v} ∪ B)[v := W'^B] ⊆ W'^B
+  W'^({v} ∪ B)[v := W^B] ⊆ W'^B
   W'^B = H[W^B W^B]
   W = \v. W'^{v}
   ω ∈ W
