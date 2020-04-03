@@ -1,5 +1,6 @@
 > import System.Environment(getArgs)
 > import System.IO
+> import Debug.Trace
 > import Data.List
 > import Data.Maybe
 > import Lambda
@@ -18,14 +19,22 @@ Enumerate all closed lambda terms of given size
 > closed :: Int -> [DB]
 > closed = openness 0
 
-Repeated reduction of whole or part
+Loop detector
 
-> trail :: (DB -> DB) -> DB -> [DB]
-> trail f t = t : case reduce t of
->                   Just t1 -> trail f (f t1)
->                   Nothing -> []
+> doubles :: DB -> Bool
+>
+> doubles = go [] where
+>   go is (DBVar i) = i `elem` is
+>   go is (DBLam body) = go' (0 : map succ is) body
+>   go _ _ = False
+> 
+>   go' is (DBApp a@(DBApp _ _) _) = go' is a
+>   go' is (DBApp fun arg) = go is fun && go is arg
+>   go' is (DBLam body) = go' (map succ is) body
+>   go' _ _ = False
 
 Equality modulo free vars
+Could be generalized so head subterm of first arg
 
 > eqfree :: Int -> DB -> DB -> Bool
 > eqfree n (DBLam body1) (DBLam body2) = eqfree (n+1) body1 body2
@@ -33,37 +42,89 @@ Equality modulo free vars
 > eqfree n (DBVar i1) (DBVar i2) = i1 == i2 || (i1 >= n && i2 >= n)
 > eqfree _ _ _ = False
 
-Need bound on cycle detection length
+> data BBClass a = NormalForm a | Diverging | Unknown
 
-> maxdepth :: Int
-> maxdepth = 3
+> instance Functor BBClass where
+>   fmap f (NormalForm t) = NormalForm (f t)
+>   fmap _ Diverging = Diverging 
+>   fmap _ Unknown = Unknown 
 
-> data BBClass = NormalForm DB | Diverging | Unknown
+> instance Applicative BBClass where
+>   pure = NormalForm
+>   NormalForm f <*> t = fmap f t
+>   Diverging    <*> _ = Diverging 
+>   Unknown      <*> _ = Unknown 
 
-Ponder reduction behaviour
+> instance Monad BBClass where
+>   return = NormalForm
+>   NormalForm t >>= f = f t
+>   Diverging    >>= _ = Diverging 
+>   Unknown      >>= _ = Unknown 
 
-> classify :: DB -> IO ()
-> classify t = if isnf t then putStrLn . show . size $ t else if size t > 999 then putStrLn "ABORT" else do
->             putStrLn ("classify " ++ show t)
->             let Just r = reduct t
->             let (_:reducts) = catMaybes . map reduct . take maxdepth $ trail deep_optimize r
->             -- mapM_ (putStrLn . show) reducts
->             let Just t1 = fmap deep_optimize . reduce $ t
->             if t1 /= t && (contracts t || not (any (eqfree 0 r) $ reducts)) then classify t1 else putStrLn "cycles"
+Simplification
+
+> simplify :: DB -> DB
+> simplify = simp where
+>   simp (DBLam a) = DBLam (simp a)
+>   simp (DBApp a b) = case simp a of
+>       DBLam a | a <- simpA a b, noccurs 0 a <= 1 -> simp (subst 0 b a)
+>       a -> DBApp a (simp b)
+>   simp t = t
+
+>   -- simplify a based on its argument
+>   simpA a (DBLam b)
+>       | not (occurs 0 b) = simpE 0 a -- \b erases first argument
+>       | b == DBVar 0     = simpI 0 a -- \b is id = \1
+>   simpA a _ = a
+
+>   -- the first argument of variable i is not needed, so replace it by simplest term
+>   simpE i (DBApp (DBVar j) b)
+>       | i == j = DBApp (DBVar j) (DBLam (DBVar 0))
+>   simpE i (DBApp a b) = DBApp (simpE i a) (simpE i b)
+>   simpE i (DBLam a) = DBLam (simpE (i+1) a)
+>   simpE i a = a
+
+> -- variable i will be substituted by id = \1
+> simpI i (DBApp (DBVar j) b)
+>     | i == j = simpI i b
+> simpI i (DBApp a b) = DBApp (simpI i a) (simpI i b)
+> simpI i (DBLam a) = DBLam (simpI (i+1) a)
+> simpI i a = a
+
+Classify reduction behaviour
+
+> classify :: DB -> BBClass DB
+> classify t = go [] t where
+>   go :: [DB] -> DB -> BBClass DB
+>   go s (DBLam a) = DBLam <$> go s a
+>   go s t@(DBApp a b) = do
+>       a1 <- go s a
+>       let b1 = simplify b
+>       case a1 of
+>           _   | doubles a1 && doubles b1 -> Diverging
+>           DBLam body
+>               | any (eqfree 0 t) s -> Diverging
+>               | length s > 20      -> Unknown
+>               | otherwise          -> go (t:s) (subst 0 b1 body)
+>           _ -> DBApp a1 <$> go s b1
+>   go _ t = NormalForm t
+
+> ponder :: Int -> DB -> IO ()
+> ponder min t = do
+>   -- putStrLn $ show t
+>   case classify t of
+>     NormalForm nf | size nf > min -> putStrLn $ (show . size $ nf) ++ " " ++ show t ++ " ->* " ++ show nf
+>     Unknown -> putStrLn $ "Unknown" ++ show t
+>     -- Diverging -> putStrLn $ "Diverging" ++ show t
+>     _ -> return ()
 
 > main :: IO ()
 > main = do
 >   args <- getArgs
 >   case args of
 >     [n] -> do
->       -- mapM_ (\t -> putStrLn (show t) >> classify t) . filter expands . closed $ read n
->       mapM_ classify . filter expands . closed $ read n
->     [n, p] -> do
->       mapM_ (\t -> classify t) $ [read p]
+>       mapM_ (ponder 0) . filter expands . closed $ read n
+>     [n,m] -> do
+>       mapM_ (ponder $ read m) . filter expands . closed $ read n
+>       -- mapM_ (ponder 0) . filter (== read m) . filter expands . closed $ read n
 >     _ -> putStrLn "usage: BB <Int>"
-
-pondering (\1 1 1) (\\1 2 2)
-pondering (\\1 2 2) (\\1 2 2) (\\1 2 2)
-pondering (\1 (\\1 2 2) (\\1 2 2))  (\\1 2 2)
-pondering (\\1 2 2) (\\1 2 2) (\\1 2 2)
-

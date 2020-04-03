@@ -1,10 +1,11 @@
-> module AIT(size,reduce,optimize,deep_optimize,contracts,expands,reduct,uni,usage) where
+> module AIT(size,reduce,optimize,subst,occurs,noccurs,contracts,expands,reduct,uni,usage) where
 > import Lambda
 > import Data.List(unfoldr)
 > import Data.Maybe
 > import Data.Char(chr,ord,intToDigit,digitToInt)
 > import qualified Data.DList as DL
 > import Data.Array.Unboxed
+> import Control.Applicative
 > import Control.Monad.Writer
 
 Encode an expression as a binary string.
@@ -77,6 +78,13 @@ Does variable occur in term?
 > occurs n (DBApp fun arg) = occurs n fun || occurs n arg
 > occurs n (DBVar i) = i == n
 
+Number of time variable occurs in term
+
+> noccurs :: Int -> DB -> Int
+> noccurs n (DBLam body) = noccurs (n+1) body
+> noccurs n (DBApp fun arg) = noccurs n fun + noccurs n arg
+> noccurs n (DBVar i) = if i == n then 1 else 0
+
 Optimize an expression; repeatedly contract redexes that reduce in size
 
 > optimize :: DB -> DB
@@ -85,17 +93,6 @@ Optimize an expression; repeatedly contract redexes that reduce in size
 >   opt (DBLam body) = DBLam (opt body)
 >   opt t@(DBApp (DBLam body) arg) | size s < size t = opt s where
 >     s = subst 0 arg body
->   opt (DBApp fun arg) = DBApp (opt fun) (opt arg)
->   opt e = e
-
-A deep optimizer
-
-> deep_optimize :: DB -> DB
-> deep_optimize x = let ox = opt x in if ox == x then x else deep_optimize ox where
->   opt (DBLam (DBApp fun (DBVar 0))) | not (occurs 0 fun) = subst 0 undefined fun -- \y. x y
->   opt (DBLam body) = DBLam (opt body)
->   opt t@(DBApp (DBLam body) arg) | size s < size t = opt s where
->     s = optimize $ subst 0 arg body 
 >   opt (DBApp fun arg) = DBApp (opt fun) (opt arg)
 >   opt e = e
 
@@ -121,9 +118,7 @@ Reduct
 > reduct :: DB -> Maybe DB
 > reduct (DBLam body) = reduct body
 > reduct a@(DBApp (DBLam body) arg) = Just a
-> reduct (DBApp fun arg) = case reduct fun of
->                            Just r    -> Just r
->                            Nothing   -> reduct arg
+> reduct (DBApp fun arg) = reduct fun <|> reduct arg
 > reduct (DBVar _) = Nothing
 
 Safe reductions (guaranteed to reach normal form)
