@@ -97,7 +97,7 @@ Observations
 
 Consequently,
 
-  W W = (\v. B^{v}) W -> B^{v}[v := W] = B^{} = H[W W]
+  W W = (\v. B^{v}) W -> B^{v}[v := W] ⊆ B^{} = H[W W]
 
 which shows that elements of W W have infinite head reductions and
 therefore do not have a normal form.
