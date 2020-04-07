@@ -29,60 +29,9 @@ Loop detector
 >   go _ _ = False
 > 
 >   go' is (DBApp a@(DBApp _ _) _) = go' is a
->   go' is (DBApp fun arg) = go is fun && go is arg
+>   go' is (DBApp fun arg) = go is fun && (go is arg || go' is arg)
 >   go' is (DBLam body) = go' (map succ is) body
 >   go' _ _ = False
-
-Complex Looping detector, recognizes terms of form \x. K^* (x^+ (\y. K^* (y^+ (x y ...) ...)) ...)
-
-> doubledloops :: DB -> Bool
-> doubledloops (DBLam body) = go0 0 body where
-
-1 (1 (\2 1 1))
-
-recognize K^* (x^+ (\y. K^* (y^+ (x y ...) ...)) ...) -- go0 0 "1 (\1 (2 1))"
-
->   go0 ix t@(DBApp _ _) = go1 ix t
->   go0 ix (DBLam body) = go0 (ix+1) body
->   go0 _ _ = False
-   
-recognize x^+ (\y. K^* (y^+ (x y ...) ...)) ... -- go1 0 "1 (\1 (2 1))"
-
->   go1 ix (DBApp (DBVar i) arg) | i==ix = go2 ix arg
->   go1 ix (DBApp fun _) = go1 ix fun
->   go1 _ _ = False
-
-recognize x^* (\y. K^* (y^+ (x y ...) ...)) -- go2 0 "\1 (2 1)"
-
->   go2 ix (DBLam body) = go3 (ix+1) 0 body
->   go2 ix (DBApp (DBVar i) arg) | i==ix = go2 ix arg
->   go2 _ _ = False
-
-recognize K^* (y^+ (x y ...) ...) -- go3 1 0 "1 (2 1)"
-
->   go3 ix iy t@(DBApp _ _) = go4 ix iy t
->   go3 ix iy (DBLam body) = go3 (ix+1) (iy+1) body
->   go3 _ _ _ = False
-   
-recognize y^+ (x y ...) ... -- go4 1 0 "1 (2 1)"
-
->   go4 ix iy (DBApp (DBVar i) arg) | i==iy = go5 ix iy arg
->   go4 ix iy (DBApp fun _) = go4 ix iy fun
->   go4 _ _ _ = False
-
-recognize y^* (x y ...) -- go5 1 0 "2 1"
-
->   go5 ix iy (DBApp (DBVar i) arg) | i==iy = go5 ix iy arg
->   go5 ix iy t@(DBApp _ _) = go6 ix iy t
->   go5 _ _ _ = False
-
-recognize x y ... -- go6 1 0 "2 1"
-
->   go6 ix iy (DBApp (DBVar i) (DBVar i2)) = i==ix && i2==iy
->   go6 ix iy (DBApp fun _) = go6 ix iy fun
->   go6 _ _ _ = False
-
-> doubledloops _ = False
 
 Equality modulo free vars
 Could be generalized so head subterm of first arg
@@ -152,7 +101,7 @@ Classify reduction behaviour
 >       a1 <- go s a
 >       let b1 = simplify b
 >       case a1 of
->           _   | doubles a1 && (doubles b1 || doubledloops b1) -> Diverging
+>           _   | doubles a1 && doubles b1 -> Diverging
 >           DBLam body
 >               | any (eqfree 0 t) s -> Diverging
 >               | length s > 20      -> Unknown

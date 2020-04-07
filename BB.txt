@@ -84,150 +84,31 @@ For this section we use ordinary lambda terms with names. Let
   T ::= v | \v. T | T T                    (terms)
   H ::= □ | \v. H | H T                    (head contexts)
   W^V ::= V | \v. B^({v} ∪ V)              (ω-like terms)
-  B^V ::= W^V W^V | \v. B^V | B^V T        (bodies of ω-like terms)
+  B^V ::= W^V W^V | W^V B^V | \v. B^V | B^V T        (bodies of ω-like terms)
   W = W^{}
+
+\x. x (x (\y.\z. x y)
 
 Observations
 
   V ⊆ V' implies W^V ⊆ W^V'
   B^({v} ∪ V)[v := W^V] ⊆ B^V
-  B^V = H[W^V W^V]
+  B^V = H[(W^V)^+ W^V]
   W = \v. B^{v}
   ω ∈ W
 
 Consequently,
 
-  W W = (\v. B^{v}) W -> B^{v}[v := W] ⊆ B^{} = H[W W]
+  W W = (\v. B^{v}) W -> B^{v}[v := W] ⊆ B^{} = H[W^+ W]
 
 which shows that elements of W W have infinite head reductions and
 therefore do not have a normal form.
 
-== The set W2
-
-If T in \x. K^* (x^+ (\y. K^* (y^+ (x y ...) ...)) ...)
-If we then set T_0 = T, and T_{i+1} = \y. K^* (y^+ (T_i y ...) ...)
-then all T_i are strict, and we can show by induction that T T_i reduces to a tern with T T_{i+1} in head position
-T T = K^* (T^+ T_1 ...)
-T T_1 = K^* (T_1^+ T_2 ...)
-T_1 T_2 = K^* (T_2^+ (T T_2 ...) ...)
-T T_2 = K^* (T_2^+ T_3 ...)
-T_2 T_3 = K^* (T_3^+ (T_1 T_3 ...) ...)
-T_1 T_3 = K^* (T_3^+ (T T_3 ...) ...)
-T T_3 = K^* (T_3^+ T_4 ...)
-and so on.
-
-== Manual proofs for n <= 31
+== Manual proofs for n <= 34
 
 Notation: t ... means t applied to an arbitrary number of arguments
 
--- for 29
-
-Starting term: (\1 1) (\1 (\1 (2 1)))
-
-Let T = \1 (\1 (2 1))
-Let T_0     =      T
-Let T_{i+1} = \1 (T_i 1)
-
-We have for i > 0
-    T_0 T_i
- -> T_i T_{i+1}
- -> T_{i+1} ( T_{i-1} T_{i+1} )
- -> T_{i-1} T_{i+1} ...
-[repeat the last 2 steps i-1 more times]
-->> T_0 T_{i+1} ...
-
-So
-(\1 1) T -> T T = T T_0
- -> T T_1
-->> T T_2 ...
-->> T T_3 ...
-and so on.
-
--- for 30
-
-Starting term: (\1 1) (\1 (\2 (2 1)))
-
-Let T = \1 (\2 (2 1)) = \1 1^2
-
-We have for i > 0
-    T T^i
- -> T^i     T^{2i} = T ( T^{i-1} T^{2i} )
- -> T^{i-1} T^{2i} ...
-[repeat the last step i-2 more times]
-->> T       T^{2i} ...
-
-So
-    (\1 1) T
- -> T T
- -> T T^2
-->> T T^4 ...
-->> T T^8 ...
-and so on.
-
--- for 31
-
-Starting term \(\1 1) (\1 (\1 (2 1))) has (\1 1) (\1 (\1 (2 1))) as a subterm, so see size 29.
-
 -- for 32
-
-Starting term: \(\1 1) (\1 (\2 (2 1))) has (\1 1) (\1 (\2 (2 1))) as a subterm, so see size 30.
-
-Starting term: (\1 1) (\1 (1 (\1 (\3))))
-Let T = \1 (1 (\1 (\3)))
-If we denote \x. x A as <A>, and \_. x as K x, then
-    T <K T>
- -> <K T> ( <K T> <A> ), where A = K <K T>
- -> <K T> ( <A> (K T) )
- -> <K T> ( K T A )
- -> <K T> T
- -> T (K T)
- -> K T (K T <K (K T)>)
- -> T,
-hence
-    (\1 1) T
- -> T T
- -> T ( T <K T> )
-->> T T
-and so on.
-
-Starting term: (\1 1) (\1 (1 (\2)) (\2))
-Let T = \1 (1 (\2)) (\2)
-If we denote \_. x as K x, then
-    T (K T)
- -> (K T)^2 A A, where A = K^2 T
- -> T A
- -> A^2 (K A) (K A)
- =  K (K T) (A (K A)) (K A)
-->> T,
-hence
-    (\1 1) T
- -> T T
- -> T (T (K T)) (K T)
-->> T T (K T)
-and so on.
-
-Starting term: (\1 1) (\1 (1 (\\3)) 1)
-Let T = \1 (1 (\\3)) 1)
-If we denote \_. x as K x, then
-    T (K^2 T)
- -> K^2 T (K^2 T (K^4 T)) (K^2 T)
- -> K T (K^2 T)
- -> T,
-hence
-    (\1 1) T
- -> T T
- -> T (T (K^2 T)) T
-->> T T T
-and so on.
-
-Starting term: (\1 1) (\1 (1 (\1) 1) 1)
-Let T = \1 (1 id 1) 1
-Note that T id = id
-    (\1 1) T
- -> T T
- -> T (T id T) ...
---> T T ...
-and so on.
 
 Starting term: (\1 (\2)) (\1 1 (\1 2))
 Let T = \1 1 (\1 2)
@@ -261,21 +142,9 @@ and so on.
 
 -- for 33
 
-Starting term: (\1 (1 1)) (\1 (\1 (2 1)))
-Starting term: (\1 1 (1 1)) (\\1 (1 2))
-Starting term: (\1 1 (1 1)) (\\1 (2 1))
-Starting term: (\1 1 1) (\1 (\1 (2 1)))
 Starting term: (\1 1 1) (\\1 (1 2) 1)
-Starting term: (\1 1) (\1 (1 (\1 (2 1))))
-Starting term: (\1 1) (\1 (1 (\2 1 1)))
-Starting term: (\1 1) (\1 (1 (\\3 2)))
-Starting term: (\1 1) (\1 (\1 (1 (2 1))))
-Starting term: (\1 1) (\1 (\1 (2 1 1)))
-Starting term: (\1 1) (\1 (\1 (2 1) 1))
-Starting term: (\1 1) (\1 (\1 (2 1)) 1)
+
 Starting term: (\1 1) (\1 (\\1 (3 2)))
-Starting term: (\1 1) (\\2 (\1 (3 1)))
-Starting term: (\\2 2) (\1 (\1 (2 1)))
 
 Starting term: \(\1 1) (\1 (\3 (2 1)))
 Let T = \1 (\3 (2 1))
@@ -293,5 +162,22 @@ let T_i = z^i . T, Then
  -> z^10 (T T_5)
 and so on.
 
-Starting term: \\(\1 1) (\1 (\1 (2 1)))
-see size 29 and 31
+-- for 34
+
+Unknown\(\1 1) (\1 (1 (\1 (\3))))
+Unknown\(\1 1) (\1 (1 (\2)) (\2))
+Unknown\(\1 1) (\1 (1 (\\3)) 1)
+Unknown\(\1 1) (\1 (1 (\1) 1) 1)
+Unknown\(\1 (\2)) (\1 1 (\1 2))
+Unknown\(\1 1 1) (\\1 (\3) 1)
+Still-Unknown(\1 1) (\\2 (\2 (3 1)))
+Still-Unknown(\1 1) (\\1 (2 1 2) 1)
+Still-Unknown(\1 1 1) (\\2 1 (2 1))
+Unknown(\1 (\1) 1) (\\1 (\3) 1)
+Still-Unknown(\1 (1 (1 1))) (\\2 (2 1))
+Still-Unknown(\1 (1 1 1)) (\\2 (2 1))
+Still-Unknown(\1 (1 1) 1) (\\2 (2 1))
+Still-Unknown(\1 1 1 1) (\\2 (2 1))
+
+-- for 35
+
