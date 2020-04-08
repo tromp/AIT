@@ -123,6 +123,9 @@ Classify reduction behaviour
 >       DBApp fun t2@(DBLam body) | doubles fun -> case fmap classify (headarg body t2) of
 >         Just (NormalForm nf) | eqfree 0 nf t2 -> putStrLn $ "Unknown-then-Diverging" ++ show t
 >         _ -> putStrLn $ "Still-Unknown" ++ show t
+>       DBLam (DBApp fun t2@(DBLam body)) | doubles fun -> case fmap classify (headarg body t2) of
+>         Just (NormalForm nf) | eqfree 0 nf t2 -> putStrLn $ "Unknown-then-KDiverging" ++ show t
+>         _ -> putStrLn $ "Still-KUnknown" ++ show t
 >       _ -> putStrLn $ "Unknown" ++ show t
 >     -- Diverging -> putStrLn $ "Diverging" ++ show t
 >     _ -> return ()
