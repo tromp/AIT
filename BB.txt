@@ -151,8 +151,14 @@ and so on.
 -- for 33
 
 Starting term: (\1 1 1) (\\1 (1 2) 1)
+let T = \\1 (1 2) 1
+T T T = T (T T) T = T (T^2 T) T = T (T^3 T) T and so on.
 
 Starting term: (\1 1) (\1 (\\1 (3 2)))
+If we denote \x. x A as <A>, then
+T = \1 (\\1 (3 2)) = \x. x (\y. <x y>)
+Denote T_0 = T, and T_{i+1} = T T_i = (\y. <T_i y>) = then
+T T = T T_1 = T_1 T_2 = <T T_2> = <T_2 T_3> = <<T_1 T_3>> = <<<T T_3>>> and so on.
 
 Starting term: \(\1 1) (\1 (\3 (2 1)))
 Let T = \1 (\3 (2 1))
@@ -173,17 +179,36 @@ and so on.
 -- for 34
 
 Starting term: \(\1 (\2)) (\1 1 (\1 2))
+If we denote \x. x A as <A>, and \_. x as K x, then
+T = \1 1 (\1 2) = \x. x x <x>
+\(\1 (\2)) T = T (K T) = K T (K T) <K T> = T <K T> = <K T> <K T> <<K T>> = <K T> (K T) = K T> (K T) 
+
 Starting term: \(\1 1 1) (\\1 (\3) 1)
+see subterm at 32
+
 Starting term: (\1 1) (\\2 (\2 (3 1)))
+let T = \\2 (\2 (3 1))
+Denoting function composition by (.), we have T x y = x (y.x)
+(\1 1) T  = T T = \y. T (y.T) = \y\z. y (T (z.y.T)) = \y\z. y (\w. z (y (T (w.z.y.T)))) and so on.
+
 Starting term: (\1 1) (\\1 (2 1 2) 1)
+let T = \x.\y.y (x y x) y
+(\1 1) T = T T =  \y.y (T y T) y
+T x T = T (x T x) T = T ((x T x) T (x T x)) T and so on.
+
 Starting term: (\1 1 1) (\\2 1 (2 1))
+let T = \x.\y.x y (x y)
+(\1 1 1) T = T T T = T T (T^0 T)
+T T (T^i T) = T (T^i T) (T^{i+1} T) = T (T^{i-1} T) (T^{i+1} T) ... = ... = T T (T^{i+1} T) ...  and so on.
 
 Starting term: (\1 (\1) 1) (\\1 (\3) 1)
-T = \x.\y.y (K x) y
-T id T = T (K id) T = T (K^2 id) T = T (K^3 id) T and so on
+let T = \x.\y.y (K x) y
+(\1 (\1) 1) T = T id T = T (K id) T = T (K^2 id) T = T (K^3 id) T and so on
 
 Starting term: (\1 (1 (1 1))) (\\2 (2 1))   ((2^2)^2)^2= 2^8	size 2054
 Starting term: (\1 (1 1 1)) (\\2 (2 1))     (2^2^2)^2 = 2^8	size 2054
 Starting term: (\1 (1 1) 1) (\\2 (2 1))     2^(2^2)^2 = 2^16	size 327686
 Starting term: (\1 1 1 1) (\\2 (2 1))       2^2^2^2 = 2^16	size 327686
+
+-- for 35
 
