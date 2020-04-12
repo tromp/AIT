@@ -84,32 +84,41 @@ For this section we use ordinary lambda terms with names. Let
   T ::= v | \v. T | T T                         (terms)
   H ::= □ | \v. H | H T                 	(head contexts)
   W^V ::= V | \v. B^({v} ∪ V)                   (ω-like terms)
-  B^V ::= W^V W^V | W^V B^V | \v. B^V | B^V T   (bodies of ω-like terms)
+  B^V ::= W^V X^V | \v. B^V | B^V T             (⊥-like terms)
+  X^V ::= W^V | B^V                             (ω-like or ⊥-like)
   W = W^{}
   B = B^{}
+  X = X^{}
 
 Observations
 
   V ⊆ V' implies W^V ⊆ W^V'
-  B^({v} ∪ V)[v := W^V] ⊆ B^V
-  B^V = H[W^V W^V] ∪ H[W^V B^V]
+  B^V = H[W^V X^V]
   W = \v. B^{v}
   ω ∈ W
 
 Deeper Observation
 
-  B^({v} ∪ V)[v := B^V] ⊆ B^V
+  B^({v} ∪ V)[v := X^V] ⊆ B^V
 
-This requires a case analysis of how each substituted v was derived in the above grammar.
-If B^V derives W^V W^V or W^V B^Vand the first W^V derives v, then substitution ends up deriving B^V W^V or B^V B^V from the original B^V which it could also have done through the B^V T option.
-If B^V derives W^V W^V and the second W^V derives v, then substitution ends up deriving W^V B^V from the original B^V which it could also have done through the W^V B^V option.
+Let V' = {v} ∪ V. We proceed by induction.
+
+  W^V'[v := X^V]
+    = X^V ∪ V ∪ \w. B^({w} ∪ V')[v := X^V]
+    ⊆[IH] X^V ∪ V ∪ \w. X^({w} ∪ V)
+    = X^V ∪ W^V = X^V
+
+  B^V'[v := X^V]
+    = H[W^V'[v := X^V] X^V'[v := X^V]]
+    ⊆[IH] H[X^V (X^V ∪ B^V)]
+    = H[W^V X^V] ∪ H[B^V X^V]
+    ⊆ B^V ∪ H[B^V] = B^V
 
 Consequently,
 
-  W W = (\v. B^{v}) W -> B^{v}[v := W] ⊆ B^{} = H[W W] ∪ H[W B]
-  W B = (\v. B^{v}) B -> B^{v}[v := B] ⊆ B^{} = H[W W] ∪ H[W B]
+  W X = (\v. B^{v}) W -> B^{v}[v := X] ⊆ B^{} = H[W X]
 
-which shows that elements of W W have infinite head reductions and
+which shows that elements of W X have infinite head reductions and
 therefore do not have a normal form.
 
 == Manual proofs for n <= 34
