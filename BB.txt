@@ -92,8 +92,9 @@ For this section we use ordinary lambda terms with names. Let
 
 Observations
 
-  V ⊆ V' implies W^V ⊆ W^V'
+  V ⊆ V' implies W^V ⊆ W^V', B^V ⊆ B^V', and X^V ⊆ X^V'
   B^V = H[W^V X^V]
+  H[□][v := T] ⊆ H
   W = \v. B^{v}
   ω ∈ W
 
