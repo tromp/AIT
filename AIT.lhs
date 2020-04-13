@@ -1,7 +1,6 @@
-> module AIT(size,reduce,optimize,subst,occurs,noccurs,contracts,expands,reduct,uni,usage) where
+> module AIT(size,reduce,optimize,strict,subst,occurs,noccurs,contracts,expands,reduct,uni,usage) where
 > import Lambda
 > import Data.List(unfoldr)
-> import Data.Maybe
 > import Data.Char(chr,ord,intToDigit,digitToInt)
 > import qualified Data.DList as DL
 > import Data.Array.Unboxed
@@ -100,7 +99,7 @@ Simpleminded strictness analyzer
 
 > strict :: Int -> DB -> Bool
 > strict n (DBLam body) = strict (n+1) body
-> strict n (DBApp fun arg) = strict n fun
+> strict n (DBApp fun _) = strict n fun
 > strict n (DBVar i) = i == n
 
 Reduction step
@@ -117,7 +116,7 @@ Reduct
 
 > reduct :: DB -> Maybe DB
 > reduct (DBLam body) = reduct body
-> reduct a@(DBApp (DBLam body) arg) = Just a
+> reduct a@(DBApp (DBLam _) _) = Just a
 > reduct (DBApp fun arg) = reduct fun <|> reduct arg
 > reduct (DBVar _) = Nothing
 
@@ -125,15 +124,15 @@ Safe reductions (guaranteed to reach normal form)
 
 > contracts :: DB -> Bool
 > contracts x = case reduct x of
->               Just t@(DBApp (DBLam body) arg) -> size (subst 0 arg body) < size t where
->               Nothing -> True
+>               Just t@(DBApp (DBLam body) arg) -> size (subst 0 arg body) < size t
+>               _ -> True
 
 Of interest to Busy Beaver
 
 > expands :: DB -> Bool
 > expands x = x == optimize x && case reduct x of
->               Just t@(DBApp (DBLam body) arg) -> size (subst 0 arg body) > size t where
->               Nothing -> False
+>               Just t@(DBApp (DBLam body) arg) -> size (subst 0 arg body) > size t
+>               _ -> False
 
 Bitstring functions -----------------------------------------------------
 
@@ -258,6 +257,7 @@ Bitstring functions -----------------------------------------------------
 >   "blc"     ->                  encode . optimize . toDB $ prog
 >   "Blc"     -> toBytes .        encode . optimize . toDB $ prog
 >   "size"    -> nl .        show . size . optimize . toDB $ prog
+>   "nfsize"  -> nl .              show . size . nf . toDB $ prog
 >   "help"    -> unlines usage
 >   a         -> "Action " ++ a ++ " not recognized.\n"
 

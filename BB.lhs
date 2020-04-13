@@ -130,6 +130,10 @@ Classify reduction behaviour
 >     -- Diverging -> putStrLn $ "Diverging" ++ show t
 >     _ -> return ()
 
+> toughtriples :: DB -> Bool
+> toughtriples (DBApp (DBLam (DBApp (DBApp (DBVar 0) (DBVar 0)) (DBVar 0))) (DBLam (DBLam (DBApp (DBVar 1) (DBApp (DBVar 1) _)))) ) = True
+> toughtriples _ = False
+
 > main :: IO ()
 > main = do
 >   args <- getArgs
@@ -137,6 +141,6 @@ Classify reduction behaviour
 >     [n] -> do
 >       mapM_ (ponder 0) . filter expands . closed $ read n
 >     [n,m] -> do
->       mapM_ (ponder $ read m) . filter expands . closed $ read n
+>       mapM_ (ponder $ read m) . filter (\t -> expands t && not (toughtriples t)) . closed $ read n
 >       -- mapM_ (ponder 0) . filter (== read m) . filter expands . closed $ read n
 >     _ -> putStrLn "usage: BB <Int>"

@@ -3,7 +3,7 @@ $\lambda$-calculus together with a parser and a printer for it.
 It also exports a simple type of identifiers that parse and
 print in a nice way.
 
-> module Lambda(LC(..), DB(..), CL(..),  Id(..), isnf, nf, evalLC, toLC, toCL, strongCL, toDB) where
+> module Lambda(LC(..), DB(..), CL(..),  Id(..), lam, isnf, nf, evalLC, toLC, toCL, strongCL, toDB) where
 > import Prelude hiding ((<>))
 > import Data.List(union, (\\), elemIndex)
 > import Data.Char(isAlphaNum)
@@ -86,16 +86,16 @@ Compute the free variables of an expression.
 >     e <- pLC
 >     return $ foldr lcLet e bs
 
-> schar :: Char -> ReadP Char
-> schar c = do skipSpaces; char c
+> schar :: Char -> ReadP ()
+> schar c = do skipSpaces; _ <- char c; return ()
 >
 > eow :: ReadP ()
 > eow = readS_to_P $ \s -> case s of
 >     c:_ | isAlphaNum c -> []
 >     _ -> [((),s)]
 >
-> sstring :: String -> ReadP String
-> sstring c = do skipSpaces; r <- string c; eow; return r
+> sstring :: String -> ReadP ()
+> sstring c = do skipSpaces; _ <- string c; eow; return ()
 >
 > pVar :: (Read v) => ReadP v
 > pVar = do skipSpaces; readS_to_P (readsPrec 9)
@@ -183,9 +183,9 @@ This makes it possible to use the native substitution of Haskell.
 Is a term already in normal form?
 
 > isnf :: DB -> Bool
-> isnf (DBVar   v) = True
+> isnf (DBVar   _) = True
 > isnf (DBLam   e) = isnf e
-> isnf (DBApp (DBLam e) a) = False
+> isnf (DBApp (DBLam _) _) = False
 > isnf (DBApp f a) = isnf f && isnf a
 
 To compute the normal form, first convert/compute to HODB, and
@@ -228,8 +228,8 @@ from http://pchiusano.github.io/2014-06-20/simple-debruijn-alternative.html
 >   body = f (Var n)
 >   n = 1 + maxBV body
 >   maxBV :: LC Int -> Int
->   maxBV (App f a) = maxBV f `max` maxBV a
->   maxBV (Lam n _) = n
+>   maxBV (App fun a) = maxBV fun `max` maxBV a
+>   maxBV (Lam m _) = m
 
 Convert back from higher order abstract syntax. Do this by inventing
 a new variable at each $\lambda$.
