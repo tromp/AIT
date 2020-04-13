@@ -23,6 +23,7 @@ size :: L -> Int
 size (Var i)   = i + 2
 size (App a b) = 2 + size a + size b
 size (Abs a)   = 2 + size a
+size Bot       = 0
 
 subst :: Int -> L -> L -> L
 subst i (Var j)   c = if i == j then c else Var (if j > i then j-1 else j)
@@ -67,10 +68,10 @@ nf a0 = go S.empty a0 where
     go s (Abs a) = Abs <$> go s a
     go s (App a b) = do
         a <- go s a
-        b <- return (simp b)
-        let r = botFree 0 (App a b)
+        let r = markFree 0 (simp (App a b))
         case a of
-            _   | isW a && isW b -> Nothing
+            Bot -> Nothing
+            -- _   | isB (App a b) -> Nothing
             Abs a
                 | r `S.member` s -> Nothing
                 | S.size s > 10  -> trace ("-- TODO: " ++ pr a0) Nothing
@@ -81,16 +82,18 @@ nf a0 = go S.empty a0 where
     go s t = Just t
 
     -- replace free variables (of a redex) by bottom
-    botFree i (Var j)   = if j >= i then Bot else Var j
-    botFree i (App a b) = App (botFree i a) (botFree i b)
-    botFree i (Abs a)   = Abs (botFree (i+1) a)
-    botFree i Bot       = Bot
+    markFree i (Var j)   = Var (if j >= i then -1 else j)
+    markFree i (App a b) = App (markFree i a) (markFree i b)
+    markFree i (Abs a)   = Abs (markFree (i+1) a)
+    markFree i Bot       = Bot
 
 -- simplification
 simp :: L -> L
 simp = go where
+    go a | isB a = Bot
     go (Abs a) = Abs (go a)
     go (App a b) = case go a of
+        Bot -> Bot
         Abs a | a <- simpA 0 a b, occur 0 a <= 1 -> go (subst 0 a b)
         a -> App a (go b)
     go t = t
@@ -117,22 +120,23 @@ simp = go where
 
 -- various terms W that allow W W -> H[W W] for head context H,
 -- leading to infinite head reductions
-isW :: L -> Bool
-isW = go [] where
+isB :: L -> Bool
+isB = go' [] where
     go is (Var i) = i `elem` is
     go is (Abs a) = go' (0 : map succ is) a
-    -- go is Bot = True
-    go _ _ = False
+    go is Bot = True
+    go is a = go' is a
 
     go' is (App a@(App _ _) _) = go' is a
     go' is (App a b) = go is a && go is b
     go' is (Abs a) = go' (map succ is) a
-    go' _ _ = False
+    go' is Bot = True
+    go' is a = False
 
 main :: IO ()
 main = do
     hSetBuffering stdout LineBuffering
-    mapM_ print [f n | n <- [0..32]]
+    mapM_ print [f n | n <- [0..34]]
   where
     f n = maximum $
         (n,0,P Bot) : [(n,size t,P a) | a <- gen 0 n, Just t <- [nf a]]

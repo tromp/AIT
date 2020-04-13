@@ -243,6 +243,7 @@ Bitstring functions -----------------------------------------------------
 >   "run8"    -> nl .   bshow . nf . toDB . machine $ bytestoLC input
 >   "print"   -> nl .                     show             $ prog
 >   "nf"      -> nl .                     show . nf . toDB $ prog
+>   "nf_size" -> nl .              show . size . nf . toDB $ prog
 >   "comb_nf" -> nl .        show . strongCL . toCL . toDB $ prog
 >   "comb"    -> nl .        show . toCL . optimize . toDB $ prog
 >   "bcl"     -> nl .      encode . toCL . optimize . toDB $ prog
