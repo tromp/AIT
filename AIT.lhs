@@ -258,7 +258,6 @@ Bitstring functions -----------------------------------------------------
 >   "blc"     ->                  encode . optimize . toDB $ prog
 >   "Blc"     -> toBytes .        encode . optimize . toDB $ prog
 >   "size"    -> nl .        show . size . optimize . toDB $ prog
->   "nfsize"  -> nl .              show . size . nf . toDB $ prog
 >   "help"    -> unlines usage
 >   a         -> "Action " ++ a ++ " not recognized.\n"
 
