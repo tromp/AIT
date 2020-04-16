@@ -105,8 +105,9 @@ denoting the Induction Hypothesis step by [IH].
     =     X^V ∪ W^V = X^V
 
   B^V'[v := X^V]
-    =     H[W^V'[v := X^V] X^V'[v := X^V]]
-    ⊆[IH] H[X^V           (X^V ∪ B^V)]
+    =     H[W^V'[v := X^V]  X^V'[v := X^V]]
+    =     H[W^V'[v := X^V] (W^V'[v := X^V] ∪ B^V'[v := X^V]) ]
+    ⊆[IH] H[X^V            (X^V            ∪ B^V)]
     =     H[(W^V ∪ B^V)    X^V]
     =     H[W^V X^V] ∪ H[B^V X^V]
     ⊆ B^V ∪ H[B^V] = B^V
@@ -230,9 +231,7 @@ Starting term: (\1 1 1 1) (\\2 (2 1))       2^2^2^2 = 2^16	size 327686
 (\1 1) (\1 (\\1 (2 1)) 1)       etc
 (\1 1) ((\1 1) (\\1 (2 1)))
   let T = \x\y. y (x y)
-  T T = \y. y (T y) = T_0
-  let T_i = T^i T_0
-  (\1 1) ((\1 1) T) = T_0 T_0 = 
+  T T = \y. y (T y) = \y. y (\z. z (y z)) = \1 (\1 (2 1)) is in the set W above.
 (\1 (1 1)) (\\2 (2 (2 1)))      size 98421		Church (3^3)^3 = 3^9
 (\1 1 1) (\\2 (2 (2 1)))        size 38127987424941	Church 3^3^3 = 3^27
 (\1 1 1) (\\2 (2 (1 2)))        size 4186155666

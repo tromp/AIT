@@ -33,6 +33,23 @@ Loop detector
 >   go' is (DBLam body) = go' (map succ is) body
 >   go' _ _ = False
 
+> triples :: DB -> Bool
+>
+> triples = go [] where
+>   go is (DBVar i) = i `elem` is
+>   go is (DBLam body) = go' (0 : map succ is) body
+>   go _ _ = False
+> 
+>   go' is (DBApp a@(DBApp (DBApp _ _) _) _) = go' is a
+>   go' is (DBApp (DBApp fun _) arg) = go is fun && (go is arg || go' is arg)
+>   go' is (DBLam body) = go' (map succ is) body
+>   go' _ _ = False
+
+> triples2 :: DB -> Bool
+>
+> triples2 (DBLam body) = triples body
+> triples2 _ = False
+
 Equality modulo free vars
 Could be generalized so head subterm of first arg
 
@@ -91,6 +108,19 @@ Simplification
 > simpI i (DBLam a) = DBLam (simpI (i+1) a)
 > simpI i a = a
 
+> headarg :: DB -> DB -> Maybe DB
+> headarg (DBApp (DBVar 0) arg) t = Just $ subst 0 t arg
+> headarg (DBApp fun arg) t = headarg fun t
+> headarg _ _ = Nothing
+
+reduction looping behaviour when duplicated
+
+> redloop :: DB -> Bool
+> redloop t@(DBLam body) = case fmap classify (headarg body t) of
+>       Just (NormalForm nf) -> eqfree 0 nf t
+>       _ -> t `elem` []
+> redloop _ = False
+
 Classify reduction behaviour
 
 > classify :: DB -> BBClass DB
@@ -101,7 +131,8 @@ Classify reduction behaviour
 >       a1 <- go s a
 >       let b1 = simplify b
 >       case a1 of
->           _   | doubles a1 && doubles b1 -> Diverging
+>           _   | doubles a1 && (doubles b1 || redloop b1) -> Diverging
+>           _   | triples a1 && triples2 b1 -> Diverging
 >           DBLam body
 >               | any (eqfree 0 t) s -> Diverging
 >               | length s > 20      -> Unknown
@@ -109,38 +140,96 @@ Classify reduction behaviour
 >           _ -> DBApp a1 <$> go s b1
 >   go _ t = NormalForm t
 
-> headarg :: DB -> DB -> Maybe DB
-> headarg (DBApp (DBVar 0) arg) t = Just $ subst 0 t arg
-> headarg (DBApp fun arg) t = headarg fun t
-> headarg _ _ = Nothing
-
 > ponder :: Int -> DB -> IO ()
 > ponder min t = do
 >   -- putStrLn $ show t
 >   case classify t of
 >     NormalForm nf | size nf >= min -> putStrLn $ (show . size $ nf) ++ " " ++ show t ++ " ->* " ++ show nf
->     Unknown -> case t of
->       DBApp fun t2@(DBLam body) | doubles fun -> case fmap classify (headarg body t2) of
->         Just (NormalForm nf) | eqfree 0 nf t2 -> putStrLn $ "Unknown-then-Diverging" ++ show t
->         _ -> putStrLn $ "Still-Unknown" ++ show t
->       DBLam (DBApp fun t2@(DBLam body)) | doubles fun -> case fmap classify (headarg body t2) of
->         Just (NormalForm nf) | eqfree 0 nf t2 -> putStrLn $ "Unknown-then-KDiverging" ++ show t
->         _ -> putStrLn $ "Still-KUnknown" ++ show t
->       _ -> putStrLn $ "Unknown" ++ show t
+>     Unknown -> putStrLn $ "Unknown" ++ show t
 >     -- Diverging -> putStrLn $ "Diverging" ++ show t
 >     _ -> return ()
 
-> toughtriples :: DB -> Bool
-> toughtriples (DBApp (DBLam (DBApp (DBApp (DBVar 0) (DBVar 0)) (DBVar 0))) (DBLam (DBLam (DBApp (DBVar 1) (DBApp (DBVar 1) _)))) ) = True
-> toughtriples _ = False
+Known nonstandard loops
+
+> loop32 :: DB
+> loop32 = read "(\\ 1 (\\ 2)) (\\ 1 1 (\\ 1 2))"
+
+Let T = \1 1 (\1 2) = \x. x x <x>
+If we denote \x. x A as <A>, and \_. x as K x, then
+    (\1 (\2)) T
+ -> T (K T)
+ -> K T (K T) <K T>
+ -> T <K T>
+ -> <K T> <K T> <<K T>>
+ -> <K T> (K T) <<K T>>
+ -> K T (K T) <<K T>>
+ -> T <<K T>>
+  etc.
+
+> loop33a :: DB
+> loop33a = read "\\ 1 (\\ 3 (2 1))"
+
+Denoting the outermost variable by z, and function composition by (.),
+let T = \1 (\3 (2 1)) = \x. x (\y. z (x y)) = \x. x (z.x)
+let T_i = z^i . T. Then
+    T T
+ -> T T_1
+ -> T_1 T_2
+ =  z (T T_2)
+ -> z (T_2 T_3)
+ =  z^3 (T T_3)
+ -> z^3 (T_3 T_4)
+ =  z^6 (T T_4)
+ -> z^6 (T_4 T_5)
+ -> z^10 (T T_5)
+etc.
+
+> loop33b :: DB
+> loop33b = read "\\ 1 (\\ \\ 1 (3 2))"
+
+If we denote \x. x A as <A>, then
+T = \1 (\\1 (3 2)) = \x. x (\y. <x y>)
+Denote T_0 = T, and T_{i+1} = T T_i = (\y. <T_i y>) = then
+T T = T T_1 = T_1 T_2 = <T T_2> = <T_2 T_3> = <<T_1 T_3>> = <<<T T_3>>> etc.
+
+> loop34a :: DB
+> loop34a = read "\\ \\ 2 (\\ 2 (3 1))"
+
+let T = \\2 (\2 (3 1))
+Denoting function composition by (.), we have T x y = x (y.x)
+(\1 1) T  = T T = \y. T (y.T) = \y\z. y (T (z.y.T)) = \y\z. y (\w. z (y (T (w.z.y.T))))  etc.
+
+> loop34b :: DB
+> loop34b = read "\\ 1 (1 (\\ \\ 1 1) 1)"   (\1 1) (\1 (1 (\\1 1) 1))
+
+Why not found before?
+
+> loop34c :: DB
+> loop34c = read "\\ \\ 2 1 (2 1)"
+
+let T = \\2 1 (2 1) = \x.\y. x y (x y)
+(\1 1 1) T = T T T = T T (T^0 T) = T T (T T) = T (T T) (T^2 T) = T T (T^2 T) ...
+T T (T^i T) = T (T^i T) (T^{i+1} T) = T (T^{i-1} T) (T^{i+1} T) ... = ... = T T (T^{i+1} T) ... etc.
+
+> tough35a :: DB
+> tough35a = read "\\ \\ 2 (2 (2 1))" -- Church 3^3^3
+
+> tough35b :: DB
+> tough35b = read "\\ \\ 2 (2 (1 2))" -- size 4186155666
+
+> excluded :: DB -> Bool
+> excluded (DBLam t) = excluded t
+> excluded (DBApp fun arg) = (doubles fun && arg `elem` [loop33a, loop33b, loop34a, loop34b]) || (triples fun && arg `elem` [loop34c, tough35a, tough35b])
+> excluded t = t `elem` [loop32]
 
 > main :: IO ()
 > main = do
+>   putStrLn . show $ loop32
 >   args <- getArgs
 >   case args of
 >     [n] -> do
 >       mapM_ (ponder 0) . filter expands . closed $ read n
 >     [n,m] -> do
->       mapM_ (ponder $ read m) . filter (\t -> expands t && not (toughtriples t)) . closed $ read n
+>       mapM_ (ponder $ read m) . filter (\t -> expands t && not (excluded t)) . closed $ read n
 >       -- mapM_ (ponder 0) . filter (== read m) . filter expands . closed $ read n
 >     _ -> putStrLn "usage: BB <Int>"
