@@ -5,7 +5,6 @@ Author: Bertram Felgenhauer / John Tromp
 > import Debug.Trace
 > import Data.List
 > import Control.Applicative
-> import qualified Data.Set as S
  
 terms with de Bruijn indices (internal: starting at 0)
 note: Bot marks useless subterms that do not contribute to the normal form
@@ -70,7 +69,6 @@ replace free variables (of a redex) by bottom
 >   str i (Abs a) = str (i+1) a
 >   str i (Var j) = i == j
 >   str i (App a _) = str i a
->   -- str _ Bot = False
 > strict _ = False
 
 Closer examination of trouble terms
@@ -81,41 +79,29 @@ Closer examination of trouble terms
 >   ex (App a b) | isW [] a && (selfish b || b `elem` []) = trace ("-- DONE: " ++ pr a0) Nothing
 >   ex _ = trace ("-- TODO: " ++ pr a0) Nothing
 
-> showset :: S.Set L -> String
-> showset s = "[" ++ intercalate ", " (map pr (S.toList s)) ++ "]"
-
 try to find normal form; Nothing means no normal form
 (logs cases where it bails out; should really be in IO...)
 
 > nf0 :: L -> Maybe L
-> nf0 a0 =  nfp S.empty a0 where
->   nfp :: S.Set L -> L -> Maybe L
->   -- nfp s a = trace ("nf " ++ showset s++ " " ++ pr a) $ nf s a
->   nfp s a = nf s a
->   nf :: S.Set L -> L -> Maybe L
->   nf s (Abs a) = Abs <$> nfp s a
+> nf0 a0 =  nf [] a0 where
+>   nf s (Abs a) = Abs <$> nf s a
 >   nf s r@(App a b) = do
->     a <- nfp s a
->     -- b <- if trace ("strict " ++ pr a ++ " = " ++ show (strict a)) (strict a) then nfp s b else Just (simplify b)
->     b <- if strict a then nfp s b else Just (simplify b)
+>     a <- nf s a
+>     b <- if strict a then nf s b else Just (simplify b)
 >     let r = botFree 0 (App a b)
->     -- case trace ("r = " ++ pr r ++ " case " ++ pr a ++ " of") a of
->     case a of
->         _   | isB [] (App a b) -> Nothing
+>     if noNF (App a b) then Nothing else case a of
 >         Abs a
->             | r `S.member` s -> Nothing
->             | S.size s > 9 -> examine a0
->             | otherwise      -> nfp (r `S.insert` s) (subst 0 a b)
+>             | r `elem` s -> Nothing
+>             | length s > 9 -> examine a0
+>             | otherwise      -> nf (r:s) (subst 0 a b)
 >         _ -> do
->             b <- nfp s b
->             return (App a b)
+>             nf s b >>= Just . App a
 >   nf _ t = Just t
 
 simplification
 
 > simplify :: L -> L
 > simplify = simp where
->     -- simp a | isB [] a || loop3 a = Bot
 >     simp (Abs a) = Abs (simp a)
 >     simp (App a b) = case simp a of
 >         Abs a | (Var _) <- b                    -> simp (subst 0 a b)
@@ -178,6 +164,9 @@ leading to infinite head reductions
 > loop3 :: L -> Bool
 > loop3 (App a (Abs b)) = isW3 [] a && isW3 [] b
 > loop3 _ = False
+
+> noNF :: L -> Bool
+> noNF a = isB [] a || loop3 a
 
 -- TODO: (\1 1) (\1 (1 (\2)) (\2))
 T = \x. x (x (K x)) (K x)
