@@ -53,17 +53,6 @@ replace free variables (of a redex) by bottom
 > botFree i (Abs a)   = Abs (botFree (i+1) a)
 > botFree _ Bot       = Bot
 
-> headarg :: L -> L -> Maybe L
-> headarg (App (Var 0) a) t = Just $ subst 0 a t
-> headarg (App a b) t = headarg a t
-> headarg _ _ = Nothing
-
-> selfish :: L -> Bool
-> selfish t@(Abs body) = case headarg body t >>= nf0 of
->   Just hanf -> botFree 0 hanf == botFree 0 t
->   Nothing -> False
-> selfish _ = False
-
 > strict :: L -> Bool
 > strict (Abs a) = str 0 a where
 >   str i (Abs a) = str (i+1) a
@@ -76,7 +65,7 @@ Closer examination of trouble terms
 > examine :: L -> Maybe L
 > examine a0 = ex a0 where
 >   ex (Abs a) = Abs <$> ex a
->   ex (App a b) | isW [] a && (selfish b || b `elem` []) = trace ("-- DONE: " ++ pr a0) Nothing
+>   ex (App a b) | (isW [] a &&  b `elem` []) || (isW3 [] a && b `elem` []) = trace ("-- DONE: " ++ pr a0) Nothing
 >   ex _ = trace ("-- TODO: " ++ pr a0) Nothing
 
 try to find normal form; Nothing means no normal form
