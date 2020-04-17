@@ -70,7 +70,7 @@ nf a0 = go S.empty a0 where
         b <- return (simp b)
         let r = botFree 0 (App a b)
         case a of
-            _   | isW a && isW b -> Nothing
+            _   | isB (App a b) -> Nothing
             Abs a
                 | r `S.member` s -> Nothing
                 | S.size s > 10  -> trace ("-- TODO: " ++ pr a0) Nothing
@@ -117,17 +117,17 @@ simp = go where
 
 -- various terms W that allow W W -> H[W W] for head context H,
 -- leading to infinite head reductions
-isW :: L -> Bool
-isW = go [] where
-    go is (Var i) = i `elem` is
-    go is (Abs a) = go' (0 : map succ is) a
-    -- go is Bot = True
-    go _ _ = False
+isB :: L -> Bool
+isB = goB [] where
+    goW is (Var i) = i `elem` is
+    goW is (Abs a) = goB (0 : map succ is) a
+    -- goW is Bot = True
+    goW is a = goB is a
 
-    go' is (App a@(App _ _) _) = go' is a
-    go' is (App a b) = go is a && go is b
-    go' is (Abs a) = go' (map succ is) a
-    go' _ _ = False
+    goB is (App a@(App _ _) _) = goB is a
+    goB is (App a b) = goW is a && goW is b
+    goB is (Abs a) = goB (map succ is) a
+    goB _ _ = False
 
 main :: IO ()
 main = do
