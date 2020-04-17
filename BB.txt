@@ -48,7 +48,6 @@ generalizing the ω ω -> ω ω case, where ω = (\1 1), see below.
 -- TODO: \(\1 (\2)) (\1 1 (\1 2))
 (34,327686,(\1 1 1 1) (\\2 (2 1)))
 -- TODO: (\1 1) (\1 (\1 (\1) (2 1)))
--- TODO: (\1 1) (\1 (\1 (1 (\1)) 2))
 -- TODO: (\1 1) (\1 (\1 (\\4) 1))
 -- TODO: (\1 1) (\1 (\1 (\1) 2 1))
 -- TODO: (\1 1) (\1 (\1) (\1 (2 1)))
@@ -171,21 +170,61 @@ see subterm at 32
 -- for 35
 
 -- TODO: (\1 1) (\1 (\1 (\1) (2 1)))
--- TODO: (\1 1) (\1 (\1 (1 (\1)) 2))
--- TODO: (\1 1) (\1 (\1 (\\4) 1))
--- TODO: (\1 1) (\1 (\1 (\1) 2 1))
--- TODO: (\1 1) (\1 (\1) (\1 (2 1)))
--- TODO: (\1 1) (\1 (\\1 (2 1)) 1)
+let T = \x.x (\y.y I (x y))
+let T_0 = T and T_{i+1} = \y.y I (T_i y)
+T_{i+1} I = I I (T_i I) = T_i I =* T I = \y.y I y
+T_{i+1} T_j = T_j I (T_i T_j) = T_i T_j I (T_i T_j) =* T T_j ...
+T T_i = T_i T_{i+1} =* T T_{i+1} ...
+T T = T T_1 = T T_2 ... etc.
 
--- TODO: (\1 1 1) (\\2 (2 (1 2)))        size 4186155666
--- TODO: (\1 1 1) (\\2 (2 (2 1)))        size 38127987424941	Church 3^3^3 = 3^27
+-- TODO: (\1 1) (\1 (\1 (\\4) 1))
+let T = \x.x (\y.y (K^2 x) y)
+let T_0 = T and T_{i+1} = \y.y (K^2 T_i) y
+T_{i+1} T_j = T_j (K^2 T_i) T_j = K^2 T_i (K^2 T_{j-1}) (K^2 T_i) T_j I = T_i T_j =* T T_j
+T T_i = T_i T_{i+1} =* T T_{i+1}
+T T = T T_1 = T T_2 etc.
+
+-- TODO: (\1 1) (\1 (\1 (\1) 2 1))
+let T = \x.x (\y.y I x y)
+let T_0 = T and T_{i+1} = \y.y I T_i y
+T_{i+1} I = I I T_i I = T_i I =* T I = \y.y I I y
+T_{i+1} T_j = T_j I T_i T_j = T_i I I T_i T_j = T_i T_j =* T T_j
+T T_i = T_i T_{i+1} =* T T_{i+1}
+T T = T T_1 = T T_2 etc.
+
+-- TODO: (\1 1) (\1 (\1) (\1 (2 1)))
+let T = \x.x I (\y.y (x y))
+let T_0 = T and T_{i+1} = \y.y (T_i y)
+T_{i+1} I = I (T_i I) = T_i I =* T I = \y.y y
+T_{i+1} T_j = T_j (T_i T_j) = T_i T_j (T_{j-1} (T_i T_j)) = T_i T_j ... =* T T_j ...
+T T_i = T_i I T_{i+1} = T_{i+1} T_{i+1} =* T T_{i+1} ...
+T T =* T T1 ... =* T T_2 ...  etc.
+
+-- TODO: (\1 1) (\1 (\\1 (2 1)) 1)
+let U = \y\z.z (y z), T = \x.x U x, and T_i = U^i T
+for j > 0
+  T_{i+1} U T_j = U T_i U T_j = U (T_i U) T_j = T_j (T_i U T_j) = U T_{j-1} (T_i U T_j) = T_i U T_j ... =* T U T_j ...
+  T_{i+1} T_j = U T_i T_j = T_j (T_i T_j) = U T_{j-1} (T_i T_j) = T_i T_j ... =* T T_j ...
+for i > 0
+  T T_i = T_i U T_i =* T U T_i ...
+  T U T_i = U U U T_i = U (U U) T_i = T_i (U U T_i) = U T_{i-1} (U U T_i) = U U T_i ...
+  U U T_i = T_i T_{i+1} =* T T_{i+1} ...
+(\1 1) T = T T = T U T = U U U T = U (U U) T = T (U U T) = U U T ...
+U U T = T (U T) = T T_1 =* T T_2 ... =* T T_3 ... etc.
+
+-- TODO: (\1 1 1) (\\2 (2 (1 2)))
+has Normal Form of size 4186155666, as reported by ./blc nf_size
+
+-- TODO: (\1 1 1) (\\2 (2 (2 1)))
+Church numeral 3^3^3 = 3^27 of size 5*3^27+6 = 38127987424941
+
 -- TODO: (\1 1 1) (\\1 1 (\1 2))
   If we denote \x. x A as <A>, then
   T = \\1 1 (\1 2) = \_\x. x x <x>
   T T T = T T <T> = <T> <T> <<T>> = <T> T <<T>> = T T <<TT>> = <<T>> <<T>> <<<T>>> =* T T <<<T>>> etc.
--- TODO: \(\1 1) (\1 (\\1 (3 2))) see 33
--- TODO: \\(\1 1) (\1 (\3 (2 1))) see 33
 
-(\1 1) (\1 (1 (\\1 (2 1))))
-(\1 1) (\1 (\1) (\1 (2 1)))     etc
-(\1 1) (\1 (\\1 (2 1)) 1)       etc
+-- TODO: \(\1 1) (\1 (\\1 (3 2)))
+see subterm at 33
+
+-- TODO: \\(\1 1) (\1 (\3 (2 1)))
+see subterm at 33

@@ -84,7 +84,7 @@ try to find normal form; Nothing means no normal form
 >     if noNF (App a b) then Nothing else case a of
 >         Abs a
 >             | r `elem` s   -> Nothing
->             | length s > 9 -> todo a0
+>             | length s > 10 -> todo a0
 >             | otherwise    -> nf (r:s) (subst 0 a b)
 >         _ -> do
 >             nf s b >>= Just . App a
