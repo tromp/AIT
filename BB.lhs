@@ -60,19 +60,22 @@ replace free variables (of a redex) by bottom
 >   str i (App a _) = str i a
 > strict _ = False
 
-Closer examination of trouble terms
+trouble terms
 
-> examine :: L -> Maybe L
-> examine a0 = ex a0 where
+> todo :: L -> Maybe L
+> todo a0 = ex a0 where
 >   ex (Abs a) = Abs <$> ex a
->   ex (App a b) | (isW [] a &&  b `elem` []) || (isW3 [] a && b `elem` []) = trace ("-- DONE: " ++ pr a0) Nothing
+>   ex (App a b) | (isW  [] a &&  b `elem` []) ||
+>                  (isW3 [] a && b `elem` [])
+>        = trace ("-- DONE: " ++ pr a0) Nothing
 >   ex _ = trace ("-- TODO: " ++ pr a0) Nothing
 
 try to find normal form; Nothing means no normal form
 (logs cases where it bails out; should really be in IO...)
 
 > nf0 :: L -> Maybe L
-> nf0 a0 =  nf [] a0 where
+> nf0 a@(App (Abs (App (App (Var 0) (Var 0)) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (App (Var i) (Var j))))))) | i+j==1 = todo a
+> nf0 a0 = nf [] a0 where
 >   nf s (Abs a) = Abs <$> nf s a
 >   nf s r@(App a b) = do
 >     a <- nf s a
@@ -80,9 +83,9 @@ try to find normal form; Nothing means no normal form
 >     let r = botFree 0 (App a b)
 >     if noNF (App a b) then Nothing else case a of
 >         Abs a
->             | r `elem` s -> Nothing
->             | length s > 9 -> examine a0
->             | otherwise      -> nf (r:s) (subst 0 a b)
+>             | r `elem` s   -> Nothing
+>             | length s > 9 -> todo a0
+>             | otherwise    -> nf (r:s) (subst 0 a b)
 >         _ -> do
 >             nf s b >>= Just . App a
 >   nf _ t = Just t
@@ -157,20 +160,11 @@ leading to infinite head reductions
 > noNF :: L -> Bool
 > noNF a = isB [] a || loop3 a
 
--- TODO: (\1 1) (\1 (1 (\2)) (\2))
-T = \x. x (x (K x)) (K x)
--- TODO: (\1 1) (\1 (1 (\\3)) 1)
--- TODO: (\1 1) (\(\1 (1 (\3))) 1)
--- TODO: (\1 1) (\(\1 (2 (\2))) 1)
--- TODO: (\1 1) (\(\2 (1 (\2))) 1)
--- TODO: (\1 1 1) (\\1 (\3) 1)
-
-
 > main :: IO ()
 > main = do
 >     hSetBuffering stdout LineBuffering
 >     -- print $ nf0 debug
->     mapM_ print [f n | n <- [0..34]]
+>     mapM_ print [f n | n <- [0..35]]
 >   where
 >     f n = maximum $
 >         (n,0,P Bot) : [(n,size t,P a) | a <- gen 0 n, Just t <- [nf0 a]]
