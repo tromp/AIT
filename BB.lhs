@@ -74,7 +74,33 @@ try to find normal form; Nothing means no normal form
 (logs cases where it bails out; should really be in IO...)
 
 > nf0 :: L -> Maybe L
+
+size 34 (\1 1 1 1) C2 and (\1 (1 1) 1) C2 
+
+> -- nf0 a@(App (Abs (App (App (App (Var 0) (Var 0)) (Var 0)) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (Var 0)))))) = todo a
+> -- nf0 a@(App (Abs (App (App (Var 0) (App (Var 0) (Var 0))) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (Var 0)))))) = todo a
+
+size 35 (\1 1 1) C3 and (\1 (1 1) 1) (\\2 2 (1 2))
+
 > nf0 a@(App (Abs (App (App (Var 0) (Var 0)) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (App (Var i) (Var j))))))) | i+j==1 = todo a
+
+size 36 (\1 1) (\1 (1 (\\2 (2 1)))) and \(\1 1 1 1) C2 and \(\1 (1 1) 1) C2 
+
+> nf0 a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 0) (App (Var 0) (Abs (Abs (App (Var 1) (App (Var 1) (Var 0))))))))) = todo a
+> -- nf0 a@(Abs (App (Abs (App (App (App (Var 0) (Var 0)) (Var 0)) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (Var 0))))))) = todo a
+> -- nf0 a@(Abs (App (Abs (App (App (Var 0) (App (Var 0) (Var 0))) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (Var 0))))))) = todo a
+
+size 37 (\1 1) (\1 (1 (\\2 (3 1)))) and (\1 1) (\1 (1 (\\3 (2 1)))) and (\1 1) (\1 (\2 (1 (2 (\2))))) and (\1 1) (\1 (\2 (2 (\2) 1))) and (\1 1) (\1 (\\3 (2 1)) 1) and \(\1 1) (\2 (1 (\2 (2 1)))) and \ size 35 ones and what is going on
+
+> -- nf0 a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 0) (App (Var 0) (Abs (Abs (App (Var 1) (App (Var 2) (Var 0))))))))) = todo a
+> -- nf0 a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 0) (App (Var 0) (Abs (Abs (App (Var 2) (App (Var 1) (Var 0))))))))) = todo a
+> -- nf0 a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 0) (Abs (App (Var 1) (App (Var 0) (App (Var 1) (Abs (Var 1))))))))) = todo a
+> -- nf0 a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 0) (Abs (App (Var 1) (App (App (Var 1) (Abs (Var 1))) (Var 0))))))) = todo a
+> -- nf0 a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (App (Var 0) (Abs (Abs (App (Var 2) (App (Var 1) (Var 0)))))) (Var 0)))) = todo a
+> -- nf0 a@(Abs (App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 1) (App (Var 0) (Abs (App (Var 1) (App (Var 1) (Var 0))))))))) = todo a
+> -- nf0 a@(Abs (App (Abs (App (App (Var 0) (Var 0)) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (App (Var i) (Var j)))))))) | i+j==1 = todo a
+
+> -- nf0 a0 = trace (pr a0) $ nf [] a0 where
 > nf0 a0 = nf [] a0 where
 >   nf s (Abs a) = Abs <$> nf s a
 >   nf s r@(App a b) = do
@@ -164,7 +190,7 @@ leading to infinite head reductions
 > main = do
 >     hSetBuffering stdout LineBuffering
 >     -- print $ nf0 debug
->     mapM_ print [f n | n <- [0..35]]
+>     mapM_ print [f n | n <- [0..36]]
 >   where
 >     f n = maximum $
 >         (n,0,P Bot) : [(n,size t,P a) | a <- gen 0 n, Just t <- [nf0 a]]
