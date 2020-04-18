@@ -22,16 +22,12 @@ in ackerlike
 -- ackify ntothen (ntothen 4) =
 -- ackify ntothen (4 4) =
 -- ackify ntothen 256 =
--- 256 ntothen 256 =
--- 256 ntothen 256 =
--- HUGE
-
--- term of size 47 bits
--- 2 ackify 2 2 =
--- ackify (ackify 2) 2 =
--- 2 (ackify 2) 2 =
--- ackify 2 (ackify 2 2) =
--- ackify 2 (2 2 2) =
--- ackify 2 16 =
--- 16 2 16 =
--- 16 ^ (2 ^ 16)
+-- 256 ntothen 256 >
+-- exponential tower with 256 levels:
+--                   256
+--                .
+--             .
+--          .
+--       256
+--    256
+-- 256
