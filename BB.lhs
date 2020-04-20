@@ -4,7 +4,9 @@ Author: Bertram Felgenhauer / John Tromp
 > import System.IO
 > import Debug.Trace
 > import Data.List
+> import Data.Bits
 > import Control.Applicative
+> import Control.Exception.Assert
  
 terms with de Bruijn indices (internal: starting at 0)
 note: Bot marks useless subterms that do not contribute to the normal form
@@ -63,58 +65,111 @@ replace free variables (of a redex) by bottom
 trouble terms
 
 > todo :: L -> Maybe L
-> todo a0 = ex a0 where
->   ex (Abs a) = Abs <$> ex a
->   ex (App a b) | (isW  [] a &&  b `elem` []) ||
->                  (isW3 [] a && b `elem` [])
->        = trace ("-- DONE: " ++ pr a0) Nothing
->   ex _ = trace ("-- TODO: " ++ pr a0) Nothing
+> todo a = trace ("-- TODO: " ++ pr a) Nothing
+
+should really use fast reduction by Higher Order Abstract Syntax
+
+> fastnf :: L -> Maybe L
+> fastnf a = todo a
 
 try to find normal form; Nothing means no normal form
 (logs cases where it bails out; should really be in IO...)
 
-> nf0 :: L -> Maybe L
+> normalForm :: L -> Maybe L
 
 size 34 (\1 1 1 1) C2 and (\1 (1 1) 1) C2 
 
-> -- nf0 a@(App (Abs (App (App (App (Var 0) (Var 0)) (Var 0)) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (Var 0)))))) = todo a
-> -- nf0 a@(App (Abs (App (App (Var 0) (App (Var 0) (Var 0))) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (Var 0)))))) = todo a
+> -- normalForm a@(App (Abs (App (App (App (Var 0) (Var 0)) (Var 0)) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (Var 0)))))) = fastnf a
+> -- normalForm a@(App (Abs (App (App (Var 0) (App (Var 0) (Var 0))) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (Var 0)))))) = fastnf a
 
 size 35 (\1 1 1) C3 and (\1 (1 1) 1) (\\2 2 (1 2))
 
-> nf0 a@(App (Abs (App (App (Var 0) (Var 0)) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (App (Var i) (Var j))))))) | i+j==1 = todo a
+> normalForm a@(App (Abs (App (App (Var 0) (Var 0)) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (App (Var i) (Var j))))))) | i+j==1 = todo a
 
 size 36 (\1 1) (\1 (1 (\\2 (2 1)))) and \(\1 1 1 1) C2 and \(\1 (1 1) 1) C2 
 
-> nf0 a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 0) (App (Var 0) (Abs (Abs (App (Var 1) (App (Var 1) (Var 0))))))))) = todo a
-> -- nf0 a@(Abs (App (Abs (App (App (App (Var 0) (Var 0)) (Var 0)) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (Var 0))))))) = todo a
-> -- nf0 a@(Abs (App (Abs (App (App (Var 0) (App (Var 0) (Var 0))) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (Var 0))))))) = todo a
+> normalForm a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 0) (App (Var 0) (Abs (Abs (App (Var 1) (App (Var 1) (Var 0))))))))) = todo a
+> -- normalForm a@(Abs (App (Abs (App (App (App (Var 0) (Var 0)) (Var 0)) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (Var 0))))))) = fastnf a
+> -- normalForm a@(Abs (App (Abs (App (App (Var 0) (App (Var 0) (Var 0))) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (Var 0))))))) = fastnf a
 
 size 37 (\1 1) (\1 (1 (\\2 (3 1)))) and (\1 1) (\1 (1 (\\3 (2 1)))) and (\1 1) (\1 (\2 (1 (2 (\2))))) and (\1 1) (\1 (\2 (2 (\2) 1))) and (\1 1) (\1 (\\3 (2 1)) 1) and \(\1 1) (\2 (1 (\2 (2 1)))) and \ size 35 ones and what is going on
 
-> -- nf0 a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 0) (App (Var 0) (Abs (Abs (App (Var 1) (App (Var 2) (Var 0))))))))) = todo a
-> -- nf0 a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 0) (App (Var 0) (Abs (Abs (App (Var 2) (App (Var 1) (Var 0))))))))) = todo a
-> -- nf0 a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 0) (Abs (App (Var 1) (App (Var 0) (App (Var 1) (Abs (Var 1))))))))) = todo a
-> -- nf0 a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 0) (Abs (App (Var 1) (App (App (Var 1) (Abs (Var 1))) (Var 0))))))) = todo a
-> -- nf0 a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (App (Var 0) (Abs (Abs (App (Var 2) (App (Var 1) (Var 0)))))) (Var 0)))) = todo a
-> -- nf0 a@(Abs (App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 1) (App (Var 0) (Abs (App (Var 1) (App (Var 1) (Var 0))))))))) = todo a
-> -- nf0 a@(Abs (App (Abs (App (App (Var 0) (Var 0)) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (App (Var i) (Var j)))))))) | i+j==1 = todo a
+> -- normalForm a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 0) (App (Var 0) (Abs (Abs (App (Var 1) (App (Var 2) (Var 0))))))))) = todo a
+> -- normalForm a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 0) (App (Var 0) (Abs (Abs (App (Var 2) (App (Var 1) (Var 0))))))))) = todo a
+> -- normalForm a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 0) (Abs (App (Var 1) (App (Var 0) (App (Var 1) (Abs (Var 1))))))))) = todo a
+> -- normalForm a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 0) (Abs (App (Var 1) (App (App (Var 1) (Abs (Var 1))) (Var 0))))))) = todo a
+> -- normalForm a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (App (Var 0) (Abs (Abs (App (Var 2) (App (Var 1) (Var 0)))))) (Var 0)))) = todo a
+> -- normalForm a@(Abs (App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 1) (App (Var 0) (Abs (App (Var 1) (App (Var 1) (Var 0))))))))) = todo a
+> -- normalForm a@(Abs (App (Abs (App (App (Var 0) (Var 0)) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (App (Var i) (Var j)))))))) | i+j==1 = todo a
 
-> -- nf0 a0 = trace (pr a0) $ nf [] a0 where
-> nf0 a0 = nf [] a0 where
->   nf s (Abs a) = Abs <$> nf s a
->   nf s r@(App a b) = do
->     a <- nf s a
->     b <- if strict a then nf s b else Just (simplify b)
+> -- normalForm a0 =  trace ("nf0 " ++ pr a0) nf0 a0 where
+> normalForm a0 =  nf0 a0 where
+
+>   nf0 (Abs a) = Abs <$> nf0 a
+>   nf0 a = nf 0 [] a
+
+>   nf f s (Abs a) = Abs <$> nf (f+1) s a
+>   nf f s r@(App a b) = do
+>     a <- nf f s a
+>     b <- if strict a then nf f s b else Just (simplify b)
 >     let r = botFree 0 (App a b)
->     if noNF (App a b) then Nothing else case a of
+>     if noNF f (App a b) then Nothing else case a of
 >         Abs a
 >             | r `elem` s   -> Nothing
 >             | length s > 10 -> todo a0
->             | otherwise    -> nf (r:s) (subst 0 a b)
+>             | otherwise    -> nf f (r:s) (subst 0 a b)
 >         _ -> do
->             nf s b >>= Just . App a
->   nf _ t = Just t
+>             nf f s b >>= Just . App a
+>   nf _ _ t = Just t
+
+>   noNF :: Int -> L -> Bool
+>   noNF f a = let is = bit f in isB is a || noNF3 is a where
+>     noNF3 :: Int -> L -> Bool
+>     noNF3 is (App a (Abs b)) = isW3 is a && isW3 is b
+>     noNF3 _ _ = False
+
+
+various terms W that allow W W -> H[W W] for strict head context H,
+leading to infinite head reductions
+
+>   isW :: Int -> L -> Bool
+>   isW is (Var i) = istest is i
+>   isW is (Abs a) = isB (2*is+1) a
+>   isW _ Bot = True
+>   isW _ _ = False
+
+>   isB :: Int -> L -> Bool
+>   isB is (App a@(App _ _) b) = isB is a || (isF is a && isB is b)
+>   isB is (App a@(Var _) b) | isF is a = isB is b
+>   isB is (App a b) = isW is a && (isW is b || isB is b)
+>   isB is (Abs a) = isB (2*is) a
+>   isB _ Bot = True
+>   isB _ a = False
+
+>   istest :: Int -> Int -> Bool
+>   istest is i = is `testBit` i && is >= bit (i+1)
+
+>   isF :: Int -> L -> Bool
+>   isF is (Var i) = bit (i+1) > is
+>   isF is (App a _) = isF is a
+>   isF _ _ = False
+
+various terms W that allow W _ W -> H[W _ W] for strict head context H,
+leading to infinite head reductions
+
+>   isW3 :: Int -> L -> Bool
+>   isW3 is (Var i) = istest is i
+>   isW3 is (Abs a) = isB3 (2*is+1) a
+>   isW3 _ Bot = True
+>   isW3 _ _ = False
+
+>   isB3 :: Int -> L -> Bool
+>   isB3 is (App a@(App (App _ _)  _) b) = isB3 is a || (isF is a && isB is b)
+>   isB3 is (App (App a _) b) = (isW3 is a && (isW3 is b || isB3 is b)) || (isF is a && isB is b)
+>   isB3 is (App a@(Var _) b) = isF is a && isB is b
+>   isB3 is (Abs a) = isB3 (2*is) a
+>   isB3 _  Bot = True
+>   isB3 _  _ = False
 
 simplification
 
@@ -147,75 +202,13 @@ simplification
 >     simpI i (Abs a) = Abs (simpI (i+1) a)
 >     simpI _ a = a
 
-various terms W that allow W W -> H[W W] for head context H,
-leading to infinite head reductions
-
-> isW :: [Int] -> L -> Bool
-> isW is (Var i) = i `elem` is
-> isW is (Abs a) = isB (0 : map succ is) a
-> isW _ Bot = True
-> isW _ _ = False
-
-> isB :: [Int] -> L -> Bool
-> isB is (App a@(App _ _) _) = isB is a
-> isB is (App a b) = isW is a && (isW is b || isB is b)
-> isB is (Abs a) = isB (map succ is) a
-> isB _ Bot = True
-> isB _ a = False
-
-various terms W that allow W _ W -> H[W _ W] for head context H,
-leading to infinite head reductions
-
-> isW3 :: [Int] -> L -> Bool
-> isW3 is (Var i) = i `elem` is
-> isW3 is (Abs a) = isB3 (0 : map succ is) a
-> isW3 _ Bot = True
-> isW3 is a = isB3 is a
-
-> isB3 :: [Int] -> L -> Bool
-> isB3 is (App a@(App (App _ _)  _) _) = isB3 is a
-> isB3 is (App (App a _) b) = isW3 is a && isW3 is b
-> isB3 is (Abs a) = isB3 (map succ is) a
-> isB3 _ Bot = True
-> isB3 _ a = False
-
-> loop3 :: L -> Bool
-> loop3 (App a (Abs b)) = isW3 [] a && isW3 [] b
-> loop3 _ = False
-
-> noNF :: L -> Bool
-> noNF a = isB [] a || loop3 a
-
 > main :: IO ()
 > main = do
 >     hSetBuffering stdout LineBuffering
->     -- print $ nf0 debug
->     mapM_ print [f n | n <- [0..36]]
+>     mapM_ print [f n | n <- [13..36]]
 >   where
 >     f n = maximum $
->         (n,0,P Bot) : [(n,size t,P a) | a <- gen 0 n, Just t <- [nf0 a]]
-
-how is size-32 (\1 (\2)) (\1 1 (\1 2)) seen to loop?
-Let T = \1 1 (\1 2) = \x. x x <x>
-If we denote \x. x A as <A>, and \_. x as K x, then
-    (\1 (\2)) T
- -> T (K T)
- -> K T (K T) <K T>
- -> T <K T>
- -> <K T> <K T> <<K T>>
- -> <K T> (K T) <<K T>>
- -> K T (K T) <<K T>>
- -> T <<K T>>
-  etc.
-
-> dbgdbl :: L
-> dbgdbl = Abs (App (Var 0) (Var 0))
-> dbgu :: L
-> dbgu = Abs (App (Var 0) (Abs (Var 1)))
-> dbgt :: L
-> dbgt = Abs (App (Var 0) (App (Var 0) dbgu))
-> debug :: L
-> debug = dbgdbl `App` dbgt
+>         (n,0,P Bot) : [(n,size t,P a) | a <- gen 0 n, Just t <- [normalForm a]]
 
 printing
 
