@@ -205,7 +205,7 @@ simplification
 > main :: IO ()
 > main = do
 >     hSetBuffering stdout LineBuffering
->     mapM_ print [f n | n <- [13..36]]
+>     mapM_ print [f n | n <- [0..36]]
 >   where
 >     f n = maximum $
 >         (n,0,P Bot) : [(n,size t,P a) | a <- gen 0 n, Just t <- [normalForm a]]
