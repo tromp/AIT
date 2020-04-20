@@ -83,11 +83,11 @@ generalizing the ω ω -> ω ω case, where ω = (\1 1), see below.
 
 For this section we use ordinary lambda terms with names. Let
 
-  T ::= v | \v. T | T T                         (terms)
-  H ::= □ | \v. H | H T                 	(head contexts)
-  W^V ::= V | \v. B^({v} ∪ V)                   (ω-like terms)
-  B^V ::= W^V X^V | \v. B^V | B^V T             (⊥-like terms)
-  X^V ::= W^V | B^V                             (ω-like or ⊥-like)
+  T ::= v | \v. T | T T                                (terms)
+  H ::= □ | \v. H | H T | freeV T^* H                  (head contexts)
+  W^V ::= V | \v. B^({v} ∪ V)                          (ω-like terms)
+  B^V ::= W^V X^V | \v. B^V | B^V T | freeV T^* B^V)   (⊥-like terms)
+  X^V ::= W^V | B^V                                    (ω-like or ⊥-like)
   W = W^{}
   B = B^{}
   X = X^{}
@@ -251,22 +251,22 @@ see subterm at 33
 
 -- for 36
 
--- TODO: (\1 1) (\1 (1 (\\1 (3 1))))
+-- TODO: (\1 1) (\1 (1 (\\1 (3 1)))) T_{i+1} T_j done on paper
 -- TODO: (\1 1) (\1 (1 (\\2 (2 1)))) Church numeral 2^256 of size 578960446186580977117854925043439539266349923328202820197287920039565648199686
--- TODO: (\1 1) (\1 (\1 (2 (1 (\2)))))
--- TODO: (\1 1) (\1 (\1 (1 (\3) 1)))
--- TODO: (\1 1) (\1 (1 (\2)) (\1 2))
--- TODO: (\1 (\2)) (\1 1 (\1 2) 1)
--- TODO: (\1 1 1) (\\1 (1 (\3) 1))
--- TODO: (\1 1 1) (\\1 2 (\1 2))
--- TODO: (\1 1 1) (\\2 1 (\1 2))
--- TODO: (\1 1 1) (\\1 1 (\3) 1)
--- TODO: (\1 (1 (\2))) (\1 1 (\1 2))
--- TODO: (\1 (\2) 1) (\1 1 (\1 2))
--- TODO: (\\2 (\3)) (\1 1 (\1 2))
--- TODO: \(\1 1) (\2 (1 (\1 (2 1))))
--- TODO: \(\1 1) (\2 (1 (\2 1 1)))
--- TODO: \(\1 1) (\2 (1 (\\3 2)))
--- TODO: \(\1 1) (\\2 (\2 (3 1)))
--- TODO: \\(\1 1) (\1 (\4 (2 1)))
+-- TODO: (\1 1) (\1 (\1 (2 (1 (\2))))) done on paper
+-- TODO: (\1 1) (\1 (\1 (1 (\3) 1))) done on paper
+-- TODO: (\1 1) (\1 (1 (\2)) (\1 2)) done on paper
+-- TODO: (\1 (\2)) (\1 1 (\1 2) 1) entirely similar to subterm at 32
+-- TODO: (\1 1 1) (\\1 (1 (\3) 1)) done on paper
+-- TODO: (\1 1 1) (\\1 2 (\1 2)) done on paper
+-- TODO: (\1 1 1) (\\2 1 (\1 2)) done on paper
+-- TODO: (\1 1 1) (\\1 1 (\3) 1) done on paper
+-- TODO: (\1 (1 (\2))) (\1 1 (\1 2)) see subterm at 32
+-- TODO: (\1 (\2) 1) (\1 1 (\1 2)) see subterm at 32
+-- TODO: (\\2 (\3)) (\1 1 (\1 2)) see subterm at 32
+-- TODO: \(\1 1) (\2 (1 (\1 (2 1)))) done on paper
+-- TODO: \(\1 1) (\2 (1 (\2 1 1))) done on paper
+-- TODO: \(\1 1) (\2 (1 (\\3 2))) done on paper
+-- TODO: \(\1 1) (\\2 (\2 (3 1))) see subterm at 34
+-- TODO: \\(\1 1) (\1 (\4 (2 1))) done on paper
 -- TODO: \\(\1 (\2)) (\1 1 (\1 2)) see subterm at 32
