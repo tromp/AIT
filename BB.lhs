@@ -67,10 +67,14 @@ trouble terms
 > todo :: L -> Maybe L
 > todo a = trace ("-- TODO: " ++ pr a) Nothing
 
-should really use fast reduction by Higher Order Abstract Syntax
+guaranteed normal form
 
-> fastnf :: L -> Maybe L
-> fastnf a = todo a
+> gnf :: L -> L
+> gnf (App a b) = case gnf a of
+>   Abs a -> gnf (subst 0 a b)
+>   a -> App a (gnf b)
+> gnf (Abs a) = Abs (gnf a)
+> gnf a = a
 
 try to find normal form; Nothing means no normal form
 (logs cases where it bails out; should really be in IO...)
@@ -79,8 +83,8 @@ try to find normal form; Nothing means no normal form
 
 size 34 (\1 1 1 1) C2 and (\1 (1 1) 1) C2 
 
-> -- normalForm a@(App (Abs (App (App (App (Var 0) (Var 0)) (Var 0)) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (Var 0)))))) = fastnf a
-> -- normalForm a@(App (Abs (App (App (Var 0) (App (Var 0) (Var 0))) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (Var 0)))))) = fastnf a
+> normalForm a@(App (Abs (App (App (App (Var 0) (Var 0)) (Var 0)) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (Var 0)))))) = Just (gnf a)
+> normalForm a@(App (Abs (App (App (Var 0) (App (Var 0) (Var 0))) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (Var 0)))))) = Just (gnf a)
 
 size 35 (\1 1 1) C3 and (\1 (1 1) 1) (\\2 2 (1 2))
 
@@ -89,24 +93,27 @@ size 35 (\1 1 1) C3 and (\1 (1 1) 1) (\\2 2 (1 2))
 size 36 (\1 1) (\1 (1 (\\2 (2 1)))) and \(\1 1 1 1) C2 and \(\1 (1 1) 1) C2 
 
 > normalForm a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 0) (App (Var 0) (Abs (Abs (App (Var 1) (App (Var 1) (Var 0))))))))) = todo a
-> -- normalForm a@(Abs (App (Abs (App (App (App (Var 0) (Var 0)) (Var 0)) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (Var 0))))))) = fastnf a
-> -- normalForm a@(Abs (App (Abs (App (App (Var 0) (App (Var 0) (Var 0))) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (Var 0))))))) = fastnf a
+> normalForm a@(Abs (App (Abs (App (App (App (Var 0) (Var 0)) (Var 0)) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (Var 0))))))) = Just (gnf a)
+> normalForm a@(Abs (App (Abs (App (App (Var 0) (App (Var 0) (Var 0))) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (Var 0))))))) = Just (gnf a)
 
 size 37 (\1 1) (\1 (1 (\\2 (3 1)))) and (\1 1) (\1 (1 (\\3 (2 1)))) and (\1 1) (\1 (\2 (1 (2 (\2))))) and (\1 1) (\1 (\2 (2 (\2) 1))) and (\1 1) (\1 (\\3 (2 1)) 1) and \(\1 1) (\2 (1 (\2 (2 1)))) and \ size 35 ones and what is going on
 
-> -- normalForm a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 0) (App (Var 0) (Abs (Abs (App (Var 1) (App (Var 2) (Var 0))))))))) = todo a
-> -- normalForm a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 0) (App (Var 0) (Abs (Abs (App (Var 2) (App (Var 1) (Var 0))))))))) = todo a
-> -- normalForm a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 0) (Abs (App (Var 1) (App (Var 0) (App (Var 1) (Abs (Var 1))))))))) = todo a
-> -- normalForm a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 0) (Abs (App (Var 1) (App (App (Var 1) (Abs (Var 1))) (Var 0))))))) = todo a
-> -- normalForm a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (App (Var 0) (Abs (Abs (App (Var 2) (App (Var 1) (Var 0)))))) (Var 0)))) = todo a
-> -- normalForm a@(Abs (App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 1) (App (Var 0) (Abs (App (Var 1) (App (Var 1) (Var 0))))))))) = todo a
-> -- normalForm a@(Abs (App (Abs (App (App (Var 0) (Var 0)) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (App (Var i) (Var j)))))))) | i+j==1 = todo a
+> normalForm a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 0) (App (Var 0) (Abs (Abs (App (Var 1) (App (Var 2) (Var 0))))))))) = todo a
+> normalForm a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 0) (App (Var 0) (Abs (Abs (App (Var 2) (App (Var 1) (Var 0))))))))) = todo a
+> normalForm a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 0) (Abs (App (Var 1) (App (Var 0) (App (Var 1) (Abs (Var 1))))))))) = todo a
+> normalForm a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 0) (Abs (App (Var 1) (App (App (Var 1) (Abs (Var 1))) (Var 0))))))) = todo a
+> normalForm a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (App (Var 0) (Abs (Abs (App (Var 2) (App (Var 1) (Var 0)))))) (Var 0)))) = todo a
+> normalForm a@(Abs (App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 1) (App (Var 0) (Abs (App (Var 1) (App (Var 1) (Var 0))))))))) = todo a
+> normalForm a@(Abs (App (Abs (App (App (Var 0) (Var 0)) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (App (Var i) (Var j)))))))) | i+j==1 = todo a
 
 > -- normalForm a0 =  trace ("nf0 " ++ pr a0) nf0 a0 where
 > normalForm a0 =  nf0 a0 where
 
 >   nf0 (Abs a) = Abs <$> nf0 a
 >   nf0 a = nf 0 [] a
+
+normal form with given minimum index of what can be considered free variable f
+and list of previous redexes s that led to current term and whose reoccurance would indicate a loop
 
 >   nf f s (Abs a) = Abs <$> nf (f+1) s a
 >   nf f s r@(App a b) = do
@@ -123,11 +130,7 @@ size 37 (\1 1) (\1 (1 (\\2 (3 1)))) and (\1 1) (\1 (1 (\\3 (2 1)))) and (\1 1) (
 >   nf _ _ t = Just t
 
 >   noNF :: Int -> L -> Bool
->   noNF f a = let is = bit f in isB is a || noNF3 is a where
->     noNF3 :: Int -> L -> Bool
->     noNF3 is (App a (Abs b)) = isW3 is a && isW3 is b
->     noNF3 _ _ = False
-
+>   noNF f a = let is = bit f in isB is a || isB3 is a where
 
 various terms W that allow W W -> H[W W] for strict head context H,
 leading to infinite head reductions
@@ -164,9 +167,10 @@ leading to infinite head reductions
 >   isW3 _ _ = False
 
 >   isB3 :: Int -> L -> Bool
->   isB3 is (App a@(App (App _ _)  _) b) = isB3 is a || (isF is a && isB is b)
->   isB3 is (App (App a _) b) = (isW3 is a && (isW3 is b || isB3 is b)) || (isF is a && isB is b)
->   isB3 is (App a@(Var _) b) = isF is a && isB is b
+>   isB3 is (App a@(App (App _ _)  _) b) = isB3 is a || (isF is a && isB3 is b)
+>   isB3 is (App (App a _) b) = (isW3 is a && (isW3 is b || isB3 is b)) || (isF is a && isB3 is b)
+>   isB3 is (App a (Abs b)) = (isW3 is a && (isW3 is b || isB3 is b)) || (isF is a && isB3 is b)
+>   isB3 is (App a@(Var _) b) = isF is a && isB3 is b
 >   isB3 is (Abs a) = isB3 (2*is) a
 >   isB3 _  Bot = True
 >   isB3 _  _ = False
