@@ -129,8 +129,7 @@ Notation: t ... means t applied to an arbitrary number of arguments
 -- for 32
 
 -- TODO: (\1 (\2)) (\1 1 (\1 2))
-Let T = \1 1 (\1 2)
-If we denote \x. x A as <A>, and \_. x as K x, then
+If we denote \x. x A as <A>, and \_. x as K x, then T = \x. x x <x>
     (\1 (\2)) T
  -> T (K T)
  -> K T (K T) <K T>
@@ -246,22 +245,61 @@ see subterm at 33
 
 -- for 36
 
--- TODO: (\1 1) (\1 (1 (\\1 (3 1)))) T_{i+1} T_j done on paper
+-- TODO: (\1 1) (\1 (1 (\\1 (3 1))))
+T = \x.x^2 (\_\y.y (x y). Let T_0 = T, T_{i+1} = \y. y (T_i y).
+for j > 0, T_{i+1} T_j = T_j (T_i T_j) = T_i T_j ..., hence T_i T_j =* T T_j ...
+for i > 0, T T_i = T_i (T_i (K T_{i+1})) = T_i (K T_{i+1} (T_{i-1} (K T_{i+1}))) = T_i T_{i+1} =* T T_{i+1} ...
+(\1 1) T = T T = T (T T_1) = T (T T_2 ...) = T (T T_3 ...) etc.
+
 -- TODO: (\1 1) (\1 (1 (\\2 (2 1)))) Church numeral 2^256 of size 578960446186580977117854925043439539266349923328202820197287920039565648199686
--- TODO: (\1 1) (\1 (\1 (2 (1 (\2))))) done on paper
--- TODO: (\1 1) (\1 (\1 (1 (\3) 1))) done on paper
--- TODO: (\1 1) (\1 (1 (\2)) (\1 2)) done on paper
+
+-- TODO: (\1 1) (\1 (\1 (2 (1 (\2)))))
+T = \x.x (\y.y (x (y (K y)))). Let T_0 = T, T_{i+1} = \y.y (T_i (y (K y))).
+for i > 0, T_i (K T_i) = K T_i (T_{i-1} (K T_i (K (K T_i)))) = T_i
+for j > 0, T_{i+1} T_j = T_j (T_i (T_j (K T_j))) = T_j (T_i T_j) = T_i T_j ..., hence T_i T_j =* T T_j ...
+for i > 0, T T_i = T_i T_{i+1} =* T T_{i+1} ...
+(\1 1) T = T T = T T_1 = T T_2 ... etc.
+
+-- TODO: (\1 1) (\1 (\1 (1 (\3) 1)))
+T = \x.x (\y.y (y (K x) y)). Let T_0 = T, T_{i+1} = \y.y (y (K T_i) y).
+for j > 0, T_j (K T_i) = K T_i (K T_i (K T_{j-1}) (K T_i)) = T_i
+for j > 0, T_{i+1} T_j = T_j (T_j (K T_i) T_j) = T_j (T_i T_j) = T_i T_j ..., hence T_i T_j =* T T_j ...
+for i > 0, T T_i = T_i T_{i+1} =* T T_{i+1} ...
+(\1 1) T = T T = T T_1 = T T_2 ... etc.
+
+-- TODO: (\1 1) (\1 (1 (\2)) (\1 2))
+T = \x.x (x (K x)) <x>. Let T_0 = T, T_{i+1} = \y.y (y (K T_i) y).
+(\1 1) T = T T = T (T (K T)) <T>
+T (K T) = K T (K T (K (K T))) <K T> = T <K T> = <K T> (<K T> (K <K T>)) <<K T>> = <K T> <K T> <<K T>> = T <<K T>> etc.
+
 -- TODO: (\1 (\2)) (\1 1 (\1 2) 1) entirely similar to subterm at 32
--- TODO: (\1 1 1) (\\1 (1 (\3) 1)) done on paper
--- TODO: (\1 1 1) (\\1 2 (\1 2)) done on paper
--- TODO: (\1 1 1) (\\2 1 (\1 2)) done on paper
--- TODO: (\1 1 1) (\\1 1 (\3) 1) done on paper
+
+-- TODO: (\1 1 1) (\\1 (1 (\3) 1))
+T = \x\y.y (y (K x) y).
+T (K T) = K T (K T (K (K T)) (K T)) = T
+(\1 1 1) T = T T T = T (T (K T) T)
+T (K^i T) T = T (T (K^{i+1} T) T) etc.
+
+-- TODO: (\1 1 1) (\\1 2 (\1 2))
+T = \x\y.y x <y>. Let T_0 = T, T_{i+1} = <T_i>.
+(\1 1 1) T = T T T = T T_0 T_1
+T T_i T_{2i+1} = T_{2i+1} T_i T_{2i+2} =* T_{i+1} T_0 T_{2i+2} = T T_i T_{2i+2} = T_{2i+2} T_i T_{2i+3} =* T_{i+2} T_0 T_{2i+3} =
+T T_{i+1} T_{2*(i+1)+1} etc.
+
+-- TODO: (\1 1 1) (\\2 1 (\1 2))
+T = \x\y.x y <y>. Let T_0 = T, T_{i+1} = <T_i>.
+(\1 1 1) T = T T_0 T_0
+T T_i T_{2i} = T_i T_{2i} T_{2i+1} =* T T_i T_{2i+1} = T_i T_{2i+1} T_{2i+2} =
+T T_{i+1} T_{2(i+1)} etc.
+
+-- TODO: (\1 1 1) (\\1 1 (\3) 1)
+T = \x\y.y y (K x) y.
+T (K T) = K T (K T) (K (K T)) (K T) = T (K (K T)) (K T) = K (K T) () () () (K T)
+(\1 1 1) T = T T (K T) T
+T (K^i T) (K T) = K T (K T) (K^{i+1} T) (K T) = T (K^{i+1} T) (K T) etc.
+
 -- TODO: (\1 (1 (\2))) (\1 1 (\1 2)) see subterm at 32
 -- TODO: (\1 (\2) 1) (\1 1 (\1 2)) see subterm at 32
 -- TODO: (\\2 (\3)) (\1 1 (\1 2)) see subterm at 32
--- TODO: \(\1 1) (\2 (1 (\1 (2 1)))) done on paper
--- TODO: \(\1 1) (\2 (1 (\2 1 1))) done on paper
--- TODO: \(\1 1) (\2 (1 (\\3 2))) done on paper
 -- TODO: \(\1 1) (\\2 (\2 (3 1))) see subterm at 34
--- TODO: \\(\1 1) (\1 (\4 (2 1))) done on paper
 -- TODO: \\(\1 (\2)) (\1 1 (\1 2)) see subterm at 32
