@@ -1,0 +1,10 @@
+let
+  three = \f\x.f (f (f x)); -- putting this before four saves 1 bit
+  four = \f\x.f (three f x);
+  times = \a\b\f.a (b f);
+  one = \x.x;
+  upify = \f\b.b f one;
+  uparrow = \n\a\b.n upify (times a) b;
+  gf  = \n.uparrow n three three;
+  graham = three four gf four;
+in graham
