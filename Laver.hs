@@ -46,6 +46,7 @@ laver 0 b = b
 laver a b = let ls = lavers !! (a-1) in ls !! (b `mod` length ls) -- same as cycle ls !! b
 
 {-# NOINLINE lavers #-}
+lavers :: [[Int]]
 lavers = map go [0..] where
     go a = 0 : reverse (takeWhile (/= 0) (iterate (\b -> laver b a) a))
 
@@ -69,4 +70,4 @@ main = do
     -- table mx "laver0" laver0
     -- table mx "laver1" laver1
     table 31 "32x22 laver"  laver
-    mapM_ print [(length l, l) | l <- [lavers !! (2^n-2) | n <- [1..12]]]
+    mapM_ print [(n, length l, l) | (n,l) <- zip [1..31]lavers ]

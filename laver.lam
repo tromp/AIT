@@ -1,4 +1,4 @@
--- halts if Laver table with period beyond 16 is found
+-- halts if Laver table with last row period beyond 16 is found
 let
   -- Let mx = 2^n - 1. We consider a dual version of the shelf, determined
   -- by a |> mx = a-1 (mod 2^n), which satisfies
