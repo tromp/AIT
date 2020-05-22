@@ -1,4 +1,4 @@
-> module AIT(size,reduce,optimize,strict,subst,occurs,noccurs,contracts,expands,reduct,uni,usage) where
+> module AIT(Encodeable(..),reduce,optimize,strict,subst,occurs,noccurs,contracts,expands,reduct,uni,usage) where
 > import Lambda
 > import Data.List(unfoldr)
 > import Data.Char(chr,ord,intToDigit,digitToInt)
