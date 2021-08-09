@@ -5,7 +5,11 @@
 > main :: IO ()
 > main = do
 >   hSetBinaryMode stdin True
->   hSetBinaryMode stdout True
+
+I originally had
+    hSetBinaryMode stdout True
+as well, but that prevents Unicode output of lambda
+
 >   hSetBuffering stdout NoBuffering
 >   args <- getArgs
 >   case args of

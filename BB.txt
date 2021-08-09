@@ -79,9 +79,11 @@ For this section we use ordinary lambda terms with names. Let
 
   T ::= v | \v. T | T T                       (terms)
   F ::= freeV | F T                           (free variable with arguments)
-  S ::= □ | \v. S | S T | F S                 (strict head contexts)
+  S ::= R | \v. v S                           (reduction preserved contexts)
+  R ::= □ | \v. R | R T | F S
   W^V ::= V | \v. B^({v} ∪ V)                 (ω-like terms)
-  B^V ::= W^V X^V | \v. B^V | B^V T | F B^V   (⊥-like terms)
+  B^V ::= A^V | \v. v B^V                     (⊥-like terms)
+  A^V ::= W^V X^V | \v. A^V | A^V T | F B^V   (⊥-like terms)
   X^V ::= W^V | B^V                           (ω-like or ⊥-like)
   W = W^{}
   B = B^{}
@@ -101,6 +103,23 @@ Deeper Observation
 
 Let V' = {v} ∪ V. We proceed by induction,
 denoting the Induction Hypothesis step by [IH].
+
+  W^V'[v := W^V]
+    =     W^V ∪ V ∪ \w. B^({w} ∪ V')[v := W^V]
+    ⊆[IH] W^V ∪ V ∪ \w. B^({w} ∪ V)
+    =     W^V ∪ W^V = W^V
+
+  B^V'[v := W^V]
+    =     S[W^V'[v := W^V]  X^V'[v := W^V]]
+    =     S[W^V'[v := W^V] (W^V'[v := W^V] ∪ B^V'[v := W^V]) ]
+    ⊆[IH] S[W^V            (W^V            ∪ B^V)]
+    =     S[W^V X^V]
+    =     B^V
+
+Consequently,
+
+  W W = (\v. B^{v}) W -> B^{v}[v := W] ⊆ B^{} = S[W W]
+
 
   W^V'[v := X^V]
     =     X^V ∪ V ∪ \w. B^({w} ∪ V')[v := X^V]
@@ -122,7 +141,7 @@ Consequently,
 which shows that elements of W X have infinite head reductions and
 therefore do not have a normal form.
 
-== Manual proofs for n <= 34
+== Manual proofs for n <= 36
 
 Notation: t ... means t applied to an arbitrary number of arguments
 

@@ -123,7 +123,7 @@ and list of previous redexes s that led to current term and whose reoccurance wo
 >     if noNF f (App a b) then Nothing else case a of
 >         Abs a
 >             | r `elem` s   -> Nothing
->             | length s > 10 -> todo a0
+>             | length s > 14 -> todo a0
 >             | otherwise    -> nf f (r:s) (subst 0 a b)
 >         _ -> do
 >             nf f s b >>= Just . App a
@@ -169,7 +169,7 @@ leading to infinite head reductions
 >   isB3 :: Int -> L -> Bool
 >   isB3 is (App a@(App (App _ _)  _) b) = isB3 is a || (isF is a && isB3 is b)
 >   isB3 is (App (App a _) b) = (isW3 is a && (isW3 is b || isB3 is b)) || (isF is a && isB3 is b)
->   isB3 is (App a (Abs b)) = (isW3 is a && (isW3 is b || isB3 is b)) || (isF is a && isB3 is b)
+>   isB3 is (App a (Abs b)) = (isW3 is a && (isW3 (2*is) b || isB3 (2*is) b)) || (isF is a && isB3 (2*is) b)
 >   isB3 is (App a@(Var _) b) = isF is a && isB3 is b
 >   isB3 is (Abs a) = isB3 (2*is) a
 >   isB3 _  Bot = True
@@ -209,8 +209,13 @@ simplification
 > main :: IO ()
 > main = do
 >     hSetBuffering stdout LineBuffering
->     mapM_ print [f n | n <- [0..36]]
+>     print $ normalForm foo
+>     -- mapM_ print [f n | n <- [0..37]]
 >   where
+>     double = Abs (App (Var 0) (Var 0))
+>     triple = Abs (App (App (Var 0) (Var 0)) (Var 0))
+>     bar = Abs (App (Var 0) (Abs (App (Var 2) (App (Var 1) (Var 0)))))
+>     foo = Abs (App double bar)
 >     f n = maximum $
 >         (n,0,P Bot) : [(n,size t,P a) | a <- gen 0 n, Just t <- [normalForm a]]
 

@@ -237,6 +237,7 @@ Bitstring functions -----------------------------------------------------
 >   prog = read progtext :: LC Id
 >   machine = \inp -> foldl (\p -> App p . bitstoLC) (App prog inp) args
 >   tex = concatMap (\c -> if c=='\\' then "\\lambda " else [c])
+>   html = concatMap (\c -> if c=='\\' then "\955 " else [c])
 >   nl = (++ "\n")
 >  in case op of
 >   "run"     -> nl .   bshow . nf . toDB . machine $  bitstoLC input
@@ -254,6 +255,7 @@ Bitstring functions -----------------------------------------------------
 >   "pbm"     -> toPBM   . diagram False . optimize . toDB $ prog
 >   "Pbm"     -> toPBM   . diagram  True . optimize . toDB $ prog
 >   "tex"     -> nl .         tex . show . optimize . toDB $ prog
+>   "html"    -> nl .        html . show . optimize . toDB $ prog
 >   "printlc" -> nl .               show . optimize . toDB $ prog
 >   "blc"     ->                  encode . optimize . toDB $ prog
 >   "Blc"     -> toBytes .        encode . optimize . toDB $ prog
@@ -278,6 +280,7 @@ Bitstring functions -----------------------------------------------------
 >   "pbm\tshow diagram in portable bitmap format",
 >   "Pbm\tshow alternative diagram in portable bitmap format",
 >   "tex\tshow program as TeX",
+>   "html\tshow program as html",
 >   "printlc\tshow lambda calculus program with de Bruijn indices",
 >   "blc\tencode as binary lambda calculus bits",
 >   "Blc\tencode as Binary lambda calculus bytes",
