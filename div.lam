@@ -2,6 +2,7 @@ let
   0    =   \s\z. z;
   succ = \n\f\x. n f (f x);
   id = \x.x;
+  pred = \n\f\x. let pd = \g\h. h (g f) in n pd (\_.x) id;
   1 = id;
   2 = succ 1;
   3 = succ 2;
@@ -10,10 +11,36 @@ let
 
   pd = \c\d\z. z (c d) d;
   false = 0;
-  true = \x\y.x;
+  K = \x\y.x;
+  true = K;
   div2 = \n\m. let r = \d. m pd (\d.r (succ d)) d in n (\l.l true) (r 0) false;
 
-  div = \n\m. \f\x.
-    n (\n\c. c n) (\_. x)
-    (n (\t. m (\m\c. c m) (\c. f (c t)) id) x);
-in div -- (2 2 2) 3
+-- from https://en.wikipedia.org/wiki/Church_encoding#Division
+  iszero = \n. n (\_. false) true;
+  div1 = \n\m. let d = m pred n in \f\x. iszero d x (f (div1 d m f x));
+  div0 = \n. div1 (succ n);
+
+  1tuple = \x\f. f x;
+-- Since (1tuple^{m+1} A) (1tuple^{n+1} B)
+--     = (1tuple^{n+1} B) (1tuple^m A)
+--     = (1tuple^m A) (1tuple^n B)
+-- (1tuple^m A) (1tuple^n B) =
+--   if n < m then B (1tuple^{m-1-n} A)
+--            else A (1tuple^{n-m} B)
+
+  F = \m\f\t. m 1tuple (\c. f (c t)) id;
+  div = \n\m. \f\x. n 1tuple (K x) (n (F m f) x)
+
+-- div n m f x = (1tuple^n (K x)) ((F m f)^n x) =
+-- if n==0 then K x x = x else
+--   ((F m f)^n x) (1tuple^{n-1} (K x)) =
+--   F m f ((F m f)^{n-1} x) (1tuple^{n-1} (K x)) =
+--   1tuple^m (\c. f (c ((F m f)^{n-1} x))) id (1tuple^{n-1} (K x)) =
+--   1tuple^{m-1} (\c. f (c ((F m f)^{n-1} x))) (1tuple^{n-1} (K x)) =
+--   1tuple^{m-1} (\c. f (c ((F m f)^{n-1} x))) (1tuple^{n-1} (K x)) =
+--   if n < m then K x (1tuple^{m-1-n} (\c. f (c ((F m f)^{n-1} x)))) = x
+--            else f ((1tuple^{n-m} (K x)) ((F m f)^{n-1} x))
+--                 which by induction equals f^{n/m} x
+-- NOTE that (F m f)^n serves as a good enough approximation of Y (F m f)
+
+in div --  (2 2 2) 3
