@@ -28,6 +28,7 @@ let
 --   if n < m then B (1tuple^{m-1-n} A)
 --            else A (1tuple^{n-m} B)
 
+-- Discovered by Bertram Felgenhauer (int-e)
   F = \m\f\t. m 1tuple (\c. f (c t)) id;
   div = \n\m. \f\x. n 1tuple (K x) (n (F m f) x)
 

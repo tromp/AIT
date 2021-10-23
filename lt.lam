@@ -10,6 +10,7 @@ let
   lt = \m\n.
     n (\m\c. c m) (\_.false)
     (m (\n\c. (c n)) (\_.true));
+-- see div.lam for explanation
 in lt -- 2 2
 
 -- size 58 bits
