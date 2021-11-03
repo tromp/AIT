@@ -38,7 +38,6 @@ let
 --   F m f ((F m f)^{n-1} x) (1tuple^{n-1} (K x)) =
 --   1tuple^m (\c. f (c ((F m f)^{n-1} x))) id (1tuple^{n-1} (K x)) =
 --   1tuple^{m-1} (\c. f (c ((F m f)^{n-1} x))) (1tuple^{n-1} (K x)) =
---   1tuple^{m-1} (\c. f (c ((F m f)^{n-1} x))) (1tuple^{n-1} (K x)) =
 --   if n < m then K x (1tuple^{m-1-n} (\c. f (c ((F m f)^{n-1} x)))) = x
 --            else f ((1tuple^{n-m} (K x)) ((F m f)^{n-1} x))
 --                 which by induction equals f^{n/m} x
