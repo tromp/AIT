@@ -247,6 +247,7 @@ Bitstring functions -----------------------------------------------------
 >   "nf_size" -> nl .              show . size . nf . toDB $ prog
 >   "comb_nf" -> nl .        show . strongCL . toCL . toDB $ prog
 >   "comb"    -> nl .        show . toCL . optimize . toDB $ prog
+>   "bcw"     -> nl .    showBCW . toBCW . optimize . toDB $ prog
 >   "bcl"     -> nl .      encode . toCL . optimize . toDB $ prog
 >   "diagram" -> elems   . diagram False . optimize . toDB $ prog
 >   "Diagram" -> elems   . diagram  True . optimize . toDB $ prog
