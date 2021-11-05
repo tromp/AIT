@@ -231,6 +231,7 @@ from http://pchiusano.github.io/2014-06-20/simple-debruijn-alternative.html
 >   maxBV :: LC Int -> Int
 >   maxBV (App fun a) = maxBV fun `max` maxBV a
 >   maxBV (Lam m _) = m
+>   maxBV (Var _) = error "Term not closed"
 
 Convert back from higher order abstract syntax. Do this by inventing
 a new variable at each $\lambda$.
@@ -256,36 +257,73 @@ The CL type of combinatory expressions has constructors for index variables, pri
 > ppCL p (CApp f a) = pparens (p>1) $ ppCL 1 f <+> ppCL 2 a
 
 > combI :: CL
-> combI = CApp (CApp CombS CombK) CombK
+> combI = CApp CombSK CombK
+
+Decrease variable depth
 
 > drip :: CL -> CL
-> drip i@(CApp (CApp CombS CombK) _) = i
+> drip i@(CApp CombSK _) = i -- ignore SK argument
 > drip (CVar 0) = error "Can't drip CVar 0"
 > drip (CVar i) = CVar (i-1)
 > drip (CApp x y) = CApp (drip x) (drip y)
 > drip x = x
+
+Increase variable depth
 
 > bump :: CL -> CL
 > bump (CVar i) = CVar (i+1)
 > bump (CApp x y) = CApp (bump x) (bump y)
 > bump x = x
 
+Implement improved bracket abstraction:
+
 > abstract :: CL -> CL
-> abstract (CApp sk@(CApp CombS CombK) _) = sk
+
+[x] (S K M) ≡ S K (for all M)
+
+> abstract (CApp sk@CombSK _) = sk
 > abstract e = if freeIn (==0) e
 >              then occabstract e
+
+[x] M ≡ K M (x not in M)
+
 >              else CApp CombK (drip e) where
->   freeIn _ (CApp (CApp CombS CombK) _) = False
+>   freeIn _ (CApp CombSK _) = False
 >   freeIn fv (CApp x y) = freeIn fv x || freeIn fv y
 >   freeIn fv (CVar i) = fv i
 >   freeIn _ _ = False
 >   isConst = not . freeIn (const True)
+
+[x] x ≡ I
+
 >   occabstract (CVar 0) = combI
+
+[x] (M x) ≡ M (x not in M)
+
 >   occabstract (CApp e1 (CVar 0)) | not (freeIn (==0) e1) = drip e1
+
+[x] (L M L) ≡ [x] (S S K L M) (x in L)
+
+>   occabstract (CApp (CApp e1 e2) e3) | e1 == e3 && freeIn (==0) e1
+>       = occabstract (CApp (CApp (CApp (CApp CombS CombS) CombK) e1) e2)
+
+[x] (M (N L)) ≡ [x] (S ([x] M) N L) (M, N combinators)
+
 >   occabstract (CApp e1 (CApp e2 e3)) | isConst e1 && isConst e2
 >       = occabstract (CApp (CApp (CApp CombS (abstract e1)) e2) e3)
+
+[x] ((M N) L) ≡ [x] (S M ([x] L) N) (M, L combinators)
+
 >   occabstract (CApp (CApp e1 e2) e3) | isConst e1 && isConst e3
 >       = occabstract (CApp (CApp (CApp CombS e1) (abstract e3)) e2)
+
+[x] ((M L) (N L)) ≡ [x] (S M N L) (M, N combinators)
+
+>   occabstract (CApp (CApp e1 e2) (CApp e3 e4)) | e2 == e4 && isConst e1 && isConst e3
+>       = occabstract (CApp (CApp (CApp CombS e1) e3) e2)
+
+[x] (M N) ≡ S ([x] M) ([x] N)
+
 >   occabstract (CApp e1 e2)
 >       = CApp (CApp CombS (abstract e1)) (abstract e2)
 >   occabstract _ = error $ "Impossible occabstract argument"
@@ -312,13 +350,16 @@ The CL type of combinatory expressions has constructors for index variables, pri
 
 BCWI+K terms: We reuse the CL type and represent combinators by their respective SK translation.
 
+> pattern CombSK :: CL
+> pattern CombSK = CApp CombS CombK
+
 > type BCW = CL
 
 > pattern CombI, CombB, CombC, CombW :: BCW
-> pattern CombI = CApp (CApp CombS CombK) CombK
+> pattern CombI = CApp CombSK CombK
 > pattern CombB = CApp (CApp CombS (CApp CombK CombS)) CombK
 > pattern CombC = CApp (CApp CombS (CApp CombK (CApp (CApp CombS (CApp CombK (CApp (CApp CombS CombS) (CApp CombK CombK)))) CombK))) CombS
-> pattern CombW = CApp (CApp CombS CombS) (CApp CombS CombK)
+> pattern CombW = CApp (CApp CombS CombS) CombSK
 
 > showBCW :: BCW -> String
 > showBCW = renderStyle style . ppBCW 0
