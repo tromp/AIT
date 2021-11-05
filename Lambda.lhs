@@ -3,7 +3,8 @@ $\lambda$-calculus together with a parser and a printer for it.
 It also exports a simple type of identifiers that parse and
 print in a nice way.
 
-> module Lambda(LC(..), DB(..), CL(..),  Id(..), lam, isnf, nf, evalLC, toLC, toCL, strongCL, toDB) where
+> {-# LANGUAGE PatternSynonyms #-}
+> module Lambda(LC(..), DB(..), CL(..),  Id(..), lam, isnf, nf, evalLC, toLC, toCL, strongCL, toDB, showBCW, toBCW) where
 > import Prelude hiding ((<>))
 > import Data.List(union, (\\), elemIndex)
 > import Data.Char(isAlphaNum)
@@ -308,3 +309,54 @@ The CL type of combinatory expressions has constructors for index variables, pri
 >   strong f@(CApp CombS _) = abstract . abstract . strongCL $ CApp (CApp (bump(bump f)) (CVar 1)) (CVar 0)
 >   strong (CApp x y) = CApp (strong x) (strong y)
 >   strong x = x
+
+BCWI+K terms: We reuse the CL type and represent combinators by their respective SK translation.
+
+> type BCW = CL
+
+> pattern CombI, CombB, CombC, CombW :: BCW
+> pattern CombI = CApp (CApp CombS CombK) CombK
+> pattern CombB = CApp (CApp CombS (CApp CombK CombS)) CombK
+> pattern CombC = CApp (CApp CombS (CApp CombK (CApp (CApp CombS (CApp CombK (CApp (CApp CombS CombS) (CApp CombK CombK)))) CombK))) CombS
+> pattern CombW = CApp (CApp CombS CombS) (CApp CombS CombK)
+
+> showBCW :: BCW -> String
+> showBCW = renderStyle style . ppBCW 0
+>
+> ppBCW :: Int -> BCW -> Doc
+> ppBCW _ (CVar v) = text $ show v
+> ppBCW _ CombI = text "I"
+> ppBCW _ CombB = text "B"
+> ppBCW _ CombC = text "C"
+> ppBCW _ CombW = text "W"
+> ppBCW _ CombS = text "S"
+> ppBCW _ CombK = text "K"
+> ppBCW p (CApp f a) = pparens (p>1) $ ppBCW 1 f <+> ppBCW 2 a
+
+> abstractBCW :: BCW -> BCW
+> abstractBCW e = if freeIn (==0) e
+>              then occabstract e
+>              else CApp CombK (drip e) where
+>   freeIn fv (CApp x y) = freeIn fv x || freeIn fv y
+>   freeIn fv (CVar i) = fv i
+>   freeIn _ _ = False
+>   occabstract (CVar 0) = CombI
+>   occabstract (CApp e1 (CVar 0))
+>       | not (freeIn (==0) e1) = drip e1
+>       | otherwise = CApp CombW (abstractBCW e1)
+>   occabstract (CApp e1 e2)
+>       = case (freeIn (==0) e1, freeIn (==0) e2) of
+>           (False, True ) -> combB (drip e1) (abstractBCW e2)
+>           (True,  False) -> combC (abstractBCW e1) (drip e2)
+>           (True,  True ) -> combS (abstractBCW e1) (abstractBCW e2)
+>           (False, False) -> error $ "Impossible free variable in occabstract"
+>   occabstract _ = error $ "Impossible occabstract argument"
+>   combS a b = CApp CombW (CApp (CApp CombB (CApp CombC a)) b)
+>   -- combS a b = CApp (CApp CombS a) b
+>   combB a b = CApp (CApp CombB a) b
+>   combC a b = CApp (CApp CombC a) b
+
+> toBCW :: DB -> BCW
+> toBCW (DBVar i) = CVar i
+> toBCW (DBApp x y) = CApp (toBCW x) (toBCW y)
+> toBCW (DBLam e) = abstractBCW (toBCW e)
