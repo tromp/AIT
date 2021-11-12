@@ -25,6 +25,30 @@ Size in bits of an expression, assuming no free variables
 >     prebin (DBLam   e) s = '0':'0':(prebin e s)
 >     prebin (DBApp x y) s = '0':'1':(prebin x (prebin y s))
 
+> {-- adaption for alternate encoding as used in int4.lam
+>     prebin (DBVar i) s | i>0 = '1':'1':(prebin (DBVar (i-1)) s)
+>     prebin l@(DBLam   e) s = succpref ++ '0':'0':(prebin se s) where
+>       mf = minFree 0 l
+>       succpref = trace ("mf "++show l++" ="++show mf) $ if mf > 0 then replicate (2*mf) '+' else ""
+>       se = if mf > 0 then adjust mf 1 e else e
+>     prebin a@(DBApp x y) s = succpref ++ ('0':'1':(prebin sx (prebin sy s))) where
+>       mf = minFree 0 a
+>       succpref = if mf > 0 then replicate (2*mf) '+' else ""
+>       sx = if mf > 0 then adjust mf 0 x else x
+>       sy = if mf > 0 then adjust mf 0 y else y
+>     adjust by n e@(DBVar j) | j >= n = DBVar (j-by)
+>                          | otherwise = e
+>     adjust by n (DBLam body) = DBLam (adjust by (succ n) body)
+>     adjust by n (DBApp fun arg) = DBApp (adjust by n fun) (adjust by n arg)
+>     minFree :: Int -> DB -> Int
+>     minFree n (DBVar i) = if i < n then -1 else i-n
+>     minFree n (DBLam e) = minFree (n+1) e
+>     minFree n (DBApp fun arg) = posmin (minFree n fun) (minFree n arg)
+>     posmin (-1) x = x
+>     posmin x (-1) = x
+>     posmin x y = min x y
+> --}
+
 Size in bits of an expression, assuming no free variables
 
 > instance Encodeable CL where
