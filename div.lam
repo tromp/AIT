@@ -16,7 +16,7 @@ let
   div2 = \n\m. let r = \d. m pd (\d.r (succ d)) d in n (\l.l true) (r 0) false;
 
 -- from https://en.wikipedia.org/wiki/Church_encoding#Division
-  iszero = \n. n (\_. false) true;
+  iszero = \n\x\y. n (\_. y) x;
   div1 = \n\m. let d = m pred n in \f\x. iszero d x (f (div1 d m f x));
   div0 = \n. div1 (succ n);
 

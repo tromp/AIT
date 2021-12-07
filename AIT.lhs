@@ -261,7 +261,7 @@ Bitstring functions -----------------------------------------------------
 >   prog = read progtext :: LC Id
 >   machine = \inp -> foldl (\p -> App p . bitstoLC) (App prog inp) args
 >   tex = concatMap (\c -> if c=='\\' then "\\lambda " else [c])
->   html = concatMap (\c -> if c=='\\' then "\955 " else [c])
+>   html = concatMap (\c -> if c=='\\' then "\0955 " else [c])
 >   nl = (++ "\n")
 >  in case op of
 >   "run"     -> nl .   bshow . nf . toDB . machine $  bitstoLC input
