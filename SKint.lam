@@ -1,0 +1,12 @@
+let
+  -- binary CL interpreter with basis {S,K}
+  -- intSK cont bits = cont parsed unparsed_bits
+  S = \x\y\z.x z(y z);
+  K = \x\y.x;
+  I = \x.x;
+  CL = \f\cont\list.list(\bit.bit(\list.list(\bit.cont (bit bit S)))(f(\x.f(\y.cont(x y)))));
+  Y0 = \x\y.x y x;
+  Y1 = \y\x.y (x y x);
+  SKY = Y0 Y1;
+  Y = \f.(\x.x x) (\x.f (x x)) -- use for cross-interpreting
+in SKY CL -- this is 267 bits but Thm 4 in tromp.github.io/cl/LC.pdf says 263 bits?!

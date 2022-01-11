@@ -256,9 +256,6 @@ The CL type of combinatory expressions has constructors for index variables, pri
 > ppCL _ CombK = text "K"
 > ppCL p (CApp f a) = pparens (p>1) $ ppCL 1 f <+> ppCL 2 a
 
-> combI :: CL
-> combI = CApp CombSK CombK
-
 Decrease variable depth
 
 > drip :: CL -> CL
@@ -292,35 +289,36 @@ Implement improved bracket abstraction:
 >   freeIn fv (CApp x y) = freeIn fv x || freeIn fv y
 >   freeIn fv (CVar i) = fv i
 >   freeIn _ _ = False
+
 >   isConst = not . freeIn (const True)
 
 [x] x ≡ I
 
->   occabstract (CVar 0) = combI
+>   occabstract (CVar 0) = CombI
 
 [x] (M x) ≡ M (x not in M)
 
->   occabstract (CApp e1 (CVar 0)) | not (freeIn (==0) e1) = drip e1
+>   occabstract (CApp m (CVar 0)) | not (freeIn (==0) m) = drip m
 
 [x] (L M L) ≡ [x] (S S K L M) (x in L)
 
->   occabstract (CApp (CApp e1 e2) e3) | e1 == e3 && freeIn (==0) e1
->       = occabstract (CApp (CApp (CApp (CApp CombS CombS) CombK) e1) e2)
+>   occabstract (CApp (CApp l m) l') | l == l' -- && freeIn (==0) e1
+>       = occabstract (CApp (CApp CombSSK l) m)
 
 [x] (M (N L)) ≡ [x] (S ([x] M) N L) (M, N combinators)
 
->   occabstract (CApp e1 (CApp e2 e3)) | isConst e1 && isConst e2
->       = occabstract (CApp (CApp (CApp CombS (abstract e1)) e2) e3)
+>   occabstract (CApp m (CApp n l)) | isConst m && isConst n
+>       = occabstract (CApp (CApp (CApp CombS (abstract m)) n) l)
 
 [x] ((M N) L) ≡ [x] (S M ([x] L) N) (M, L combinators)
 
->   occabstract (CApp (CApp e1 e2) e3) | isConst e1 && isConst e3
->       = occabstract (CApp (CApp (CApp CombS e1) (abstract e3)) e2)
+>   occabstract (CApp (CApp m n) l) | isConst m && isConst l
+>       = occabstract (CApp (CApp (CApp CombS m) (abstract l)) n)
 
 [x] ((M L) (N L)) ≡ [x] (S M N L) (M, N combinators)
 
->   occabstract (CApp (CApp e1 e2) (CApp e3 e4)) | e2 == e4 && isConst e1 && isConst e3
->       = occabstract (CApp (CApp (CApp CombS e1) e3) e2)
+>   occabstract (CApp (CApp m l) (CApp n l')) | l == l' && isConst m && isConst n
+>       = occabstract (CApp (CApp (CApp CombS m) n) l)
 
 [x] (M N) ≡ S ([x] M) ([x] N)
 
@@ -350,8 +348,9 @@ Implement improved bracket abstraction:
 
 BCWI+K terms: We reuse the CL type and represent combinators by their respective SK translation.
 
-> pattern CombSK :: CL
+> pattern CombSK, CombSSK :: CL
 > pattern CombSK = CApp CombS CombK
+> pattern CombSSK = CApp (CApp CombS CombS) CombK
 
 > type BCW = CL
 

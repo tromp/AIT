@@ -23,12 +23,13 @@ let
   -- digits
   0 = true;
   1 = false;
-  -- small numbers
+  -- small numbers, no trailing 0s, normal binary, reverse order
   n0 = nil;
   n1 = cons 1 nil;
   n2 = cons 0 (cons 1 nil);
   n3 = cons 1 (cons 1 nil);
   n10 = cons 0 (cons 1 (cons 0 (cons 1 nil)));
+  -- small numbers, trailing 0s, nth in lexicographic order
   t0 = nil;
   t1 = cons 0 nil;
   t2 = cons 1 nil;
