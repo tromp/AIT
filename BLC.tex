@@ -459,15 +459,15 @@ encode $\CS$ as $00$, $\CK$ as $01$, and application as $1$.
 \begin{definition}
 We define the encoding $\widetilde{C}$ of a combinator $C$ as
 \begin{eqnarray*}
-\widetilde{\CS} & \equiv & 00 \\
-\widetilde{\CK} & \equiv & 01 \\
+\widetilde{\CK} & \equiv & 00 \\
+\widetilde{\CS} & \equiv & 01 \\
 \widetilde{C\ D} & \equiv & 1\ \widetilde{C}\ \widetilde{D}
 \end{eqnarray*}
 Again we call $|\widetilde{C}|$ the {\em size} of combinator $C$.
 \end{definition}
 
 For instance, the combinator $\CS(\CK\CS\CS)\equiv(\CS((\CK\CS)\CS))$
-is encoded as $1 01 1 1 00 01 01$.
+is encoded as $1\ 01\ 1\ 1\ 00\ 01\ 01$.
 The size of a combinator with $n$ $\CK/\CS$'s, which necessarily
 has $n-1$ applications, is thus $2n+n-1=3n-1$.
 

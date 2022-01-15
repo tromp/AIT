@@ -4,9 +4,21 @@ let
   S = \x\y\z.x z(y z);
   K = \x\y.x;
   I = \x.x;
-  CL = \f\cont\list.list(\bit.bit(\list.list(\bit.cont (bit bit S)))(f(\x.f(\y.cont(x y)))));
+  B = \x\y\z.x (y z);
+  T = \x\y.y x;
+  V  = \x\y\z.z x y;
+  CL = \f\cont\list.list(\bit.bit(\list.list(\bit.cont (bit K S)))(f(\x.f(\y.cont(x y)))));
+  -- COMB = \cont.(\bit.cont (bit K S));
+  -- BTCOMB = B T COMB;
+  -- FB2 = \f\cont.f(B f(B cont));
+  -- CL  = \f\cont T (V (BTCOMB cont) (FB2 f cont));
+  -- V' = \x\y\z.z y x;
+  -- CL' = \f\cont T (V' (FB2 f cont) (BTCOMB cont));
+  mtve = S(K(S(K(S(K(S(K(S(K(S I))K))))(S(S(K(S(K(S(K S)(S(K(S S S(K(S I))))K)))K))(S(K(S S(K(S S(S K)(S S(K(K S)))))))K)))))(S(K K))))(S S S(S(S K))(S S K(S(K S)K))); -- equivalent to CL only 197 bits
   Y0 = \x\y.x y x;
   Y1 = \y\x.y (x y x);
-  SKY = Y0 Y1;
-  Y = \f.(\x.x x) (\x.f (x x)) -- use for cross-interpreting
-in SKY CL -- this is 267 bits but Thm 4 in tromp.github.io/cl/LC.pdf says 263 bits?!
+  SKY = Y0 Y1
+  -- for cross-interpreting replace bit K S above by bit bit S and use Y instead of SKY
+in SKY CL
+
+

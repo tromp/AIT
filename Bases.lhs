@@ -119,27 +119,27 @@ Candidate single point bases
 >  "λ1(λλ2)(λλλ2 1 (3 1))(λλ2)", -- <K,S',K> level 16 cumsize    3261
 >  "λ1(λλ2)(λλλ3 1 (2 1))(λλ2)", -- <K,S,K>  level 16 cumsize    2253
 >  "λ1(λλλ3 1 (2 1))(λλ2)",      -- <S,K>    level 16 cumsize     244
+>  "λ1(λλλ3 1 (2 1))(λλλ3)",     -- Jeroen Fokker
+>  "λλλ3 (λλ2) 1 (2 1)",         -- Johannes Bader
+>  "λλλλ2 1 (4 (λ2))",           -- C.A. Meredith 1963!
 >  ""]
 
 > main :: IO ()
 > main = do
 >   hSetBuffering stdout LineBuffering
 >   args <- getArgs
->   let basis = read (bases !! (if null args then 0 else read (head args))) :: L
->   putStrLn $ "Using single point basis {A = " ++ show basis ++ " }"
->   -- findtargets 1 (levels basis) targets
->   findtargets 1 (levels2 basis 12 1000) targets
+>   let basis = [("A", read (bases !! (if null args then 0 else read (head args))))]
+>   putStrLn $ "Using basis " ++ show basis
+>   findtargets 1 (levels basis) targets
+>   -- findtargets 1 (levels2 basis 12 65536) targets
 
-> levels :: L -> [[(String, L)]]
-> levels basis = l where l = [("A", basis)] : map (build id (const True) l) [1..] 
-> -- combK :: L
-> -- combK = read "λλ2"
+> levels :: [(String,L)] -> [[(String, L)]]
+> levels basis = l where l = basis : map (build id  l) [1..] 
 
-> levels2 :: L -> Int -> Int -> [[(String, L)]]
+> levels2 :: [(String,L)] -> Int -> Int -> [[(String, L)]]
 > levels2 basis n len = l2 where
->   l2 = take n (levels basis) ++ map (build filt filta l2) [n..]
->   filt = take len . sortBy (compare `on` (size.snd)) 
->   filta a = size a < 160
+>   l2 = take n (levels basis) ++ map (build filt l2) [n..]
+>   filt = take len -- . sortBy (compare `on` (size.snd)) 
 
 > findtargets :: Int -> [[(String,L)]] -> [(L,String)] -> IO ()
 > findtargets _ _ [] = return ()
@@ -164,27 +164,31 @@ Candidate single point bases
 >   (read"λ       1   ","I"), -- A(A(A(A A)A))(A(A A)A) of size 10 (14)
 >   (read"λλ      2   ","K"), -- A(A A)(A(A A)A A A A A) of size 11 (15)
 >   (read"λλ      1   ","F"), -- A A A(A(A A)(A A)(A A))A of size 11 (16)
->   (read"λλ  1   2   ","T"), -- A A(A(A A)A(A(A A)A)A)(A A) of size 13 (?)
+>   (read"λλ  1   2   ","T"), -- A A(A(A A)A(A(A A)A)A)(A A) of size 13 (18 or 16 with eta)
 >   (read"λλλ 3 1 2   ","C"), -- A(A A A(A A A)(A A)(A A))A A of size 13 (15)
 >   (read"λλλ 3  (2 1)","B"), -- A(A(A(A(A A)A))(A A)A)(A(A(A A))) of size 14 (?)
->   (read"λλ  1 2 2   ","T1"), -- A(A(A(A(A(A A))))(A A) A)(A(A A)(A A)) of size 15
+>   (read"λλλ   3 1   ","K2"), -- A A(A(A A)(A A)(A A))(A(A A) A) A A (15)
 >   (read"λλλ 2 1(3 1)","S'"), -- A(A(A A)A)A A A A A A(A(A A)A) of size 15 (13)
 >   (read"λλλ 1 2 3   ","V'"), -- A A(A A)(A A)(A(A A(A A)) A A)(A A) of size 15
+>   (read"λλ  1 2 2   ","T1"), -- A(A(A(A(A(A A))))(A A) A)(A(A A)(A A)) of size 15
 >   (read"λλ  2 2 1   ","W0"), -- A A(A A)(A A(A A) A)(A A(A(A(A A) A))) of size 16
->   (read"λλλ 3 1(2 1)","S"), -- A(A(A A(A A(A A))(A(A(A A(A A))))))A A of size 16
+>   (read"λλλ 3 1(2 1)","S"), -- A(A(A A(A A(A A))(A(A(A A(A A))))))A A of size 16 (18)
 >   (read"λλ  1 1 2   ","T0"), -- A(A A)(A(A(A(A(A A) A) A(A A)) A) A A A) of size 17
 >   (read"λλ2(1 2 1)  ","Y1"), -- A(A(A A A)(A A)(A(A A) A) A)(A(A(A(A A)) A)) of size 18
->   (read"λλλ 1 3 2   ","V"), -- A(A(A A A)(A A)(A(A(A(A(A A)A A))A)A A A A)A)A of size 22 (?)
->   (read"λλλ2(3 2 1)  ","X"), -- 
+>   (read"λλλ 1 3 2   ","V"), -- ((((A(A(A(A(A A)))))((((A A)A)((A A)((A A)A)))A))(A A))A)A of size 19
+>   (read"λλλ2(3 2 1)  ","X"), -- ((((A(A(((A((A(AA))A))A)A)))(AA))(A((A(A((AA)A)))A)))A)A of size 20
 >   (read"λλλλ4 (3 2 1)","B3"), -- 
->   (read"λλλ3 (λ3 (2 1))","CB3B")] -- 
+>   (read"λλλ3 (λ3 (2 1))","CB3B"), --  > 22 according to Hunt.hs
+>   (read"λλ21","I2")] -- 
 
-> build :: ([(String,L)] -> [(String,L)]) -> (L -> Bool) -> [[(String,L)]] -> Int -> [(String,L)]
-> build filt filta as n = filt apps where
+Btw, shortest diverging is Omega = (A A A) (A (A A A)) of size 7
+
+> build :: ([(String,L)] -> [(String,L)]) -> [[(String,L)]] -> Int -> [(String,L)]
+> build filt as n = filt apps where
 >   apps = nubOrd (Set.fromList . concatMap (map snd) . take n $ as) $
 >          [(fst x ++ paren (fst y), a) | i <- [0..n-1],
->            x <- as!!i, y <- as!!(n-1-i),
->            Just a <- [fmap snd . lnf lim $ App (snd x) (snd y)], filta a]
+>            x <- as!!(n-1-i), y <- as!!i,
+>            Just a <- [fmap snd . lnf lim $ App (snd x) (snd y)]]
 >   lim = if n < 16 then 42 else 14
 >   paren [a] = ' ':[a]
 >   paren  s  = "(" ++ s ++ ")"
