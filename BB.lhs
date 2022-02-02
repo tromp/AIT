@@ -4,6 +4,7 @@ Author: Bertram Felgenhauer / John Tromp
 > import System.IO
 > import Debug.Trace
 > import Data.List
+> import Data.Char
 > import Data.Bits
 > import Control.Applicative
 > import Control.Exception.Assert
@@ -12,7 +13,14 @@ terms with de Bruijn indices (internal: starting at 0)
 note: Bot marks useless subterms that do not contribute to the normal form
 
 > data L = Var !Int | App L L | Abs L | Bot
->     deriving (Eq, Ord, Show)
+>     deriving (Eq, Ord)
+
+> instance Read L where
+>     readsPrec _ s
+>         | '(':s <- s, [(n,s)] <- reads s, ')':s <- s = [(Var (n-1),s)]
+>         | c:s <- s, isDigit c = [(Var (digitToInt c-1),s)]
+>         | '^':s <- s, [(t,s)] <- reads s = [(Abs t,s)]
+>         | '`':s <- s, [(t,s)] <- reads s, [(u,s)] <- reads s = [(App t u,s)]
 
 generate terms of size n with all variables < v
 
@@ -220,6 +228,14 @@ simplification
 >         (n,0,P Bot) : [(n,size t,P a) | a <- gen 0 n, Just t <- [normalForm a]]
 
 printing
+
+> instance Show L where
+>     show (Var i) = showParen (i < 0 || i > 8) (shows $ if i < 0 then i else i+1) ""
+>     show (Abs t) = "^" ++ show t
+>     show (App s t) = "`" ++ show s ++ show t
+>     show Bot = "_"
+
+alternative printing
 
 > newtype P = P L
 >     deriving (Eq, Ord)

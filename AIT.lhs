@@ -268,6 +268,7 @@ Bitstring functions -----------------------------------------------------
 >   "run8"    -> nl .   bshow . nf . toDB . machine $ bytestoLC input
 >   "print"   -> nl .                     show             $ prog
 >   "nf"      -> nl .                     show . nf . toDB $ prog
+>   "hnf"     -> nl .                    show . hnf . toDB $ prog
 >   "nf_size" -> nl .              show . size . nf . toDB $ prog
 >   "comb_nf" -> nl .        show . strongCL . toCL . toDB $ prog
 >   "comb"    -> nl .        show . toCL . optimize . toDB $ prog
@@ -295,6 +296,7 @@ Bitstring functions -----------------------------------------------------
 >   "run8\trun given program applied to standard input bytes and args",
 >   "print\tshow program",
 >   "nf\tshow normal form",
+>   "nf\tshow head normal form",
 >   "comb_nf\tnormal form through SK reduction",
 >   "comb\tshow translation to combinatory logic",
 >   "bcl\tencode in binary combinatory logic",

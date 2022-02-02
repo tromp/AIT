@@ -4,7 +4,7 @@ It also exports a simple type of identifiers that parse and
 print in a nice way.
 
 > {-# LANGUAGE PatternSynonyms #-}
-> module Lambda(LC(..), DB(..), CL(..),  Id(..), lam, isnf, nf, evalLC, toLC, toCL, strongCL, toDB, showBCW, toBCW) where
+> module Lambda(LC(..), DB(..), CL(..),  Id(..), lam, isnf, nf, hnf, evalLC, toLC, toCL, strongCL, toDB, showBCW, toBCW) where
 > import Prelude hiding ((<>))
 > import Data.List(union, (\\), elemIndex)
 > import Data.Char(isAlphaNum)
@@ -127,7 +127,7 @@ Identifiers print and parse without any adornment.
 
 > instance Read Id where
 >     readsPrec _ s =
->         case span (\c -> isAlphaNum c || c=='_') s of
+>         case span (\c -> isAlphaNum c || c=='_' || c=='\'') s of
 >         ("", _) -> []
 >         (i, s') -> [(Id i, s')]
 
@@ -194,6 +194,25 @@ convert back.
 
 > nf :: DB -> DB
 > nf = toDB . toLC . evalLC
+
+Head Normal Form
+
+> hnf :: DB -> DB
+> hnf v@(DBVar _) = v
+> hnf (DBLam e) = DBLam (hnf e)
+> hnf (DBApp f a) = case hnf f of
+>   DBLam e -> hnf (subst 0 e a)
+>   f'      -> DBApp f' a
+
+> subst :: Int -> DB -> DB -> DB
+> subst i (DBVar j)   c = if i == j then c else DBVar (if j > i then j-1 else j)
+> subst i (DBApp a b) c = DBApp (subst i a c) (subst i b c)
+> subst i (DBLam a)   c = DBLam (subst (i+1) a (incv 0 c))
+
+> incv :: Int -> DB -> DB
+> incv i (DBVar j)   = DBVar (if i <= j then j+1 else j)
+> incv i (DBApp a b) = DBApp (incv i a) (incv i b)
+> incv i (DBLam a)   = DBLam (incv (i+1) a)
 
 Convert/compute to higher order abstract syntax. Do this by keeping
 a mapping of the bound variables and translating them as they

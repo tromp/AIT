@@ -7,11 +7,19 @@ let
   myF = \c\n\m.c(succ n)(\f.n(m f));
   myfac = \n.n myF false id id;
   F   = \c\n    .n (c (succ n));
-  fac =   \n\f.n F (\x.f) id
+  fac =   \n\f.n F (\x.f) id;
+  G   = \c\n\a.c (succ n) (n a);
+  gac =   \n.n G false id
 in fac
 
--- fac 3 = \f. F (F (F (\x.f))) one
---       = \f. one (F (F (\x.f)) two)
---       = \f. one (two (F (\x.f) three))
---       = \f. one (two (three ((\x.f) four)))
---       = \f. one (two (three f))
+-- fac 3 = \f. F (F (F (\x.f))) 1
+--       = \f. 1 (F (F (\x.f))  2)
+--       = \f. 1 (2 (F (\x.f)   3))
+--       = \f. 1 (2 (3 ((\x.f)  4)))
+--       = \f. 1 (2 (3 f))
+
+-- gac 3 = \f. G (G (G false)) 1 f
+--       = \f.    G (G false)  2 (1 f)
+--       = \f.       G false   3 (2 (1 f))
+--       = \f.         false   4 (3 (2 (1 f)))
+--       = \f.                   (3 (2 (1 f)))
