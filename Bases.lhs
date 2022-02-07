@@ -2,6 +2,7 @@ Look for small bases
  
 > import System.IO
 > import Data.List
+> import Data.Tuple
 > import qualified Data.Heap as Heap
 > import Data.Function
 > -- import Debug.Trace
@@ -70,15 +71,17 @@ A ReadP parser for $\lambda$-expressions.
 
 de-Bruijn substitution
 
-> subst :: Int -> L -> L -> L
-> subst i (Var j)   c = if i == j then c else Var (if j > i then j-1 else j)
-> subst i (App a b) c = App (subst i a c) (subst i b c)
-> subst i (Abs a)   c = Abs (subst (i+1) a (incv 0 c))
+> tmMap :: (Int -> Int -> L) -> Int -> L -> L
+> tmMap onvar = walk where
+>     walk i (Var j)   = onvar i j
+>     walk i (Abs a)   = Abs (walk (i+1) a)
+>     walk i (App a b) = App (walk i a) (walk i b)
 
-> incv :: Int -> L -> L
-> incv i (Var j)   = Var (if i <= j then j+1 else j)
-> incv i (App a b) = App (incv i a) (incv i b)
-> incv i (Abs a)   = Abs (incv (i+1) a)
+> subst :: Int -> L -> Int -> L -> L
+> subst d c = tmMap (\i j -> if d+i == j then shift i 0 c else Var (if d+i < j then j-1 else j))
+
+> shift :: Int -> Int -> L -> L
+> shift d = tmMap (\i j -> Var (if i <= j then j+d else j))
 
 number of occurrences of a variable
 
@@ -99,7 +102,7 @@ SSK (λxλy.x y SSK) SSK
 >  case lnf n f of
 >   Nothing -> Nothing
 >   Just (n', Abs a) -> if n'' < 0 then Nothing else lnf n'' a' where
->     a' = subst 0 a b
+>     a' = subst 0 b 0 a -- (shift (-1) 1 a) -- TAPL: shift (-1) 0 (subst 0 (shift 1 0 b) 0 a)
 >     n'' = case b of
 >       (Var _) -> n'
 >       _       -> n' - max 0 ((noccur 0 a) - 1)
@@ -111,7 +114,7 @@ Candidate single point bases
 
 > bases :: [String]
 > bases = [
->  "λλλ3 1 (2 (λ2))", -- minimal             level 16 cumsize 2200336
+>  "λλλ3 1 (2 (λ2))", -- minimal             level 16 cumsize 2200336	2498293
 >  "λλλ2 1 (3 (λ2))", -- sizes below in ()   level 16 cumsize 1220869
 >  "λλλ2 (λ2) (3 1)", -- generates {T,K,B,W} level 16 cumsize  577496
 >  "λλλ3 (λ2) (2 1)", -- only finds F,I      level 16 cumsize   20312
@@ -128,10 +131,13 @@ Candidate single point bases
 > main = do
 >   hSetBuffering stdout LineBuffering
 >   args <- getArgs
->   let basis = [("A", read (bases !! (if null args then 0 else read (head args))))]
+>   -- let basis = [("A", read (bases !! (if null args then 0 else read (head args))))]
+>   let basis = [("W",read"λλ2 1 1"),("K",read"λλ2"),("B",read"λλλ3(2 1)")]
 >   putStrLn $ "Using basis " ++ show basis
->   findtargets 1 (levels basis) targets
->   -- findtargets 1 (levels2 basis 12 65536) targets
+>   let lvls = levels basis
+>   findtargets 1 lvls targets
+>   -- mapM_ (mapM_ print) lvls
+>   -- findtargets 1 (levels2 basis 8 4096) targets
 
 > levels :: [(String,L)] -> [[(String, L)]]
 > levels basis = l where l = basis : map (build id  l) [1..] 
@@ -141,7 +147,7 @@ Candidate single point bases
 >   l2 = take n (levels basis) ++ map (build filt l2) [n..]
 >   filt = take len -- . sortBy (compare `on` (size.snd)) 
 
-> findtargets :: Int -> [[(String,L)]] -> [(L,String)] -> IO ()
+> findtargets :: Int -> [[(String,L)]] -> [(String,L)] -> IO ()
 > findtargets _ _ [] = return ()
 > findtargets _ [] _ = putStrLn "Unexpected end of levels"
 > findtargets n (lvl:lvls) tgts = do
@@ -151,35 +157,41 @@ Candidate single point bases
 >     go ((as,comb):lvl') found = case Map.lookup comb tgtmap of
 >       Just name -> do
 >         putStrLn $ name ++ " = " ++ show comb ++ " = " ++ as
->         go lvl' ((comb,name) : found)
+>         go lvl' ((name,comb) : found)
 >       Nothing -> go lvl' found
->     tgtmap = Map.fromList targets
+>     tgtmap = Map.fromList . map swap $ targets
 
-> targets :: [(L,String)]
+> targets :: [(String,L)]
 > targets = [
->   (read"λλ  2 1 2   ","Y0"), -- A A(A(A A)A) of size 6 (14)
->   (read"λλ  2 1 1   ","W"), -- A A(A(A(A A)A)) of size 7 (9)
+>   ("Y0",read"λλ  2 1 2   "), -- A A(A(A A)A) of size 6 (14)
+>   ("W",read"λλ  2 1 1   "), -- A A(A(A(A A)A)) of size 7 (9)
 >   -- A M (W N) is 8 shorter than S M N and 7 shorter than S' N M
->   (read"λ   1   1   ","D"), -- A(A(A A)A)(A(A A)A) of size 9 (9)
->   (read"λ       1   ","I"), -- A(A(A(A A)A))(A(A A)A) of size 10 (14)
->   (read"λλ      2   ","K"), -- A(A A)(A(A A)A A A A A) of size 11 (15)
->   (read"λλ      1   ","F"), -- A A A(A(A A)(A A)(A A))A of size 11 (16)
->   (read"λλ  1   2   ","T"), -- A A(A(A A)A(A(A A)A)A)(A A) of size 13 (18 or 16 with eta)
->   (read"λλλ 3 1 2   ","C"), -- A(A A A(A A A)(A A)(A A))A A of size 13 (15)
->   (read"λλλ 3  (2 1)","B"), -- A(A(A(A(A A)A))(A A)A)(A(A(A A))) of size 14 (?)
->   (read"λλλ   3 1   ","K2"), -- A A(A(A A)(A A)(A A))(A(A A) A) A A (15)
->   (read"λλλ 2 1(3 1)","S'"), -- A(A(A A)A)A A A A A A(A(A A)A) of size 15 (13)
->   (read"λλλ 1 2 3   ","V'"), -- A A(A A)(A A)(A(A A(A A)) A A)(A A) of size 15
->   (read"λλ  1 2 2   ","T1"), -- A(A(A(A(A(A A))))(A A) A)(A(A A)(A A)) of size 15
->   (read"λλ  2 2 1   ","W0"), -- A A(A A)(A A(A A) A)(A A(A(A(A A) A))) of size 16
->   (read"λλλ 3 1(2 1)","S"), -- A(A(A A(A A(A A))(A(A(A A(A A))))))A A of size 16 (18)
->   (read"λλ  1 1 2   ","T0"), -- A(A A)(A(A(A(A(A A) A) A(A A)) A) A A A) of size 17
->   (read"λλ2(1 2 1)  ","Y1"), -- A(A(A A A)(A A)(A(A A) A) A)(A(A(A(A A)) A)) of size 18
->   (read"λλλ 1 3 2   ","V"), -- ((((A(A(A(A(A A)))))((((A A)A)((A A)((A A)A)))A))(A A))A)A of size 19
->   (read"λλλ2(3 2 1)  ","X"), -- ((((A(A(((A((A(AA))A))A)A)))(AA))(A((A(A((AA)A)))A)))A)A of size 20
->   (read"λλλλ4 (3 2 1)","B3"), -- 
->   (read"λλλ3 (λ3 (2 1))","CB3B"), --  > 22 according to Hunt.hs
->   (read"λλ21","I2")] -- 
+>   ("D",read"λ   1   1   "), -- A(A(A A)A)(A(A A)A) of size 9 (9)
+>   ("I",read"λ       1   "), -- A(A(A(A A)A))(A(A A)A) of size 10 (14)
+>   ("K",read"λλ      2   "), -- A(A A)(A(A A)A A A A A) of size 11 (15)
+>   ("F",read"λλ      1   "), -- A A A(A(A A)(A A)(A A))A of size 11 (16)
+>   ("O",read"λλ  1  (2 1)"), -- A(A(A(A A) A)(A A) A(A A)) A if size 12
+>   ("T",read"λλ  1   2   "), -- A A(A(A A)A(A(A A)A)A)(A A) of size 13 (18 or 16 with eta)
+>   ("C",read"λλλ 3 1 2   "), -- A(A A A(A A A)(A A)(A A))A A of size 13 (15)
+>   ("B",read"λλλ 3  (2 1)"), -- A(A(A(A(A A)A))(A A)A)(A(A(A A))) of size 14 (?)
+>   ("K2",read"λλλ   3 1   "), -- A A(A(A A)(A A)(A A))(A(A A) A) A A (15)
+>   ("YT",read"λλ 1 (2 2 1)"), -- 
+>   ("S'",read"λλλ 2 1(3 1)"), -- A(A(A A)A)A A A A A A(A(A A)A) of size 15 (13)
+>   ("V'",read"λλλ 1 2 3   "), -- A A(A A)(A A)(A(A A(A A)) A A)(A A) of size 15
+>   ("T1",read"λλ  1 2 2   "), -- A(A(A(A(A(A A))))(A A) A)(A(A A)(A A)) of size 15
+>   ("W0",read"λλ  2 2 1   "), -- A A(A A)(A A(A A) A)(A A(A(A(A A) A))) of size 16
+>   ("S",read"λλλ 3 1(2 1)"), -- A(A(A A(A A(A A))(A(A(A A(A A))))))A A of size 16 (18)
+>   ("T0",read"λλ  1 1 2   "), -- A(A A)(A(A(A(A(A A) A) A(A A)) A) A A A) of size 17
+>   ("Y1",read"λλ2(1 2 1)  "), -- A(A(A A A)(A A)(A(A A) A) A)(A(A(A(A A)) A)) of size 18
+>   ("V",read"λλλ 1 3 2   "), -- ((((A(A(A(A(A A)))))((((A A)A)((A A)((A A)A)))A))(A A))A)A of size 19
+>   ("X",read"λλλ2(3 2 1)  "), -- ((((A(A(((A((A(AA))A))A)A)))(AA))(A((A(A((AA)A)))A)))A)A of size 20
+>   ("B3",read"λλλλ4 (3 2 1)"), -- (((A A)(A(((A A)A)(A(A A)))))A)(((A(A((A A)A)))A)(((A A)((A A)A))A)) of size 22
+> -- 0x79714758730 ````AA`A```AAA`A`AAA```A`A``AAAA```AA``AAAA
+> -- 0x79714758730 (((A A)(A(((A A)A)(A(A A)))))A)(((A(A((A A)A)))A)(((A A)((A A)A))A))
+>   ("CB3B",read"λλλ3 (λ3 (2 1))"), --  > 22 according to Hunt.hs
+>   ("Z",read"λλλ2 (3 1)"),
+>   ("WTF",read"λλλ2"),
+>   ("I2",read"λλ21")] -- 
 
 Btw, shortest diverging is Omega = (A A A) (A (A A A)) of size 7
 

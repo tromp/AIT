@@ -12,7 +12,9 @@ primes = let
     sn = succ n
  in False:False:primes zero
 
-main=print.take 30$
+main2 = print . take 4096 $ primes
+
+main=print.take 4096$
  let
  f='.'
  o c(x:y)=x:c y

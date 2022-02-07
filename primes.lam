@@ -5,8 +5,15 @@
    consz = \xs\p.p zero xs;
    oneS = \cont\x\xs\p.p x (xs cont);
    zeroS = \cont\x\xs.consz (xs cont);
-   primes = \N\p.p one (let SN = \r.oneS (N r); F = SN F in (primes SN) F);
-   main = consz (consz (primes zeroS))
+   prms = \N\p.p one (let SN = \r.oneS (N r); F = SN F in (prms SN) F);
+   2 = \f\x.f (f x);
+   3 = \f\x.f (f (f x));
+   4 = 2 2;
+   12 = \f.3(4 f);
+   4k = 12 2;
+   tk = \cont\x\xs\z.z x (xs cont);
+   primes = consz (consz (prms zeroS));
+   main = primes (4k tk (zero (zero one)))
 in main
 
 -- test with ./blc run primes.lam

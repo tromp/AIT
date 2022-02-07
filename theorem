@@ -1,3 +1,8 @@
+https://www.cambridge.org/core/journals/journal-of-symbolic-logic/article/abs/basis-result-in-combinatory-logic/306DF60857C5A842C9793FBBAA4A2970
+
+A basis result in combinatory logic,
+Remi Legrand, J. Symb. Logic 53.4 (1988), pp. 1224-1226.
+
 Define an n-form as a lambda calculus term containing (at least) n free variables.
 Define an n-bind as a term containing an n-form as well as its n binding lambdas.
 
@@ -25,7 +30,8 @@ Proof:
 Suppose T0 is a deprived term that 1-step reduces to T1,
 with redex A = (\x.M) N and reduct M[x:=N].
 
-First suppose that M[x:=N] has a 3-form. Since M and N both lack a 3-form,
+First suppose that T1 has a 3-form. Since the reduct has no new variables,
+this 3-form must appear within the reduct. Since M and N both lack a 3-form,
 this 3-form must have some variables in M and some in a substituted N.
 There cannot be two of the former, or they plus x would make M contain a 3-form.
 Hence there is only one 3-form variable y in M,
@@ -34,9 +40,12 @@ Since all 3 binding lambdas must ancestor the 3-form containing y,
 and lambdas in M cannot bind variables in N, \z1 and \z2 must ancestor A.
 Since A is not a 3-form, \y must be in M.
 That makes \x.M a 2-bind and A a 2-form with N as disjoint subterm, a contradiction.
-Thus M[x:=N] has no 3-form.
+Thus T1 has no 3-form.
 
-Finally, suppose that M[x:=N] has a 2-2-form with free variables y and z, and 2-bind T.
+Finally, suppose that T1 has a 2-2-form T_2_2 containing 2-bind T and free variables y and z.
+Since T0 contains no 2-2-form, T must be in the redex.
+Variables y and z can't both be outside A, since A either contains T or a 2-bind with x.
+By disjointness, neither y nor z can be outside A.
 Since A has no 2-2-form, y and z can't both be in N.
 They cannot both be in M either, as that implies a 3-form in M with variables x,y,z.
 If y is in M and z in N, then M has a 2-2-form with T and free variables x and y.
