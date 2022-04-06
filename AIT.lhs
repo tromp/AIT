@@ -220,29 +220,24 @@ Bitstring functions -----------------------------------------------------
 >                  $ [((j,x+1),'\n') | j <- [0..y]] ++ reverse (DL.toList pc)
 
 > boxChar :: Bool -> UArray Point Char -> String
-> boxChar alt a = boxer 0 1 >>= boxUtf8 where
+> boxChar alt a = boxer 0 1 where
 >   (_,(y,x)) = bounds a
 >   boxer :: Int -> Int -> String
 >   boxer j i | i>x = if j<y' then boxer (j+1) 1 else [] where
 >                        y' = if alt then y else y-1
 >   boxer j i = boxVar (a!(j,i-1)) (a!(j,i)) (a!(j,i+1)) (j<y && a!(j+1,i)=='|') : boxMid (a!(j,i+2)) : boxer j (i+4) where
->     boxMid '_' = '\x80'
+>     boxMid '_' = '─'
 >     boxMid c = c
 >     boxVar  _  ' '  _  _     = ' '
->     boxVar '_' '|' '_' _     = '\xbc' -- +
->     boxVar ' ' '|' ' ' _     = '\x82' -- |
->     boxVar '_' '|' ' ' True  = '\xa4' -- 4
->     boxVar '_' '|' ' ' False = '\x98' -- J
->     boxVar ' ' '|' '_' True  = '\x9c' -- F
->     boxVar ' ' '|' '_' False = '\x94' -- L
->     boxVar  _  '_'  _  True  = '\xac' -- T
->     boxVar  _  '_'  _  False = '\x80' -- -
+>     boxVar '_' '|' '_' _     = '┼'
+>     boxVar ' ' '|' ' ' _     = '│'
+>     boxVar '_' '|' ' ' True  = '├'
+>     boxVar '_' '|' ' ' False = '┘'
+>     boxVar ' ' '|' '_' True  = '├'
+>     boxVar ' ' '|' '_' False = '└'
+>     boxVar  _  '_'  _  True  = '┬'
+>     boxVar  _  '_'  _  False = '─'
 >     boxVar  _   c   _  _     = error $ "Unexpected char" ++ [c]
->   boxUtf8 :: Char -> String
->   boxUtf8 c = pref c ++ [c] where
->     pref  ' ' = ""
->     pref '\n' = ""
->     pref  _   = "\xe2\x94"
 
 > toPBM :: UArray Point Char -> String
 > toPBM a = "P1\n" ++ show x ++ " " ++ show (2*y+1) ++ "\n" ++ tobmp True 0 0 where
