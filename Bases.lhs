@@ -78,7 +78,7 @@ de-Bruijn substitution
 >     walk i (App a b) = App (walk i a) (walk i b)
 
 > subst :: Int -> L -> Int -> L -> L
-> subst d c = tmMap (\i j -> if d+i == j then shift i 0 c else Var (if d+i < j then j-1 else j))
+> subst d c = tmMap (\i j -> if d+i == j then shift i 0 c else Var (if d+i < j then j-1 else j)) -- incorporate (shift (-1) 1 a) below
 
 > shift :: Int -> Int -> L -> L
 > shift d = tmMap (\i j -> Var (if i <= j then j+d else j))

@@ -14,11 +14,9 @@ let
   -- CL  = \f\cont T (V (BTCOMB cont) (FB2 f cont));
   -- V' = \x\y\z.z y x;
   -- CL' = \f\cont T (V' (FB2 f cont) (BTCOMB cont));
-  mtve = S(K(S(K(S(K(S(K(S(K(S I))K))))(S(S(K(S(K(S(K S)(S(K(S S S(K(S I))))K)))K))(S(K(S S(K(S S(S K)(S S(K(K S)))))))K)))))(S(K K))))(S S S(S(S K))(S S K(S(K S)K))); -- equivalent to CL only 197 bits
+  mtve = S(K(S(K(S(K(S(K(S(K(S I))K))))(S(S(K(S(K(S(K S)(S(K(S S S(K(S I))))K)))K))(S(K(S S(K(S(S S(K(K S)))(K K)))))  K)))))(S(K K))))(S S S(S(S K))(S S K(S(K S)K))); -- equivalent to CL only 194 bits
   Y0 = \x\y.x y x;
   Y1 = \y\x.y (x y x);
   SKY = Y0 Y1
   -- for cross-interpreting replace bit K S above by bit bit S and use Y instead of SKY
 in SKY CL
-
-

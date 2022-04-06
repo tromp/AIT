@@ -6,7 +6,7 @@ let
   not = \b\x\y.b y x;
   or  = \a\b.b b a;
   and = \a\b.b a b;
-  xor = \a\b.a b (not b);
+  xor = \a\b.a b (not b); -- xor on bits (0==true), not booleans
   xor3 = \a\b.xor (xor a b);
   maj = \a.a or and;
   nil = false;

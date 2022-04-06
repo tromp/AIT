@@ -3,7 +3,7 @@
   Cons = \x\xs\p. p x xs;
   Zero = \z\o. z;
   One = \z\o. o;
-  xor = \a\b. a b (\z\o. b o z);
+  xor = \a\b. a b (\z\o. b o z);  -- xor on bits (0==true), not booleans
   f = \ts. ts (\a\ts. ts (\b\_. Cons (xor a b) (f ts)));
   ts = Cons One (Cons Zero (Cons Zero (f ts)));
 in
