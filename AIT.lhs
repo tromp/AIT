@@ -231,7 +231,7 @@ Bitstring functions -----------------------------------------------------
 >     boxVar  _  ' '  _  _     = ' '
 >     boxVar '_' '|' '_' _     = '┼'
 >     boxVar ' ' '|' ' ' _     = '│'
->     boxVar '_' '|' ' ' True  = '├'
+>     boxVar '_' '|' ' ' True  = '┤'
 >     boxVar '_' '|' ' ' False = '┘'
 >     boxVar ' ' '|' '_' True  = '├'
 >     boxVar ' ' '|' '_' False = '└'
