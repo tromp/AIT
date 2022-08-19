@@ -13,7 +13,8 @@
    4k = 12 2;
    tk = \cont\x\xs\z.z x (xs cont);
    primes = consz (consz (prms zeroS));
-   main = primes (4k tk (zero (zero one)))
+   someprimes = primes (4k tk (zero (zero one)));
+   main = primes
 in main
 
 -- test with ./blc run primes.lam
