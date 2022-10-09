@@ -2,9 +2,9 @@ import Control.Applicative hiding((<|>),many)
 import Text.Parsec
 import System.IO
 data W=S!Char|F(W->W)
-(F f)&w=f w
 f=c$F id
 c=F .const
+(F f)&w=f w
 a x y v=x v&y v
 l e v=F$ \a->e(a:v)
 q x y=F$ \z->z&x&y
