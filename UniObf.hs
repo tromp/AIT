@@ -17,4 +17,4 @@ w2l l = case (l <@> cs) of { S ':' -> l <@> wT : w2l (l <@> wF); F  _  -> [] }
 w2c iw = c where (S c) = iw <@> S '0' <@> S '1'
 bIO prog = map w2c . w2l . (prog [] <@>) . foldr (p2w .b2w . fromEnum) wF
 main = do hSetBuffering stdout NoBuffering
-          interact $ either (error.show) id . parse (bIO <$> expr <*> getInput) ""
+          interact $ either (error . show) id . parse (bIO <$> expr <*> getInput) ""
