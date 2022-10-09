@@ -1,22 +1,14 @@
 module Main where
 import System.IO
-import Data.List
 import Text.Parsec
 import Control.Applicative hiding ((<|>), many)
-data W = W { ann :: !Char, fun :: W -> W }
-wC = W ' ' . const
-wT  = W ' ' wC
-wF = wC $ W ' ' id
-wA x = W x undefined
-bL e v = W ' ' $ \a -> e (a:v)
-bA e1 e2 v = e1 v `fun` e2 v
+data W = S !Char | F (W -> W); (F f) <@> w = f w; wC = F . const; wT = F wC; wF = wC $ F id
+bL e v = F $ \a -> e (a:v); bA e1 e2 v = e1 v <@> e2 v
 expr = char '0' *> (bL <$ char '0' <*> expr <|>  bA  <$ char '1' <*> expr <*> expr)
-                <|> flip (!!) <$> pred . length <$> many (char '1') <* char '0'
-b2w n = if even n then wT else wF
-p2w f g = W ' ' $ \h -> h `fun` f `fun` g
-cs = wC . wC $ wA ':'
-w2l l = if ann (l `fun` cs) /= ':' then [] else l `fun` wT : w2l (l `fun` wF)
-w2c iw = ann $ iw `fun` wA '0' `fun` wA '1'
-bIO prog = map w2c . w2l . (prog [] `fun` ) . foldr (p2w .b2w . fromEnum) wF
+     <|> flip (!!) <$> pred . length <$> many (char '1') <* char '0'
+b2w n = if even n then wT else wF; p2w x y = F $ \z -> z <@> x <@> y; cs = wC . wC $ S ':'
+w2l l = case (l <@> cs) of { S ':' -> l <@> wT : w2l (l <@> wF); F  _  -> [] }
+w2c iw = c where (S c) = iw <@> S '0' <@> S '1'
+bIO prog = map w2c . w2l . (prog [] <@>) . foldr (p2w .b2w . fromEnum) wF
 main = do hSetBuffering stdout NoBuffering
           interact $ either (error.show) id . parse (bIO <$> expr <*> getInput) ""
