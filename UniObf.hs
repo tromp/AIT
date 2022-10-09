@@ -1,20 +1,16 @@
-import System.IO
+import Control.Applicative hiding((<|>),many)
 import Text.Parsec
-import Control.Applicative hiding ((<|>), many)
-data W = S !Char | F (W -> W)
-(F f) <@> w = f w
-wC = F . const
-wT = F wC
-wF = wC $ F id
-bL e v = F $ \a -> e (a:v)
-bA e1 e2 v = e1 v <@> e2 v
-expr = char '0' *> (bL <$ char '0' <*> expr <|>  bA  <$ char '1' <*> expr <*> expr)
- <|> flip (!!) <$> pred . length <$> many (char '1') <* char '0'
-b2w n = if even n then wT else wF
-p2w x y = F $ \z -> z <@> x <@> y
-cs = wC . wC $ S ':'
-w2l l = case (l <@> cs) of { S ':' -> l <@> wT : w2l (l <@> wF); F  _  -> [] }
-w2c iw = c where (S c) = iw <@> S '0' <@> S '1'
-bIO prog = map w2c . w2l . (prog [] <@>) . foldr (p2w .b2w . fromEnum) wF
-main = do hSetBuffering stdout NoBuffering
-          interact $ either (error . show) id . parse (bIO <$> expr <*> getInput) ""
+import System.IO
+data W=S!Char|F(W->W)
+j(F f)=f
+f=c$F id
+c=F .const
+a x y v=x v`j`y v
+l e v=F$ \a->e(a:v)
+q x y=F$ \z->z`j`x`j`y
+b n=if even n then F c else f
+s w=c where(S c)=w`j`S '0'`j`S '1'
+o p=map s.g.(p[]`j`).foldr(q.b.fromEnum)f
+g l=case (l`j`c(c.S$':'))of{S ':'->l`j`F c:g(l`j`f);F _->[]}
+x=char '0'*>(l<$char '0'<*>x<|>a<$char '1'<*>x<*>x)<|>flip(!!)<$>pred.length<$>many(char '1')<*char '0'
+main=hSetBuffering stdout NoBuffering>>interact(either(error.show)id.parse(o<$>x<*>getInput)"")
