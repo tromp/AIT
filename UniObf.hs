@@ -1,4 +1,3 @@
-module Main where
 import System.IO
 import Text.Parsec
 import Control.Applicative hiding ((<|>), many)
