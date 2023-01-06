@@ -1,19 +1,32 @@
 -- outputs characteristic sequence of primes
 \io.let
-   zero = \x\y.x;
-   one = \x\y.y;
-   consz = \xs\p.p zero xs;
-   oneS = \cont\x\xs\p.p x (xs cont);
-   zeroS = \cont\x\xs.consz (xs cont);
-   prms = \N\p.p one (let SN = \r.oneS (N r); F = SN F in (prms SN) F);
+   -- bits
+   zero = \x\y.x;                      -- bit 0
+   one  = \x\y.y;                      -- bit 1
+   consz = \xs\p.p zero xs;            -- prefix a 0 bit
+
+   -- combinators for sieving numerals Sn = succS^n zeroS
+   -- for which (list (Sn cont)) = take n list ++ [bit0] ++ ((drop (n+1) list) cont)
+   -- and thus (list (Y Sn)) sets every (n+1)'th element of the list to bit0
+   zeroS = \cont\x\xs.consz (xs cont); -- (x:xs) (zeroS cont) = bit0 : xs cont
+    oneS = \cont\x\xs\p.p x (xs cont); -- (x:xs) ( oneS cont) = x    : xs cont
+   succS = \N\r.oneS (N r);
+   -- Note that (x:xs) (succS Sn cont) = (x:xs) (oneS (Sn cont)) = x : xs (Sn cont) 
+
+   sieve = \N\p.p one (let SN = succS N; F = SN F in (sieve SN) F);
+   primes = consz (consz (sieve zeroS));
+
+   -- church numerals
    2 = \f\x.f (f x);
    3 = \f\x.f (f (f x));
    4 = 2 2;
    12 = \f.3(4 f);
    4k = 12 2;
+
+   -- (list (cn tk )) takes the first cn elements of the list
    tk = \cont\x\xs\z.z x (xs cont);
-   primes = consz (consz (prms zeroS));
    someprimes = primes (4k tk (zero (zero one)));
+
    main = primes
 in main
 

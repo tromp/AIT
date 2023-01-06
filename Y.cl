@@ -3,6 +3,8 @@ let
   foo = \y\x.y (x y x)
 in ssk foo
 
+-- ssk foo f = foo f foo = f (foo f foo) = f (ssk foo)
+
 -- ./blc comb Y.cl
 -- now correctly outputs
 -- S S K (S (K (S S (S (S S K)))) K)
