@@ -1,0 +1,39 @@
+\io. let
+  0 = \s\z. z;
+  1 = \s. s;
+  id = \x. x;
+
+  add = \a\b\s\z. a s (b s z);
+  succ = add 1;
+  mul = \a\b\s. a (b s);
+
+  true = \x\y.x;
+  false = \x\y.y;
+  not = \t\x\y.t y x;
+
+  cons = \a\b\p. p a b;
+
+  K = \x\y.x;
+  1tuple = \x\f. f x;
+  F = \m\f\t. m 1tuple (\c. f (c t)) id;
+  div = \n\m. \f\x. n 1tuple (K x) (n (F m f) x);
+
+  -- 2+525 bits
+  go = \go\n\c\a\b.
+      let a' = add a b;
+          f = \a. div a c not;
+          d  = f a' true;
+          d' = f (add a' b) d
+      in  d' (cons d (go go n c (add a a) (add b b)))
+             (let n' = \f\x. n f (n f (f x))
+              in  go go (succ n) (mul c n') (mul a' n') (mul b n));
+  pi1 = go go 1 1 0 1;
+
+  -- YOLO, 2+442 bits
+  step = \cont\n\a\b\c.
+      let n' = \f\x. n f (n f (f x))
+      in  cont (succ n) (mul c n') (mul (add a b) n') (mul b n);
+  go = \go. step (step (\n\a\b\c. cons (div a c not true) (go go n (add a a) (add b b) c)));
+  pi_probably = go go 1 1 0 1
+in
+  pi1
