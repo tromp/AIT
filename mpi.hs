@@ -6,10 +6,10 @@ pi0 = go 1 0 2 1 1 3
          else go (q*k) ((2*q+r)*l) (t*l) (k+1) ((q*(7*k+2)+r*l)`div`(t*l)) (l+2)
 
 -- same series, but simplified arithmetic
-pi1 = go 1 0 1 1
+pi1 = go 1 1 1 1
   where
     -- This is using the series pi/2 = 1/1 + 1/3 + (1*2)/(3*5) + (1*2*3)/(3*5*7) ...
-    -- a/c is the sum of the first (n-1) terms, b/c is the n-th term.
+    -- a/c is the sum of the first n terms, b/c is the n-th term.
     --
     -- To check whether a digit can be produced, we check that the parities
     -- of (a+b) `div` c and (a+2*b) `div` c are the same. This is clumsy in
@@ -18,12 +18,12 @@ pi1 = go 1 0 1 1
     -- value for `true`.
     go n a b c = if d' == 0
         then d : go n (2*a) (2*b) c
-        else go (n+1) (a'*n') (b*n) (c*n')
+        else go (n+1) (a*n' + b') b' (c*n')
       where
         n' = 2*n + 1
-        a' = a + b
-        d  = a' `div` c `mod` 2
-        d' = ((a' + b) `div` c + d) `mod` 2
+        b' = b*n
+        d  = a `div` c `mod` 2
+        d' = ((a + b) `div` c + d) `mod` 2
 
 -- Same series, but produce the n-th digits after 2n terms. The first
 -- 50,000 digits are correct, so the probability of this being wrong

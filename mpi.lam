@@ -19,16 +19,16 @@
   F = \m\f\t. m 1tuple (\c. f (c t)) id;
   div = \n\m. \f\x. n 1tuple (K x) (n (F m f) x);
 
-  -- 2+525 bits
+  -- 2+515 bits
   go = \go\n\c\a\b.
-      let a' = add a b;
-          f = \a. div a c not;
-          d  = f a' true;
-          d' = f (add a' b) d
+      let f = \a. div a c not;
+          d  = f a true;
+          d' = f (add a b) d
       in  d' (cons d (go go n c (add a a) (add b b)))
-             (let n' = \f\x. n f (n f (f x))
-              in  go go (succ n) (mul c n') (mul a' n') (mul b n));
-  pi1 = go go 1 1 0 1;
+             (let n' = \f\x. n f (n f (f x));
+                  b' = mul b n
+              in  go go (succ n) (mul c n') (add (mul a n') b') b');
+  pi1 = go go 1 1 1 1;
 
   -- YOLO, 2+439 bits
   step = \cont\n\c\a\b.
