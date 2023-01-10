@@ -1,40 +1,44 @@
 -- for comments, see mpi.hs
 \io. let
-  0 = \s\z. z;
-  1 = \s. s;
+  0  = \s\z. z;
+  1  = \s. s;
   id = \x. x;
 
-  add = \a\b\s\z. a s (b s z);
+  add  = \a\b\s\z. a s (b s z);
   succ = add 1;
-  mul = \a\b\s. a (b s);
-
-  true = \x\y. x;
-  false = \x\y. y;
-  not = \t\x\y. t y x;
+  mul  = \a\b\s. a (b s);
 
   cons = \a\b\p. p a b;
+
+  true  = \x\y. x;
+  false = \x\y. y;
+  not   = \t\x\y. t y x;
 
   K = \x\y. x;
   1tuple = \x\f. f x;
   F = \m\f\t. m 1tuple (\c. f (c t)) id;
   div = \n\m. \f\x. n 1tuple (K x) (n (F m f) x);
 
-  -- 2+515 bits
-  go = \go\n\c\a\b.
-      let f = \a. div a c not;
-          d  = f a true;
-          d' = f (add a b) d
-      in  d' (cons d (go go n c (add a a) (add b b)))
-             (let n' = \f\x. n f (n f (f x));
-                  b' = mul b n
-              in  go go (succ n) (mul c n') (add (mul a n') b') b');
-  pi1 = go go 1 1 1 1;
+  -- 2+478 bits
+  go = \c\n\a.
+      let f = \a. div a c not in \b.
+      let add  = \a\b\s\z. a s (b s z);
+          succ = add 1;
+          d    = f a true;
+          d'   = f (add a b) d
+      in  d' (cons d (go c n (add a a) (add b b)))
+             (let n'  = succ n;
+                  2n1 = add n n';
+                  b'  = mul b n
+              in  go (mul 2n1 c) n' (add (mul 2n1 a) b') b');
+  pi1 = go 1 1 1 1;
 
-  -- YOLO, 2+439 bits
+  -- YOLO, 2+432 bits
   step = \cont\n\c\a\b.
-      let n' = \f\x. n f (n f (f x))
-      in  cont (succ n) (mul c n') (mul (add a b) n') (mul b n);
-  go = \go. step (step (\n\c\a\b. cons (div a c not true) (go go n c (add a a) (add b b))));
-  pi_probably = go go 1 1 0 1
+      let n'  = succ n;
+          2n1 = add n n'
+      in  cont n' (mul c 2n1) (mul (add a b) 2n1) (mul b n);
+  go = step (step (\n\c\a\b. cons (div a c not true) (go n c (add a a) (add b b))));
+  pi_probably = go 1 1 0 1
 in
   pi1
