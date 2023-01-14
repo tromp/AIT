@@ -19,18 +19,18 @@
   F = \m\f\t. m 1tuple (\c. f (c t)) id;
   div = \n\m. \f\x. n 1tuple (K x) (n (F m f) x);
 
-  -- 2+478 bits
-  go = \c\n\a.
+  -- 2+475 bits
+  go = \c\a.
       let f = \a. div a c not in \b.
       let add  = \a\b\s\z. a s (b s z);
           succ = add 1;
           d    = f a true;
           d'   = f (add a b) d
-      in  d' (cons d (go c n (add a a) (add b b)))
-             (let n'  = succ n;
-                  2n1 = add n n';
-                  b'  = mul b n
-              in  go (mul 2n1 c) n' (add (mul 2n1 a) b') b');
+      in  d' (\n. cons d (go c (add a a) (add b b) n))
+             (\n. let n'  = succ n;
+                      2n1 = add n n';
+                      b'  = mul b n
+                  in  go (mul 2n1 c) (add (mul 2n1 a) b') b' n');
   pi1 = go 1 1 1 1;
 
   -- YOLO, 2+432 bits
