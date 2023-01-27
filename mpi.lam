@@ -19,9 +19,9 @@
   F = \m\f\t. m 1tuple (\c. f (c t)) id;
   div = \n\m. \f\x. n 1tuple (K x) (n (F m f) x);
 
-  -- 2+475 bits
-  go = \c\a.
-      let f = \a. div a c not in \b.
+  -- 2+471 bits
+  go = \c.
+      let f = \a'. div a' c not in \a\b.
       let add  = \a\b\s\z. a s (b s z);
           succ = add 1;
           d    = f a true;
