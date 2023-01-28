@@ -34,8 +34,15 @@ let
   -- less than
   Tlt = \tn\tm. tm (K false) (tn (K true));
 
+  -- add tuple numerals
+  Tadd = \tm\tn\x. tm (tn x);
+  -- subtract tuple numeral from a second one at least as large; NOTE non-standard order
+  Tsub = \tm\tn\x. tm id (tn x);
+  -- multiply church numeral with tuple numeral
+  CTmul = \c\t. c t;
+
   T2C = \t\f\x. let F = \y.f (y F) in t (K x) F;
   -- alternative church predecessor
   Cpred = \c. T2C (Tpred (C2T c))
 
-in Tlt T3 T3
+in Tsub T5 T5
