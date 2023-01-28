@@ -1,0 +1,29 @@
+-- for comments, see tpi.hs and tuple_numerals.lam
+\io. let
+  id = \x. x;
+  C1 = id;
+  add  = \a\b\s\z. a s (b s z);
+  succ = add C1;
+  cons = \a\b\p. p a b;
+  true  = \x\y. x;
+  false = \x\y. y;
+  Tadd = \tm\tn\x. tm (tn x); -- same as mul for church
+  Tsub = \tm\tn\x. tm id (tn x);
+  CTmul = \c\t. c t;
+  T1 = \x\f. f x;
+
+  got = \cn\ta\tb\tc. let
+      prod = \bit\ta'. cons bit (got cn (Tadd ta' ta') (Tadd tb tb) tc) in
+      (tc (\_. prod false (Tsub tc ta))) -- case ta >= tc
+      (ta (\_.                           -- case ta < tc
+         (tc
+             (\_. let cn1  = succ cn;      -- case ta+tb >= tc
+                  x2np1 = CTmul (add cn cn1);
+                  cnxtb  = CTmul cn tb
+              in got cn1 (Tadd (x2np1 ta) cnxtb) cnxtb (x2np1 tc)))
+         (ta (tb (\_. prod true ta)))    -- case ta+tb < tc
+      ));
+
+  tpi = got C1 T1 T1 T1;
+in
+  tpi
