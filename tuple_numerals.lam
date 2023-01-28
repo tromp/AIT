@@ -1,0 +1,41 @@
+let
+  id  = \x. x;
+  K = \x\y. x;
+
+  -- church numerals
+  C0  = \f\x. x;
+  Csucc = \c\f\x. f (c f x);
+  C1  = Csucc C0;
+  C2  = Csucc C1;
+  C3  = Csucc C2;
+  C4  = Csucc C3;
+  C5  = Csucc C4;
+
+  -- tuple numerals
+  -- Tn x = <...<x>...> with n nested 1-tuples
+  -- 1-tuple
+  T = \x\f.f x;
+  C2T = \c. c T;
+  -- tuple successor
+  Tsucc = \t\x\f. f (t x);
+  -- tuple predecessor
+  Tpred = \t\x. t x id;
+
+  T0 = id;
+  T1 = Tsucc T0;
+  T2 = Tsucc T1;
+  T3 = Tsucc T2;
+  T4 = Tsucc T3;
+  T5 = Tsucc T4;
+
+  true  = \x\y. x;
+  false = \x\y. y;
+  -- Tm x (Tn y) = if n < m then y (Tm-1-n x) else x (Tn-m y)
+  -- less than
+  Tlt = \tn\tm. tm (K false) (tn (K true));
+
+  T2C = \t\f\x. let F = \y.f (y F) in t (K x) F;
+  -- alternative church predecessor
+  Cpred = \c. T2C (Tpred (C2T c))
+
+in Tlt T3 T3
