@@ -1,29 +1,29 @@
 -- for comments, see tpi.hs and tuple_numerals.lam
 \io. let
-  id = \x. x;
-  C1 = id;
-  add  = \a\b\s\z. a s (b s z);
-  succ = add C1;
   cons = \a\b\p. p a b;
-  true  = \x\y. x;
-  false = \x\y. y;
-  Tadd = \tm\tn\x. tm (tn x); -- same as mul for church
+  Csucc = \n\f\x. f (n f x);
+  Cadd  = \a\b\f\x. a f (b f x);
+  bit0 = \x\y. x;
+  bit1 = \x\y. y;
+  Tadd = \tm\tn\x. tm (tn x);
+  id = \x. x;
   Tsub = \tm\tn\x. tm id (tn x);
   CTmul = \c\t. c t;
-  T1 = \x\f. f x;
 
-  got = \cn\ta\tb\tc. let
-      prod = \bit\ta'. cons bit (got cn (Tadd ta' ta') (Tadd tb tb) tc) in
-      (tc (\_. prod false (Tsub tc ta))) -- case ta >= tc
-      (ta (\_.                           -- case ta < tc
-         (tc
-             (\_. let cn1  = succ cn;      -- case ta+tb >= tc
-                  x2np1 = CTmul (add cn cn1);
-                  cnxtb  = CTmul cn tb
-              in got cn1 (Tadd (x2np1 ta) cnxtb) cnxtb (x2np1 tc)))
-         (ta (tb (\_. prod true ta)))    -- case ta+tb < tc
+  go = \Cn\Ta\Tb\Tc. let
+      prod = \bit\Ta'. cons bit (go Cn (Tadd Ta' Ta') (Tadd Tb Tb) Tc) in
+      (Tc (\_. prod bit1 (Tsub Tc Ta)))      -- case Ta >= Tc
+      (Ta (\_.                               -- case Ta < Tc
+         (Tc
+             (\_. let Cn1 = Csucc Cn;        -- case Ta+Tb >= Tc
+                    x2np1 = CTmul (Cadd Cn Cn1);
+                    cnxTb = CTmul Cn Tb
+              in go Cn1 (Tadd (x2np1 Ta) cnxTb) cnxTb (x2np1 Tc)))
+         (Ta (Tb (\_. prod bit0 Ta)))        -- case Ta+Tb < Tc
       ));
 
-  tpi = got C1 T1 T1 T1;
+  C1 = id;
+  T1 = \x\f. f x;
+  tpi = go C1 T1 T1 T1
 in
   tpi
