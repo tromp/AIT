@@ -17,7 +17,7 @@
       (Ta (\_.                               -- case Ta < Tc
          (Tc
              (\_\Cn. let Cn1 = Csucc Cn;     -- case Ta+Tb >= Tc
-                     x2np1 = CTmul (Cadd (Csucc Cn) Cn);
+                    x2np1 = CTmul (Cadd (Csucc Cn) Cn);
                     CnxTb = CTmul Cn Tb
               in go CnxTb (Tadd (x2np1 Ta) CnxTb) (x2np1 Tc) Cn1))
          (Ta (Tb (\_. prod bit0 Ta)))        -- case Ta+Tb < Tc
