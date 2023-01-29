@@ -1,14 +1,14 @@
 -- for comments, see tpi.hs and tuple_numerals.lam
 \io. let
-  cons = \a\b\p. p a b;
   Csucc = \n\f\x. f (n f x);
-  Cadd  = \a\b\f\x. a f (b f x);
-  bit0 = \x\y. x;
-  bit1 = \x\y. y;
   Tadd = \tm\tn\x. tm (tn x);
   id = \x. x;
-  Tsub = \tm\tn\x. tm id (tn x);
+  bit0 = \x\y. x;
+  bit1 = \x\y. y;
   CTmul = \c\t. c t;
+  Tsub = \tm\tn\x. tm id (tn x);
+  Cadd  = \a\b\f\x. a f (b f x);
+  cons = \a\b\p. p a b;
 
   -- 399+2 bits
   go = \Tb\Ta\Tc. let
@@ -16,10 +16,10 @@
       (Tc (\_. prod bit1 (Tsub Tc Ta)))      -- case Ta >= Tc
       (Ta (\_.                               -- case Ta < Tc
          (Tc
-             (\_\Cn. let Cn1 = Csucc Cn;     -- case Ta+Tb >= Tc
-                    x2np1 = CTmul (Cadd (Csucc Cn) Cn);
+             (\_\Cn. let                     -- case Ta+Tb >= Tc
+                    x2np1 = CTmul (Csucc (Cadd Cn Cn));
                     CnxTb = CTmul Cn Tb
-              in go CnxTb (Tadd (x2np1 Ta) CnxTb) (x2np1 Tc) Cn1))
+              in go CnxTb (Tadd (x2np1 Ta) CnxTb) (x2np1 Tc) (Csucc Cn)))
          (Ta (Tb (\_. prod bit0 Ta)))        -- case Ta+Tb < Tc
       ));
 
@@ -29,16 +29,15 @@
 
   -- YOLO, 376+2 bits
   step = \cont\Tb\Ta\Tc\Cn.
-      let Cn1   = Csucc Cn;
-          Csucc = \n\f\x. f (n f x);
-          x2np1 = CTmul (Cadd (Csucc Cn) Cn);
+      let
+          x2np1 = CTmul (Csucc (Cadd Cn Cn));
           CnxTb = CTmul Cn Tb
-      in  cont CnxTb (x2np1 (Tadd Ta Tb)) (x2np1 Tc) Cn1;
-  go = step (step (\Tb\Ta\Tc. let
-      prod = \bit\Ta'\Cn. cons bit (go (Tadd Tb Tb) (Tadd Ta' Ta') Tc Cn) in
+      in  cont CnxTb (x2np1 (Tadd Ta Tb)) (x2np1 Tc) (Csucc Cn);
+  go_ = step (step (\Tb\Ta\Tc. let
+      prod = \bit\Ta'\Cn. cons bit (go_ (Tadd Tb Tb) (Tadd Ta' Ta') Tc Cn) in
       (Tc (\_. prod bit1 (Tsub Tc Ta)))      -- case Ta >= Tc
       (Ta (\_. prod bit0 Ta))));             -- case Ta < Tc
   T0 = \x. x;
-  tpi_probably = go T1 T0 T1 C1;
+  tpi_probably = go_ T1 T0 T1 C1;
 in
-  tpi
+  tpi_probably 
