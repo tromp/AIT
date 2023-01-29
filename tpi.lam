@@ -17,8 +17,8 @@
          (Tc
              (\_. let Cn1 = Csucc Cn;        -- case Ta+Tb >= Tc
                     x2np1 = CTmul (Cadd Cn Cn1);
-                    cnxTb = CTmul Cn Tb
-              in go Cn1 cnxTb (Tadd (x2np1 Ta) cnxTb) (x2np1 Tc)))
+                    CnxTb = CTmul Cn Tb
+              in go Cn1 CnxTb (Tadd (x2np1 Ta) CnxTb) (x2np1 Tc)))
          (Ta (Tb (\_. prod bit0 Ta)))        -- case Ta+Tb < Tc
       ));
 
@@ -27,3 +27,4 @@
   tpi = go C1 T1 T1 T1
 in
   tpi
+  -- λ (λ (λ 1 1) (λ (λ λ λ λ λ (λ 2 (λ prod@2 bit1@(λ λ 1) (λ Tc@4 id@(λ 1) (Ta@5 x@1))) (Ta@3 (λ Tc@3 (λ (λ (λ (λ go@11 Cn1@3 CnxTb1 (λ 3 9 (2 1)) (2 Tc@7)) (9 8)) (λ λ 10 2 (3 2 1))) (λ λ 2 (9 2 1))) (4 (5 (λ 3 (λ λ 2) 5)))))) (λ λ λ 1 3 (8 7 (λ 7 (7 1)) (λ 3 (3 1)) 4))) (1 1)) (λ 1) 1 1 1) T1@(λ λ 1 2)
