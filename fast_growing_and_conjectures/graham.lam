@@ -1,3 +1,5 @@
+-- Graham's number https://en.wikipedia.org/wiki/Graham%27s_number
+-- size 114 bits, 6 less than the 120 bits in its 15 byte name.
 let
   three = \f\x.f (f (f x)); -- putting this before four saves 1 bit
   four = \f\x.f (three f x);

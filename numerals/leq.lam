@@ -1,3 +1,4 @@
+-- less than or equal using tuple numerals
 let
   0 = \x\y.y;
   id = \x.x;

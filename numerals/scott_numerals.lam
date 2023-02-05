@@ -1,0 +1,36 @@
+let
+  id = \x.x;
+  True = \t\f.t;
+  False = \t\f.f;
+  if = \b\t\f.b t f;
+  -- Scott numerals
+  S0 = \z\s.z;
+  Ssucc = \n\z\s.s n;
+  Spred = \n.n id id;
+
+  S1 = Ssucc S1;
+  S2 = Ssucc S1;
+  S3 = Ssucc S2;
+  S4 = Ssucc S3;
+
+  isZero = \n.n True (\m.False);
+  K = \x\y.x;
+  Sadd = \x\y. x y (\n  Ssucc (Sadd n y));
+  Smul = \x\y. x S0 (\n  Sadd y (Smul n y));
+  Sfac = \x. x S1 (\n  Smul x (Sfac n));
+  Seq = \x\y. x (y True (K False)) (\x1.y False (\y1.Seq x1 y1));
+  sumto = \x. x S0 (\n.Sadd x (sumto n));
+  S5 = Sadd S2 S3;
+  S6 = Sadd S3 S3;
+  S17 = Sadd S6 (Sadd S6 S5);
+  S37 = Ssucc (Smul S6 S6);
+  S703 = sumto S37;
+  S720 = Sfac S6;
+  test = Seq S720 (Sadd S703 S17)
+in test
+
+-- test with
+-- ./blc nf arithmetic.lam
+-- which should output
+-- \\2
+-- i.e. True

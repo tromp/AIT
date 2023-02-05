@@ -1,0 +1,20 @@
+let
+  0 = \x\y.y;
+  1 = \x.x;
+  id = 1;
+  2 = \f\x.f(f x);
+  3 = \f\x.f(f(f x));
+  sum0 = \a\b\f\x. a f (b f x);
+  fb0 = \c\a\b.c b (sum0 a b);
+  true = \x\y.x;
+  fib0 = \n.n fb0 true 0 1;
+  sum1 = \a\b\x. a (b x);
+  fb1 = \c\a\b.c b (sum1 a b);
+  fib1 = \n\f.n fb1 true id f
+in fib1 -- (3 2)
+
+-- size 74 bits
+-- fib0 = λn. n (λc λa λb.c b (λf λx.a f (b f x))) (λx λy.x) (λf λx.x) (λf.f)
+-- size 52 bits
+-- fib1 = λn. n (λc λa λb.c b (λx.a (b x))) (λx λy.x) (λx.x)
+

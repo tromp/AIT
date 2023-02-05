@@ -1,5 +1,0 @@
-let
-  succ = \n\f\x.n f (f x);
-  G = \f\n.n f n;
-  g = \n.n G succ
-in g

@@ -1,3 +1,4 @@
+-- simplest Church numeral equality uses Scott numerals!
 let
   0 = \x\y.y;
   id = \x.x;

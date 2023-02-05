@@ -1,0 +1,5 @@
+-- outputs characteristic sequence of all naturals
+\io.let
+  bit1 = \x0\x1.x1;
+  all = \z.z bit1 all
+in all

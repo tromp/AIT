@@ -1,6 +1,6 @@
 -- halts if odd perfect number is found
 let
-  0    =   \s\z. z;
+  0    =   \f\x. x;
   succ = \n\f\x.n f (f x);
   id = \x.x;
   1 = id;

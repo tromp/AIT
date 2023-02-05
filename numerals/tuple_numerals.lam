@@ -33,11 +33,12 @@ let
   -- Tm x (Tn y) = if n < m then y (Tm-1-n x) else x (Tn-m y)
   -- less than
   Tlt = \tn\tm. tm (K false) (tn (K true));
+  Teq = \tn\tm. tm (\z. z (K true) false true) (tn (K false));
 
   -- add tuple numerals
   Tadd = \tm\tn\x. tm (tn x);
-  -- subtract tuple numeral from a second one at least as large; NOTE non-standard order
-  Tsub = \tm\tn\x. tm id (tn x);
+  -- subtract: tuple numeral minus tuple numeral (smaller or equal)
+  Tsub = \tn\tm\x. tm id (tn x);
   -- multiply church numeral with tuple numeral
   CTmul = \c\t. c t;
 
@@ -45,4 +46,4 @@ let
   -- alternative church predecessor
   Cpred = \c. T2C (Tpred (C2T c))
 
-in Tsub T5 T5
+in Teq (Tadd T1 (Tsub T4 T2)) (Tpred T4)

@@ -1,4 +1,5 @@
 -- This code is a manual translation from `Sample.hs`
+-- used as example for compiling Haskell to blc with a plugin; see BLC.hs
 \_. let
   Cons = \x\xs\p. p x xs;
   Zero = \z\o. z;

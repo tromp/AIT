@@ -1,0 +1,31 @@
+let
+  0    =   \f\x. x;
+  succ = \n\f\x. n f (f x);
+  1 = succ 0;
+  2 = succ 1;
+  3 = succ 2;
+  4 = succ 3;
+  5 = succ 4;
+
+  false = 0;
+  true = \x\y.x;
+  cons = \x\y\p. p x y;
+  -- reversing normal convention
+  tail = \l.l true;
+  head = \l.l false;
+  index = \n\l. head (n tail l);
+  -- modulo, 106 bits
+  mod = \n\m. \f\z.  index n
+    -- F cont m = cons m (cont (f m))
+    -- F^m (K r) z =  F (F^(m-1) (K r)) z = cons z (cons (f z) (cons (f(f z)) ... r))
+    (n (\r.m (\cont\m. cons (cont (f m)) m) (\_. r) z) (\_. z)); -- use n as poor man's Y
+  -- 1-tuple
+  T = \x\y. y x;
+  -- even mod1 n m = n mod (m+1) not as concise as list indexing:
+  mod1 = \n\m. let F = \c\a\x. a c (succ x); R = \r\a\y. a (m F r) 0 in n R m (n T false) m
+-- = R (T^3 false) _
+-- = (T^3 false) (F^2 R) 0 = F^2 R (T^2 false) 0
+-- = (T^2 false) (F^1 R) 1 = F^1 R (T^1 false) 1
+-- = (T^1 false) (F^0 R) 2 = F^0 R (T^0 false) 2
+-- = (T^0 false) (F^2 R) 0 = 0
+in mod -- 3 2

@@ -1,0 +1,11 @@
+-- church numeral minimum using tuple numeral dynamics
+let
+  K = \x\y. x;
+  2 = \f\x. f (f x);
+  3 = \f\x. f (f (f x));
+  4 = 2 2;
+  -- 1-tuple
+  T = \x\y. y x;
+
+  min = \n\m. n T (K n) (m T (K m));
+in min -- 3 2
