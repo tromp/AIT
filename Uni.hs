@@ -6,9 +6,6 @@ import Control.Applicative
 import Debug.Trace
 
 data Term = App Term Term | Abs Term | Var Int
-data Term' = Return Closure | Apply Term' Term Env
-data Closure = TE Term Env | IDX Int
-type Env = [Closure]
 
 instance Show Term where
     showsPrec d (Abs t) = showParen (d>7) $
@@ -28,6 +25,12 @@ parse ('0' : '1' : xs) = do
 parse ('1' : xs) = do
     (os, '0':xs') <- return $ span (=='1') xs
     return (Var (length os), xs')
+
+data Term' = Return Closure | Apply Term' Term Env
+
+data Closure = TE Term Env | IDX Int
+
+type Env = [Closure]
 
 whnf :: Term -> Env -> Term'
 whnf (Var i) env = case env !! i of

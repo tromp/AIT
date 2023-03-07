@@ -4,15 +4,15 @@
 --     go n [] = n
 --     go n (x:xs) = go (2*n + x) xs
 -- 
--- list (0:xs) = ([], xs)
--- list (1:xs) = let (n, xs') = list xs in splitAt (nat n) xs'
+-- decode (0:xs) = ([], xs)
+-- decode (1:xs) = let (x, xs') = decode xs in splitAt (nat x) xs'
 let
   true = \x\y.x;
   false = \x\y.y;
   nil = false;
   cons = \a\b\p.p a b;
   -- xs (fold f) <==> foldr f id xs
-  fold = \f.(let go = \x\xs.f x (xs go) in go);
+  fold = \f. let go = \x\xs.f x (xs go) in go;
 
   -- 236 bit decoder
   consnat = \x\xs\n.xs (\f\a.n f (n f (x a (f a))));

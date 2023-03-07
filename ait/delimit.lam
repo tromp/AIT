@@ -5,18 +5,22 @@ let
  zero = false;
  one = id;
 
+ -- readbit cont n (bit:list) = cont (2*n+bit) list
  readbit = \cont\n\list.list (\bit.cont (\f\x.(n f (n f (bit x (f x))))));
 
+ -- delimit cont (levenstein_code_for_n ++ list) = cont n list
  delimit = \cont\list.list (\bit.bit (cont zero) (delimit (\len.len readbit cont one)));
-
- incc = \cont\done\list.list (\msb.incc (\r\_.msb done cont (\z.z (\x\y.msb y x) r))
-                                        (\r\_.    done      (\z.z       msb      r))
-                             ) (cont list);
- inc = incc (\r\z.z true r) id;
 
  nil = false;
 
- main = delimit (\n\l\z.z (n inc nil) l)
+ -- xs R tail returns reverse(xs) ++ tail
+ R = \x\xs\t.xs R (\z z x t);
+ rev = \xs.xs R nil;
+
+ -- inc reverse_ith_binary_string = reverse_i_plus_1st_binary string
+ inc = \l.l (\bit\bits\_.bit (\z.z false bits) (\z.z true (inc bits))) (\z.z true l);
+
+ main = delimit (\n\l \z.z (rev (n inc nil)) l)
 in main
 
 -- test with
