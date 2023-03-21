@@ -1,12 +1,20 @@
 -- Graham's number https://en.wikipedia.org/wiki/Graham%27s_number
 -- size 114 bits, 6 less than the 120 bits in its 15 byte name.
 let
-  three = \f\x.f (f (f x)); -- putting this before four saves 1 bit
-  four = \f\x.f (three f x);
+  3 = \f\x.f (f (f x)); -- putting this before 4 saves 1 bit
+  4 = \f\x.f (3 f x);
   times = \a\b\f.a (b f);
-  one = \x.x;
-  upify = \f\b.b f one;
-  uparrow = \n\a\b.n upify (times a) b;
-  gf  = \n.uparrow n three three;
-  graham = three four gf four;
+  1 = \x.x;
+  upify = \f\b.b f 1;
+-- hyper n a b = a[n]b from https://en.wikipedia.org/wiki/Hyperoperation
+  hyper = \n\a\b.n upify (times a) b;
+-- a[0]b = b+1
+-- a[1]b = a+b
+-- for n>=1, a[n+1]1 = a, a[n+1](b+1) = a[n] (a[n+1]b) = a[n] (a[n] (... a[n]a) ...) with b a's
+-- a[2]b = a*b, a[3]b = a^b, a[4]b = a^{a^...^a}, tower of b a's
+-- if n >= 2 then a[n]1 = a hence upify (a[n]) b = (a[n])^b 1 = a[n+1]b
+-- n gf 4 = g_n from https://en.wikipedia.org/wiki/Graham%27s_number
+  gf = \n.hyper n 3 3;
+  64 = 3 4;
+  graham = 64 gf 4;
 in graham

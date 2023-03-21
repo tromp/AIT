@@ -40,4 +40,4 @@
   T0 = \x. x;
   tpi_probably = go_ T1 T0 T1 C1;
 in
-  tpi_probably 
+  tpi

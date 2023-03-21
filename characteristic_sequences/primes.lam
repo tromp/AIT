@@ -1,20 +1,24 @@
 -- outputs characteristic sequence of primes
 \io.let
-   -- bits
-   zero = \x\y.x;                      -- bit 0
-   one  = \x\y.y;                      -- bit 1
-   consz = \xs\p.p zero xs;            -- prefix a 0 bit
+   -- Bits
+   B0 = \x\y.x;                   -- bit 0
+   B1 = \x\y.y;                   -- bit 1
+   cons = \x\y\z.z x y;
+   cons0 = \y\z.z B0 y;
+   Y = \f. (\x. x x) (\x. f (x x));
 
-   -- combinators for sieving numerals Sn = succS^n zeroS
-   -- for which (list (Sn cont)) = take n list ++ [bit0] ++ ((drop (n+1) list) cont)
-   -- and thus (list (Y Sn)) sets every (n+1)'th element of the list to bit0
-   zeroS = \cont\x\xs.consz (xs cont); -- (x:xs) (zeroS cont) = bit0 : xs cont
-    oneS = \cont\x\xs\p.p x (xs cont); -- (x:xs) ( oneS cont) = x    : xs cont
-   succS = \N\r.oneS (N r);
-   -- Note that (x:xs) (succS Sn cont) = (x:xs) (oneS (Sn cont)) = x : xs (Sn cont) 
+   -- Sieving numerals Sn = Ssucc^n S0
+   -- (x:xs) (Ssucc Sn cont) = Ssucc Sn cont x xs = x : xs (Sn cont)
+   -- (list (Y Sn)) sets every (n+1)'th element of list to B0
+   -- (11111111111111111111:T) (Y S0) = (00000000000000000000:T')
+   -- (11111111111111111111:T) (Y S1) = (10101010101010101010:T')
+   -- (11111111111111111111:T) (Y S2) = (11011011011011011011:T')
 
-   sieve = \N\p.p one (let SN = succS N; F = SN F in (sieve SN) F);
-   primes = consz (consz (sieve zeroS));
+   S0    = \cont\x\xs. cons0  (xs cont);
+   Ssucc = \Sn\c\x\xs. cons x (xs (Sn c));
+
+   sieve = \Sn. cons B1 (let Ssn = Ssucc Sn in (sieve Ssn) (Y Ssn));
+   primes = cons0 (cons0 (sieve S0));
 
    -- church numerals
    2 = \f\x.f (f x);
@@ -25,9 +29,9 @@
 
    -- (list (cn tk )) takes the first cn elements of the list
    tk = \cont\x\xs\z.z x (xs cont);
-   someprimes = primes (4k tk (zero (zero one)));
+   someprimes = primes (4k tk (B0 (B0 B1)));
 
-   main = primes
+   main = someprimes
 in main
 
 -- test with ./blc run primes.lam

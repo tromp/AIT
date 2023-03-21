@@ -1,4 +1,6 @@
+-- decode levenshtein code https://en.wikipedia.org/wiki/Levenshtein_coding
 let
+ cons = \x\y\z.z x y; -- needs to come first to inline last 2 cases
  id = \x.x;
  true = \x\y.x;
  false = \x\y.y;
@@ -11,16 +13,14 @@ let
  -- delimit cont (levenstein_code_for_n ++ list) = cont n list
  delimit = \cont\list.list (\bit.bit (cont zero) (delimit (\len.len readbit cont one)));
 
+ -- 2 bits shorter than reversing n little-endian incs
+ incc = \cont\done\list list (\msb incc (\r\_ msb done cont (cons (\x\y msb y x) r))
+                                        (\r\_     done      (cons       msb      r))
+                             ) (cont list);
+ inc = incc (cons true) id;
+
  nil = false;
-
- -- xs R tail returns reverse(xs) ++ tail
- R = \x\xs\t.xs R (\z z x t);
- rev = \xs.xs R nil;
-
- -- inc reverse_ith_binary_string = reverse_i_plus_1st_binary string
- inc = \l.l (\bit\bits\_.bit (\z.z false bits) (\z.z true (inc bits))) (\z.z true l);
-
- main = delimit (\n\l \z.z (rev (n inc nil)) l)
+ main = delimit (\n.cons (n inc nil))
 in main
 
 -- test with

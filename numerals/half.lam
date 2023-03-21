@@ -1,0 +1,17 @@
+let
+  0 = \f\x.x;
+  3 = \f\x.f (f (f x));
+  succ = \n\f\x.f (n f x);
+  next = \g\m\n.g n (succ m);
+  true = \x\y.x;
+  half = \n.n next true 0 0
+in half -- (3 3)
+
+-- half 5 =
+-- next^5 true 0 0 =
+-- next^4 true 0 1 =
+-- next^3 true 1 1 =
+-- next^2 true 1 2 =
+-- next^1 true 2 2 =
+-- next^0 true 2 3 =
+-- 2
