@@ -47,23 +47,20 @@ BG 2 > f_{w*w} 2 = f_{w*2} 2 = f_{w+2} 2 = 2 f_{w+1} 2 = f_{w+1} (f_{w+1} 2) =
 -- DEFINITIONS --
 
 times = \a\b\f.a (b f);
+-- Knuth's a `uparrow^k` b = k upify (times a) b
 upify = \f\n.n f 1;
 gs = \n.n upify (times 3) 3;
 graham = 64 gs 4;
 
 -- LEMMAS --
 
-times 3 n = 3*n < n*2^n = f_2 n                               -- for n >= 2
+For n >= 2: times 3 n < n*2^n = f_2 n
+For n >= 2: upify f_a n = n f_a 1 < n f_a n = f_{a+1} n
+For n >= 2:
+gs n = n upify (times 3) 3 < n upify f_2 3 < f_{2+n} 3 < f_{n+2} (n+2) - 2 = f_w (n+2) - 2
 
-upify f_a n = n f_a 1 <= n f_a n = f_{a+1} n                  -- for n >= 1
-
-gs n = n upify (times 3) 3 < n upify f_2 3 <= f_{2+n} 3
-    <= f_{n+2} (n+2) - 2 = f_w (n+2) - 2                      -- for n >= 1
-
--- Proof by Induction that for n >= 6: n gs 4 < n f_w n - 2
-
+Proof by Induction that for n >= 6: n gs 4 < n f_w n - 2
 Base: 6 gs 4 = 5 gs (gs 4) < 5 gs (f_w 6 - 2) < 5 fw (f_w 6) - 2 = 6 f_w 6 - 2
-
 Step: (n+1) gs 4 = gs (n gs 4) < gs (n f_w n - 2) < f_w (n f_w n) - 2
               = (n+1) f_w n - 2 < (n+1) f_w (n+1) - 2
 
