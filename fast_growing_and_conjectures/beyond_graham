@@ -1,70 +1,41 @@
--- On https://codegolf.stackexchange.com/questions/6430/shortest-terminating-program-whose-output-size-exceeds-grahams-number/219734#comment533337_219734
--- user https://codegolf.stackexchange.com/users/98257/2014melo03
--- gives the following program to compute a number beyond Graham in only 63 bits
+https://googology.fandom.com/wiki/User_blog:JohnTromp/The_largest_number_representable_in_64_bits#Lambda_Calculus
+
 let
   2 = \f\x.f (f x);
-  H = \h\f\n.n h f n
-in 2 (2 H 2) 2 2 -- BG 2
+  H = \h\f\n.n h f n;
+in 2 2 H 2 2 2
 
--- LOWER BOUND FOR MELO'S NUMBER --
+    f_0 n = 2 n
+f_{α+1} n = 2 n f_α n = H2 f_α n 
+    f_ω n = f_n n
 
--- DEFINITIONS --
+    1 H 2 f_α n       =    H2 f_α       n = f_{α+1} n 
+    2 H 2 f_{ω*i}   n = H  H2 f_{ω*i}   n = n  H2 f_{ω*i}   n = f_{ω*i+n}       n = f_{ω*i+ω} n
+    3 H 2 f_{ω^2*i} n = H 2H2 f_{ω^2*i} n = n 2H2 f_{ω^2*i} n = f_{ω^2*i+ω*n}   n = f_{ω^2*i+ω^2} n
+    4 H 2 f_{ω^3*i} n = H 3H2 f_{ω^3*i} n = n 3H2 f_{ω^3*i} n = f_{ω^3*i+ω^2*n} n = f_{ω^3*i+ω^3} n
 
-Define the Fast Growing functions f_a indexed by ordinals a as
-f_0 = succ
-H1 = \f\n.n f n
-f_{a+1} = H1 f_a = \n. n f_a n
-f_a = f_{a[n]} for limit ordinals a
+BB3W = 4 H 2 f_0 2 = f_{ω^3} 2
 
-Here, a[n] denotes the n'th term of the fixed fundamental sequence assigned to ordinal a < e_0:
-w[n] = n
-w^{a+1}[n] = w^a*n
-(w^a)[n] = w^{a[n]} for limit ordinals a
+LEMMA forall i>=0,j>0: (j+1) H 2 f_{ω^j*i} n = f_{ω^j*i+ω^j} n
 
-Further define
-H2 = H 2
-2H2 = H H2
-BG = H 2H2 2
+Base j=1: 2 H 2 f_{ω*i}   n = H H2 f_{ω*i} n = n H2 f_{ω*i} n = f_{ω*i+n} n = f_{ω*i+ω} n
+Step: (j+1) H 2 f_{ω^j*i} n = H jH2 f_{ω^j*i} n = n jH2 f_{ω^j*i} n
+                            = f_{ω^j*i+ω^(j-1)*n} n = f_{ω^j*i+ω^j} n
 
--- LEMMAS --
-
-2 n > succ n = f_0 n                                 -- for n >= 2
-
-H2 f_a n = n  2 f_a n >= n f_a n = f_{a+1} n         -- for n >= 0
-
-Induction case: assume (i 2H2 2) n > f_{w*i} n (proven for i=0). Then
-(succ i) 2H2 2 n = H H2 (i 2H2 2) n > H H2 f_{w*i} n = n H2 f_{w*i} n > f_{w*i+n} n = f_{w*i+w} n
-This proves i 2H2 2 n > f_{w*i} n
-
--- for n >= 2
-BG n = H 2H2 2 n = n 2H2 2 n > f_{w*n} n = f_{w*w} n
-BG 2 > f_{w*w} 2 = f_{w*2} 2 = f_{w+2} 2 = 2 f_{w+1} 2 = f_{w+1} (f_{w+1} 2) =
-       f_{w+1} (2 f_w 2) = f_{w+1} (f_w (f_w 2)) = f_{w+1} (f_w (f_2 2)) =
-       f_{w+1} (f_w 8) = f_{w+1} (f_8 8)
 
 -- UPPER BOUND FOR GRAHAM'S NUMBER --
-
--- DEFINITIONS --
 
 times = \a\b\f.a (b f);
 -- Knuth's a `uparrow^k` b = k upify (times a) b
 upify = \f\n.n f 1;
-gs = \n.n upify (times 3) 3;
-graham = 64 gs 4;
+g = \n.n upify (times 3) 3;
+graham = 64 g 4;
 
--- LEMMAS --
-
-For n >= 2: times 3 n < n*2^n = f_2 n
-For n >= 2: upify f_a n = n f_a 1 < n f_a n = f_{a+1} n
-For n >= 2:
-gs n = n upify (times 3) 3 < n upify f_2 3 < f_{2+n} 3 < f_{n+2} (n+2) - 2 = f_w (n+2) - 2
-
-Proof by Induction that for n >= 6: n gs 4 < n f_w n - 2
-Base: 6 gs 4 = 5 gs (gs 4) < 5 gs (f_w 6 - 2) < 5 fw (f_w 6) - 2 = 6 f_w 6 - 2
-Step: (n+1) gs 4 = gs (n gs 4) < gs (n f_w n - 2) < f_w (n f_w n) - 2
-              = (n+1) f_w n - 2 < (n+1) f_w (n+1) - 2
-
-G n = n gs 4 < n f_w n - 2 < f_{w+1} n                        -- for n >= 6
+-- LEMMAS For n>=3 --
+times 3 n <= n^2 = f_0 n
+upify f_a n = n f_a 1 < 2^n f_a n = f_{a+1} n
+g n = n upify (times 3) 3 < n upify f_0 3 < f_n 3 <= f_n n = f_w n
 
 -- THEOREM --
-G 64 < f_{w+1}(64)
+graham = 64 g 4 < 64 f_w 64 = f_{w+1} 64
+

@@ -1,5 +1,5 @@
--- see beyond_graham for documentation
+-- see beyond_graham2 for documentation
 let
   2 = \f\x.f (f x);
   H = \h\f\n.n h f n;
-in 2 (2 H 2) 2 2
+in 2 2 H 2 2 2
