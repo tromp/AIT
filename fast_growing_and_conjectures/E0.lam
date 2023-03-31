@@ -1,0 +1,40 @@
+-- E has growth rate epsilon_0 at 79 bits
+-- optimized down from 106 bits by Bertram Felgenhauer
+let
+  D = \cont\s\x.cont(\h.s h x);
+  id = \x.x;
+  G = \c\d. c (D d) (d id);
+  false = \x\y.y; -- or \d.d n
+  _d0 = \s\n.s n n;
+  E = \n.n G false _d0 n;
+  2 = \f\x.f(f x);
+in E
+
+-- = 3 D (\s\n.s n n) id
+-- = D (D (D (\s\n.s n n))) id
+-- = \x1. D (D (\s\n.s n n)) (\h.id h x1)
+-- = \x1. D (D (\s\n.s n n)) <x1>
+-- = \x1 \x2. D (\s\n.s n n) <x1 x2>
+-- = \x1 \x2 \x3. (\s\n.s n n) <x1 x2 x3>
+-- = \x1 \x2 \x3. \n. n x1 x2 x3 n
+-- Bertram instead viewed D as a function transformer
+-- e.g. D (\s\n\c\b\a. s n c b a n) = (\s\n\d\c\b\a. s n d c b a n)
+
+-- E 3 = G (G (G false)) _d0 3
+--     = G (G false) _d1 d0 3
+--     = G false _d2 d1 d0 3
+--     = false _d3 d2 d1 d0 3
+--     = d2 d1 d0 3
+
+--     d2 d1  f_{ω*i}   n = n d1 f_{ω*i} n = f_{ω*i+n} n = f_{ω*i+ω} n
+-- d2 (d2 d1) f_{ω^2*i} n = n (d2 d1) f_{ω^2*i} n = f_{ω^2*i+ω*n}   n = f_{ω^2*i+ω^2} n
+-- d2  2d2d1  f_{ω^3*i} n = n 2d2d1   f_{ω^3*i} n = f_{ω^3*i+ω^2*n} n = f_{ω^3*i+ω^3} n
+
+--  d3 d2 d1 f_{ω^ω*i} n = n d2 d1 f_{ω^ω*i} n = f_{ω^ω*i+ω^n} n = f_{ω^ω*i+ω^ω} n
+--  dn+1 .. d1 f_{ω^...^ω*i} n = n dn ... d1 f_{ω^...^ω*i} n = f_{ω^...^ω*i+ω^...^ω*n} n
+--  = f_{ω^...^ω*(i+1)} n
+
+-- d1 d0 2 = 2 d0 2 = d0 (d0 2) = d0 (2 2) = d0 4 = 4 4 = 256
+-- E 2 = 2 d1 d0 2 = d1 (d1 d0) 2 = 2 (d1 d0) 2 = d1 d0 (d1 d0 2) = d1 d0 256
+-- = 256 d0 256 = 255 d0 256^256 = 254 d0 256^{256*256^256} = 254 d0 256^256^257
+-- = 253 d0 256^{256^257*256^256^257} = 253 d0 256^256^{257+256^257} > 256^^257

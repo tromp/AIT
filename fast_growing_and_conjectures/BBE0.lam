@@ -1,0 +1,18 @@
+-- also see E0.lam
+let
+  D = \cont\s\x.cont(\h.s h x);
+  id = \x.x;
+  G = \c\d. c (D d) (d id);
+  false = \x\y.y; -- or \d.d n
+  _d0 = \s\n.s n n;
+  -- E = \n.n G false _d0 n;
+  -- (d n) instean of G's (d id) gives huge initial boost
+  E = \n.n (\c\d. c (D d) (d n)) false _d0 n;
+  2 = \f\x.f(f x);
+in 2 2 E 2
+
+-- E 3 = G (G (G false)) _d0 3
+--     = G (G false) _d1 D0 3
+--     = G false _d2 D1 D0 3
+--     = false _d3 D2 D1 d0 3
+--     = 3 D3 D2 D1 D0 3
