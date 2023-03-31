@@ -1,26 +1,26 @@
--- possibly shortest example (29 bits) of non-primitive recursive function
--- a close relative of Ackermann function
+-- shortest example (29 bits) of non-primitive recursive function
+-- https://en.wikipedia.org/wiki/Ackermann_function
 let
   0 = \f\x.x;
   1 = \x.x;
   2 = \f\x.f (f x);
   3 = \f\x.f (f (f x));
-  ackify = \f\n.n f n;
-  ackerlike = \n.n ackify n n
-in ackerlike 3
+  A = \f\n.n f n;
+  Ack = \n.n A n n
+in Ack
 
-
--- term of size 47 bits
--- ackerlike 2 =
--- 2 ackify 2 2 =
--- ackify (ackify 2) 2 =
--- 2 (ackify 2) 2 =
--- ackify 2 (ackify 2 2) =
--- ackify 2 (4 2) =
--- ackify 2 16 =
--- 16 2 16 = 2^16 16 = 16^2^16 = 2^2^18
-
--- term of size 52 bits
--- ackerlike 3 =
--- ackify (ackify (\n.n 3 n))) 3 =
--- HUGE tower of exponentials
+-- Ack 0 = 0
+-- Ack 1 = 1
+-- Ack 2
+-- = 2 A 2 2
+-- = A (A 2) 2
+-- = 2 (A 2) 2
+-- = A 2 (A 2 2)
+-- = A 2 (2 2 2)
+-- = A 2 (4 2)
+-- = A 2 16
+-- = 16 2 16
+-- = 2^16 16
+-- = 16^2^16
+-- = 2^2^18 > 2^2^16 - 3 = Ackerman(4,2)
+-- In general Ack n exceeds both n ↑^n n and Ackerman(2+n,n)
