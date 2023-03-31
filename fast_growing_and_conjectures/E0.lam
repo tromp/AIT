@@ -1,4 +1,5 @@
 -- E has growth rate epsilon_0 at 79 bits
+-- design inspired from https://codegolf.stackexchange.com/questions/44560/combinator-quines/235867#235867 by Code Golf user https://codegolf.stackexchange.com/users/98257/2014melo03
 -- optimized down from 106 bits by Bertram Felgenhauer
 let
   D = \cont\s\x.cont(\h.s h x);
