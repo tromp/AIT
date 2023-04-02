@@ -20,7 +20,7 @@ let
   --
   -- For reference, a generic monadic evaluator, using type
   --   Val ~ m Val -> m Val
-  -- would be  uni return (liftM2 id) (\prog\ps\rs.prog omega (encode rs))
+  -- would be  uni return (liftM2 id) (\prog\ps\rs.prog omega (encode rs)) id
   -- where encode :: [Bool] -> m Val.
   --
   -- In the continuation, ps contains the consumed bits as a difference list.

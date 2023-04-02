@@ -1,0 +1,67 @@
+-- showing KP(x) <= KO(x) + 621
+
+\io\p. let
+  id = \x. x;
+  true = \t\f. t;
+  false = \t\f. f;
+  omega = omega;
+
+  -- replace `omega` used as the initial variable context by the closest
+  -- variable; this is fine for closed terms as required by KP.
+  IF_DIRTY = true;
+
+  -- generic evaluator -- really just parser + translation to HOAS
+  --
+  --   uni :: ((t -> t) -> t)     -- abstraction
+  --       -> (t -> (t -> t))     -- application
+  --       -> [Bool]              -- input
+  --       -> ([t] -> t, [Bool])  -- program, remainder of input
+  --
+  -- (the returned program takes a context defining its free variables)
+  uni = \abs\app.
+    let uni0 = \cnt\xs. xs (\b0\ys. \uni0\cnt.
+      ys (\b1.
+        b0 (uni0 (\v1. b1 (cnt (\ctx. abs (\v2. v1 (\p. p v2 ctx))))
+                          (uni0 (\v2. cnt (\ctx. app (v1 ctx) (v2 ctx))))))
+           (b1 (cnt (\ctx. ctx b1))
+               (\d. uni0 (\v. cnt (\ctx. v (ctx b1))) ys)))) uni0 cnt
+    in uni0;
+
+  -- data T = A (V -> V)  -- abstraction
+  --        | V           -- free variable
+  --        | O           -- "Omega" marking the end of the available input
+  caseT = \t\a\v\o. t a v o;
+  A = \f. \a\v\o. a f;
+  V = \a\v\o. v;
+  O = \a\v\o. o;
+
+  nfT = \t. caseT t
+    (\f. nfT (f V))  -- A: apply to a free variable to further reduce whnf
+    t                -- V: done, this is a normal form
+    t;               -- O: done, we've hit the "Omega"
+
+  absT = A;
+
+  appT = \t\u. caseT t
+    (\f. f u)        -- A: apply
+    (nfT u)          -- V: reduce argument to normal form next
+    t;               -- O: preserve O
+  appT = \t. caseT t (\f. f) nfT (\u. t); -- same but smaller
+
+  boolT = \x. absT (\t. absT (\f. x t f));
+  consT = \x\xs. absT (\p. appT (appT p x) xs);
+
+  rest = \prog.
+    let go = \is\xs.
+          caseT (nfT (appT (prog (IF_DIRTY xs omega)) (is O)))
+            xs -- A: impossible case
+            xs -- V: we've found the remainder
+            -- O: start over with a longer input list
+            (xs (\x\xs. go (\tl. is (consT (boolT x) tl)) xs))
+    in  go id;
+in
+  p (uni id id (\prog\rs. prog (IF_DIRTY prog omega) rs) io)
+    (uni absT appT rest io)
+
+-- template for showing KO(x) <= KP(x) + 15:
+-- 00 01 01 <prog> 10 01 01 110 = \io. <prog> io (\t\f. t)
