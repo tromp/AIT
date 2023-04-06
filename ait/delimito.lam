@@ -1,0 +1,44 @@
+-- Yet another prefix encoding of binary strings.
+--
+-- nat []     = 1
+-- nat (x:xs) = 2*nat xs + x
+--
+-- decode (0:xs) = ([], xs)
+-- decode (1:xs) = let (x, xs') = decode xs in revSplitAt (nat x) xs'
+--
+-- revSplitAt n xs = let (ys, zs) = splitAt n xs in (reverse ys, zs)
+--
+-- While the format is different, the *lengths* of the encoded integers match
+--   https://en.wikipedia.org/wiki/Elias_omega_coding
+
+\io. let
+  true = \x\y. x;
+  false = \x\y. y;
+  nil = false;
+  cons = \a\b\p. p a b;
+  -- xs (fold f) <==> foldr f id xs
+  fold = \f. let go = \x\xs. f x (xs go) in go;
+  fo1d = \f. let go = \x\xs. f x (xs go) in go; -- copy for inlining
+
+  -- 222 bit decoder
+  consnat = \x\n. \f\a. n f (n f (x a (f a)));
+  revSplitAt = \n. n (\c\ys\xs. xs (\x. c (cons x ys))) cons nil;
+  list = \x\xs.
+    x (\p. p nil xs)
+      (xs list (\ns. revSplitAt (ns (fold consnat))));
+  decode = io list true;
+
+  -- 328 bit encoder
+  ct = cons true;
+  succ = \xs. xs (\x\xs\z. cons (\t\f. x f t) (x xs (succ xs))) (ct xs);
+  len = \xs. xs (fold (\x\f\c. f (succ c))) nil;
+  rev = \xs. xs (fo1d (\x\f\tl. f (cons x tl)));
+
+  list = \xs. xs (\_\zs\z\tl\p. p false (list (len zs) (rev xs tl))) ct;
+
+  encode = list io nil;
+
+in decode
+
+-- echo -n 1110101100000000001 | ./blc run delimito.lam
+-- 10000000000

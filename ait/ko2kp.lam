@@ -1,4 +1,4 @@
--- showing KP(x) <= KO(x) + 621
+-- showing KP(x) <= KO(x) + 620
 
 \io\p. let
   id = \x. x;
@@ -14,8 +14,10 @@
   --
   --   uni :: ((t -> t) -> t)     -- abstraction
   --       -> (t -> (t -> t))     -- application
+  --       -> (([t] -> t) -> [Bool] -> r)
+  --          -- continuation taking program, remainder of input
   --       -> [Bool]              -- input
-  --       -> ([t] -> t, [Bool])  -- program, remainder of input
+  --       -> r
   --
   -- (the returned program takes a context defining its free variables)
   uni = \abs\app.
@@ -40,13 +42,13 @@
     t                -- V: done, this is a normal form
     t;               -- O: done, we've hit the "Omega"
 
-  absT = A;
-
   appT = \t\u. caseT t
     (\f. f u)        -- A: apply
     (nfT u)          -- V: reduce argument to normal form next
     t;               -- O: preserve O
   appT = \t. caseT t (\f. f) nfT (\u. t); -- same but smaller
+
+  absT = A;
 
   boolT = \x. absT (\t. absT (\f. x t f));
   consT = \x\xs. absT (\p. appT (appT p x) xs);
