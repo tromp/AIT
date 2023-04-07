@@ -10,6 +10,7 @@ let
  -- readbit cont n (bit:list) = cont (2*n+bit) list
  readbit = \cont\n\list.list (\bit.cont (\f\x.(n f (n f (bit x (f x))))));
 
+ -- 139 bit decoder
  -- delimit cont (levenstein_code_for_n ++ list) = cont n list
  delimit = \cont\list.list (\bit.bit (cont zero) (delimit (\len.len readbit cont one)));
 
@@ -20,8 +21,9 @@ let
  inc = incc (cons true) id;
 
  nil = false;
- main = delimit (\n.cons (n inc nil))
-in main
+ -- 197 bit converter
+ church2bits = \n.cons (n inc nil);
+in delimit church2bits -- 2 + 139 + 197 =  338 bits
 
 -- test with
 

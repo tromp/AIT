@@ -217,13 +217,13 @@ simplification
 > main :: IO ()
 > main = do
 >     hSetBuffering stdout LineBuffering
->     print $ normalForm foo
->     -- mapM_ print [f n | n <- [0..37]]
+>     -- print $ normalForm foo			-- test case for omega detector
+>     mapM_ print [f n | n <- [0..37]]
 >   where
 >     double = Abs (App (Var 0) (Var 0))
 >     triple = Abs (App (App (Var 0) (Var 0)) (Var 0))
 >     bar = Abs (App (Var 0) (Abs (App (Var 2) (App (Var 1) (Var 0)))))
->     foo = Abs (App double bar)
+>     foo = Abs (App double bar)		-- \z. (\x. x x) (\x. x (\y. z (x y)))
 >     f n = maximum $
 >         (n,0,P Bot) : [(n,size t,P a) | a <- gen 0 n, Just t <- [normalForm a]]
 
