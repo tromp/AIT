@@ -20,9 +20,9 @@
   fold = \f. let go = \x\xs. f x (xs go) in go;
   fo1d = \f. let go = \x\xs. f x (xs go) in go; -- copy for inlining
 
-  -- 222 bit decoder
+  -- 216 bit decoder
   consnat = \x\n. \f\a. n f (n f (x a (f a)));
-  revSplitAt = \n. n (\c\ys\xs. xs (\x. c (cons x ys))) cons nil;
+  revSplitAt = \n\xs\c. n (\c\ys\xs. xs (\x. c (cons x ys))) c nil xs;
   list = \x\xs.
     x (\p. p nil xs)
       (xs list (\ns. revSplitAt (ns (fold consnat))));
