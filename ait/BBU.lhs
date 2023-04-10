@@ -46,7 +46,7 @@ generate progs of size n with no prefix in set
 > gen2 :: Set Word64 -> Int -> [(Word64, L)]
 > gen2 set n = do
 >     (code,len,t) <- gen 0 n
->     (prog,bits) <- genBits set (bit len .|. code) (n-len) omega
+>     (prog,bits) <- genBits set (bit len .|. code) (n-len) (Var (998))
 >     return $ (prog, App t bits)
 
 generate terms within v lambda binders of size up to n
@@ -96,6 +96,26 @@ replace free variables (of a redex) by bottom
 >   str i (Var j) = i == j
 >   str i (App a _) = str i a
 > strict _ = False
+
+> data FreeNess = None | Applied | Unapplied deriving (Eq, Show)
+
+> freeness :: Int -> L -> FreeNess
+> freeness i (Var j)   = if j < i then None else Unapplied
+> freeness i (App a b) = case freenessA i a of
+>   None -> freeness i b
+>   Applied -> Applied
+>   Unapplied -> if freeness i b == Applied then Applied else Unapplied
+> freeness i (Abs a)   = freeness (i+1) a
+> freeness _ Bot       = None
+
+> freenessA :: Int -> L -> FreeNess
+> freenessA i (Var j)   = if j < i then None else Applied
+> freenessA i (App a b) = case freenessA i a of
+>   None -> freeness i b
+>   Applied -> Applied
+>   Unapplied -> if freeness i b == Applied then Applied else Unapplied
+> freenessA i (Abs a)   = error $ "applied " ++ show (Abs a)  ++ " in App"
+> freenessA _ Bot       = None
 
 trouble terms
 
@@ -158,7 +178,7 @@ and list of previous redexes s that led to current term and whose reoccurance wo
 >     if noNF f (App a b) then Nothing else case a of
 >         Abs a
 >             | r `elem` s   -> Nothing
->             | length s > 14 -> todo a0
+>             | length s > 28 -> todo a0
 >             | otherwise    -> nf f (r:s) (subst 0 a b)
 >         _ -> do
 >             nf f s b >>= Just . App a
@@ -241,13 +261,20 @@ simplification
 >     simpI i (Abs a) = Abs (simpI (i+1) a)
 >     simpI _ a = a
 
-> mapmax :: (Word64, Int, P) -> (Int, P, Set Word64) -> (Int, P, Set Word64)
-> mapmax (p,lt,t) (mx, mt, set) = if lt > mx then (lt, t, set') else (mx, mt, set') where set' = insert p set
+> mapmax :: (Word64, L, L) -> (Int, L, Set Word64) -> (Int, L, Set Word64)
+> mapmax (p,t,a) (mx, mt, set) =
+>   let
+>     lt = size t
+>     set' = insert p set
+>   in case freeness 0 t of
+>     None ->  if lt > mx then (lt, a, set') else (mx, mt, set')
+>     Applied -> (mx, mt, set)
+>     otherwise -> (mx, mt, set')
 
 > go :: Int -> Set Word64 -> IO ()
 > go n set = do
->   let (mx, a, set') = foldr mapmax (0,P Bot,set) [(p,size t,P a) | (p,a) <- gen2 set n, Just t <- [normalForm a]]
->   print (n, mx, a)
+>   let (mx, a, set') = foldr mapmax (0,Bot,set) [(p,t,a) | (p,a) <- gen2 set n, Just t <- [normalForm a]]
+>   print (n, mx, P a)
 >   go (n+1) set'
 
 > main :: IO ()
