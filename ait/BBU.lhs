@@ -261,26 +261,31 @@ simplification
 >     simpI i (Abs a) = Abs (simpI (i+1) a)
 >     simpI _ a = a
 
-> mapmax :: (Word64, L, L) -> (Int, L, Set Word64) -> (Int, L, Set Word64)
-> mapmax (p,t,a) (mx, mt, set) =
->   let
->     lt = size t
->     set' = insert p set
->   in case freeness 0 t of
->     None ->  if lt > mx then (lt, a, set') else (mx, mt, set')
->     Applied -> (mx, mt, set)
->     otherwise -> (mx, mt, set')
+collect max normal form size and term, set of progs, number of nfs, and number of non-nfs
 
-> go :: Int -> Set Word64 -> IO ()
-> go n set = do
->   let (mx, a, set') = foldr mapmax (0,Bot,set) [(p,t,a) | (p,a) <- gen2 set n, Just t <- [normalForm a]]
->   print (n, mx, P a)
->   go (n+1) set'
+> collect :: (Word64, L) -> (Int, L, Set Word64, Int, Int) -> (Int, L, Set Word64, Int, Int)
+> collect (p,a) (mx, mt, set, nfs, nonfs) =
+>   let set' = insert p set
+>   in case normalForm a of
+>     Nothing -> (mx, mt, set', nfs, nonfs+1)
+>     Just t -> let lt = size t
+>        in case freeness 0 t of
+>          None      ->  if lt > mx then (lt, a, set', nfs+1, nonfs) else (mx, mt, set', nfs+1, nonfs)
+>          Applied   -> (mx, mt, set , nfs, nonfs)
+>          otherwise -> (mx, mt, set', nfs, nonfs+1)
+
+> go :: Int -> Int -> Int -> Set Word64 -> IO ()
+> go n nfs nonfs set = do
+>   let (mx, a, set', nfs', nonfs') = foldr collect (0,Bot,set,nfs,nonfs) (gen2 set n) -- , Just t <- [normalForm a]]
+>   putStrLn $ show n ++ " " ++ show mx ++ " " ++ show (P a) ++ " " ++ 
+>             show (fromIntegral nfs' * 0.5**fromIntegral n) ++ " " ++ 
+>             show (1 - fromIntegral nonfs' * 0.5**fromIntegral n)
+>   go (n+1) (2*nfs') (2*nonfs') set'
 
 > main :: IO ()
 > main = do
 >     hSetBuffering stdout LineBuffering
->     go 0 Data.Set.empty
+>     go 0 0 0 Data.Set.empty
 
 printing
 
