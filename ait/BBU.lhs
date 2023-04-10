@@ -114,7 +114,7 @@ replace free variables (of a redex) by bottom
 >   None -> freeness i b
 >   Applied -> Applied
 >   Unapplied -> if freeness i b == Applied then Applied else Unapplied
-> freenessA i (Abs a)   = error $ "applied " ++ show (Abs a)  ++ " in App"
+> freenessA i (Abs a)   = freeness (i+1) a
 > freenessA _ Bot       = None
 
 trouble terms
@@ -274,13 +274,16 @@ collect max normal form size and term, set of progs, number of nfs, and number o
 >          Applied   -> (mx, mt, set , nfs, nonfs)
 >          otherwise -> (mx, mt, set', nfs, nonfs+1)
 
+examine program of given length
+
 > go :: Int -> Int -> Int -> Set Word64 -> IO ()
 > go n nfs nonfs set = do
 >   let (mx, a, set', nfs', nonfs') = foldr collect (0,Bot,set,nfs,nonfs) (gen2 set n) -- , Just t <- [normalForm a]]
+>   let nonfs'' = nonfs' + sum [1 | (_,len,t) <- gen 99 n, len == n, freeness 0 t /= None]
 >   putStrLn $ show n ++ " " ++ show mx ++ " " ++ show (P a) ++ " " ++ 
 >             show (fromIntegral nfs' * 0.5**fromIntegral n) ++ " " ++ 
->             show (1 - fromIntegral nonfs' * 0.5**fromIntegral n)
->   go (n+1) (2*nfs') (2*nonfs') set'
+>             show (1 - fromIntegral nonfs'' * 0.5**fromIntegral n)
+>   go (n+1) (2*nfs') (2*nonfs'') set'
 
 > main :: IO ()
 > main = do
