@@ -39,3 +39,21 @@ g n = n upify (times 3) 3 < n upify f_0 3 < f_n 3 <= f_n n = f_w n
 -- THEOREM --
 graham = 64 g 4 < 64 f_w 64 = f_{w+1} 64
 
+
+--- COQ PROOF FOR EARLIER VERSION ---
+
+2 = λA:*λf:A->A.λx:A.f (f x) : nat = ΠA:*.(A->A)->A->A
+2' = λn:natλA:*λf:(A->A).n A (n A f) : nat->nat
+H = λh:((nat->nat)->nat->nat)λf:(nat->nat)λn:nat.n (nat->nat) h f n : ((nat->nat)->nat->nat)->(nat->nat)->nat->nat
+N = 2 (nat->nat) (2 ((nat->nat)->nat->nat) H (2 nat)) 2' 2 : nat
+
+H::T3 = \(h::T2)\(f::T1)\(n::T0).n h f n;
+(2::T3) ((2::T4) (H::T3) (2::T2)) (2::T1) (2::T0)
+
+With -impredicative-set, following type checks in Coq:
+Definition mynat : Set := forall A : Set, (A -> A) -> A -> A.
+Definition two : mynat := fun A f x => f (f x).
+Definition two' : mynat -> mynat := fun n A f => n A (n A f).
+Definition H : ((mynat -> mynat) -> mynat -> mynat) -> (mynat -> mynat) -> mynat -> mynat
+:= fun h f n =>n (mynat -> mynat) h f n.
+Definition N : mynat := two (mynat -> mynat) (two ((mynat -> mynat) -> mynat -> mynat) H (two mynat)) two' two.

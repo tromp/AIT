@@ -1,45 +1,40 @@
 -- https://codegolf.stackexchange.com/questions/139355/golf-a-number-bigger-than-tree3/219466#219466
+-- but with left and right subtrees reversed to save some bits
 let
-  0    = \f\x.x;
-  true = \x\y.x;
-  false = \x\y.y;
-  succ = \n\f\x.f (n f x);
-  node = \a\b\n.n a b;
-  -- equality on trees
-  eq = \t\s.t (\a\b\_.s (\a'\b'\_.eq a a' (eq b b') false) s) (s (\_\_\_.t) true);
+  -- trees are made from pairing nodes and nil leaves
+  node  = \a\b\n.n a b;
+  -- inequality on trees; return tree that's empty only on equal inputs
+  neq   = \s\t.s (\a\b\t.t (\a'\b'\s.neq a a' (\_\_\_.s) (neq b b')) s) t;
   -- substitute y for x in tree t
-  subs = \y\x\t. eq t x y (t (\a\b\_. let syx = subs y x in node (syx a) (syx b)) t);
-  -- tree predecessor
-  tpred = \t.t (\a\b\_. let t' = node a (tpred b) in b (\_\_\a. subs t' a t') a) t;
+  subs  = \y\x. let go = \t. neq t x (\_\_\_. t (\a\b\_. node (go a) (go b)) t) y in go;
+  -- post applied non-nil-tree predecessor
+  tpred = (\a\b. let t' = node a (b tpred) in b (\_\_\a. subs t' a t') a);
+
+  succ = \n\f\x.f (n f x);
   -- tree to church
-  t2c = \t.t (\_\_\t.succ (t2c (tpred t))) t;
-  t0 = 0;
-  tsucc = \t. node t 0;
+  t2c = \t.t (\_\_\t.succ (t2c (t tpred))) t;
+
+  t0 = \x\y.y;
+  grow = \n.t2c (n (node t0) t0);
+
+  tsucc = \t. node t t0;
   t1 = tsucc t0;
   t2 = tsucc t1;
   t3 = tsucc t2;
   t4 = tsucc t3;
   t5 = tsucc t4;
   t6 = tsucc t5;
-  tree = node t3 t5;
+  tree = node t0 t1;
   1 = \f\x.f x;
   2 = \f\x.f (f x);
   3 = \f\x.f (f (f x));
-  grow = \n.t2c (n (node t0) t0)
-in 2 2 2 2 grow 2
+in 2 2 grow 2
 
--- 2 = λA:*λf:A->A.λx:A.f (f x) : nat = ΠA:*.(A->A)->A->A
--- 2' = λn:natλA:*λf:(A->A).n A (n A f) : nat->nat
--- H = λh:((nat->nat)->nat->nat)λf:(nat->nat)λn:nat.n (nat->nat) h f n : ((nat->nat)->nat->nat)->(nat->nat)->nat->nat
--- N = 2 (nat->nat) (2 ((nat->nat)->nat->nat) H (2 nat)) 2' 2 : nat
-
--- H::T3 = \(h::T2)\(f::T1)\(n::T0).n h f n;
--- (2::T3) ((2::T4) (H::T3) (2::T2)) (2::T1) (2::T0)
-
--- With -impredicative-set, following type checks in Coq:
--- Definition mynat : Set := forall A : Set, (A -> A) -> A -> A.
--- Definition two : mynat := fun A f x => f (f x).
--- Definition two' : mynat -> mynat := fun n A f => n A (n A f).
--- Definition H : ((mynat -> mynat) -> mynat -> mynat) -> (mynat -> mynat) -> mynat -> mynat
--- := fun h f n =>n (mynat -> mynat) h f n.
--- Definition N : mynat := two (mynat -> mynat) (two ((mynat -> mynat) -> mynat -> mynat) H (two mynat)) two' two.
+-- t2c (node t0 t0)	0	1	2	3	4	5	6
+--		0	1	5
+--		1	2	5	36
+--		2	3	5	9	1033
+--		3	4	6	10	18
+--		4	5	7	11	19	35
+--		5	6	8	12	20	36	68
+--		6	7	9	13	21	37	69	133
