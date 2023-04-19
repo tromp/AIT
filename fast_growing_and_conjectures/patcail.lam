@@ -10,9 +10,9 @@ let
   -- post applied non-nil-tree predecessor
   tpred = (\a\b. let t' = node a (b tpred) in b (\_\_\a. subs t' a t') a);
 
-  succ = \n\f\x.f (n f x);
   -- tree to church
-  t2c = \t.t (\_\_\t.succ (t2c (t tpred))) t;
+  t2c = \t\f.let go = \t.t (\_\_\x.f (go (t tpred) x)) in go t;
+  -- t2c = \t.t (\_\_\t.let succ = \n\f\x.f (n f x) in succ (t2c (t tpred))) t;
 
   t0 = \x\y.y;
   grow = \n.t2c (n (node t0) t0);
@@ -28,9 +28,9 @@ let
   1 = \f\x.f x;
   2 = \f\x.f (f x);
   3 = \f\x.f (f (f x));
-in 2 2 grow 2
+in 2 2 grow 2 -- 429 bits
 
--- t2c (node t0 t0)	0	1	2	3	4	5	6
+-- t2c (node t2 t3)	0	1	2	3	4	5	6
 --		0	1	5
 --		1	2	5	36
 --		2	3	5	9	1033
