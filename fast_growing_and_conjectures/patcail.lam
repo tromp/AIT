@@ -1,40 +1,44 @@
 -- https://codegolf.stackexchange.com/questions/139355/golf-a-number-bigger-than-tree3/219466#219466
--- but with left and right subtrees reversed to save some bits
 let
   -- trees are made from pairing nodes and nil leaves
   node  = \a\b\n.n a b;
   -- inequality on trees; return tree that's empty only on equal inputs
   neq   = \s\t.s (\a\b\t.t (\a'\b'\s.neq a a' (\_\_\_.s) (neq b b')) s) t;
-  -- substitute y for x in tree t
-  subs  = \y\x. let go = \t. neq t x (\_\_\_. t (\a\b\_. node (go a) (go b)) t) y in go;
+  -- substitute y for subtrees x in tree t
+  subs  = \x\y. let go = \t. neq t x (\_\_\_. t (\a\b\_. node (go a) (go b)) t) y in go;
   -- post applied non-nil-tree predecessor
-  tpred = (\a\b. let t' = node a (b tpred) in b (\_\_\a. subs t' a t') a);
+  tpred = \a\b. a (\_\_\b. let t' = node (a tpred) b in subs b t' t') b;
 
   -- tree to church
   t2c = \t\f.let go = \t.t (\_\_\x.f (go (t tpred) x)) in go t;
-  -- t2c = \t.t (\_\_\t.let succ = \n\f\x.f (n f x) in succ (t2c (t tpred))) t;
 
   t0 = \x\y.y;
-  grow = \n.t2c (n (node t0) t0);
+  grow = \n.t2c (n (\t. node t t0) t0);
 
-  tsucc = \t. node t t0;
+  tsucc = node t0;
   t1 = tsucc t0;
   t2 = tsucc t1;
   t3 = tsucc t2;
   t4 = tsucc t3;
   t5 = tsucc t4;
   t6 = tsucc t5;
-  tree = node t0 t1;
   1 = \f\x.f x;
   2 = \f\x.f (f x);
   3 = \f\x.f (f (f x));
-in 2 2 grow 2 -- 429 bits
+in 2 2 grow 2 -- 421 bits
 
--- t2c (node t2 t3)	0	1	2	3	4	5	6
---		0	1	5
---		1	2	5	36
---		2	3	5	9	1033
---		3	4	6	10	18
---		4	5	7	11	19	35
---		5	6	8	12	20	36	68
---		6	7	9	13	21	37	69	133
+-- (λ 1 1 (λ λ (λ 1 1) (λ λ 1 (λ λ λ 6 (5 5 (4 ((λ 1 1) (λ λ 1 (λ λ λ (λ (λ 1 1) (λ (λ λ (λ 1 1) (λ (λ λ 1 (λ λ λ 1 (λ λ λ 8 6 3 (λ λ λ 4) (8 5 2)) 4)) (1 1)) 1 5 (λ λ λ 4 (λ λ λ λ 1 (9 4) (9 3)) 4) 4) (1 1)) 1) (λ 1 (5 (6 6)) 2))))) 1))) (2 (λ λ 1 2 (λ λ 1)) (λ λ 1))) 1) (λ λ 2 (2 1))
+-- (λC2 C2 C2
+-- grow@(λn λf (λ 1 1) (λgo λt t (λ_ λ_ λx f (go go (t ((λ 1 1) (λtp λa a (λ_ λ_ λb (λy (λ 1 1) (λ (λx λt (λ 1 1) (λgo (λ λ 1 (λ λ λ 1 (λ λ λ 8 6 3 (λ λ λ 4) (8 5 2)) 4)) (1 1)) 1 5 (λ λ λ 4 (λa λb λ_ λz z (go a) (go b)) t) y) (1 1)) 1) (λz z (a (tp tp)) b))))) x))) (n (λt λz z t t0@(λ λ 1)) t0@(λ λ 1)))
+-- C2) (λf λx f (f x))
+
+
+-- t2c (node tm tn)	0	1	2	3	4	5     n=6
+----------------+--------------------------------------------------------
+--	0	|	1	2	3	4	5	6	7
+--	1	|   2^2+1	4	5	6	7	8	9
+--	2	|	    2^5+4	9	10	11	12	13
+--	3	|		   2^10+9	18	19	20	21
+--	4	|			   2^19+18	35	36	37
+--	5	|				   2^36+35	68	69
+--    m=6	|					   2^69+68	133
