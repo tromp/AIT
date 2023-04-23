@@ -1,4 +1,4 @@
--- pairup operator for KO.
+-- pairup operator for KP.
 --
 -- pairup (ps ++ pi ++ qs ++ qi) evaluates to <po, qo>, provided that
 -- 1) ps and qs represent the lambda calculus programs p and q, respectively,

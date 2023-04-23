@@ -718,18 +718,22 @@ Thus the universal computer essentially forces programs to be closed terms.
 % like we prove in this paper, the pure $\CU$ is to be preferred.
 
 We can now define the Kolmogorov complexity of a term $x$,
-which comes in three flavors.
+which comes in four flavors.
 In the {\em simple} version, programs are terminated with
 $N=\Cnil$ and the result must equal $x$.
-In the {\em prefix} version, programs are not terminated,
-and the result must equal the pair of $x$ and the remainder of the input.
-In both cases the complexity is conditional on zero or more terms $y_i$.
+In the {\em prefix} version, programs are terminated with unsolvable $\Omega$,
+and the result must $x$.
+In a former prefix definition, now considered unnecessarily complicated and renamed Kp, programs were not terminated,
+and the result had to equal the pair of $x$ and the remainder of the input.
+In all cases the complexity is conditional on zero or more terms $y_i$.
 
 \begin{definition}
 \begin{eqnarray*}
 KS(x|y_1,\ldots,y_{k}) & = &
 \min \{ l(p)\ |\ \CU\ \pref{p}{\Cnil}\ y_1\ \ldots\ y_{k} =      x    \} \\
 KP(x|y_1,\ldots,y_{k}) & = &
+\min \{ l(p)\ |\ \CU\ \pref{p}{\Omega}\ y_1\ \ldots\ y_{k} =     x    \} \\
+Kp(x|y_1,\ldots,y_{k}) & = &
 \min \{ l(p)\ |\ \CU\ \pref{p}{ z   }\ y_1\ \ldots\ y_{k} = \tup{x,z} \}
 \end{eqnarray*}
 \label{defait}
@@ -738,8 +742,7 @@ KP(x|y_1,\ldots,y_{k}) & = &
 The definition also applies to infinite terms according to the {\em infinitary lambda calculus}
 of \cite{KKSV97}.
 
-In the special case of $k=0$ we obtain the unconditional complexities
-$KS(x)$ and $KP(x)$.
+In the special case of $k=0$ we obtain the unconditional complexities $KS(x)$ and $KP(x)$.
 
 Finally, for a binary string $s$, we can define its {\em monotone} complexity
 as
@@ -914,7 +917,7 @@ The simple complexity of a string is upper bounded by its length:
 %\[ KP(x|l(x)) \leq |\widehat{{\bf readbits}}|+l(x) = l(x)+235, \]
 The prefix complexity of a string is
 upper bounded by the length of its delimited version:
-\[ KP(x) \leq |\widehat{{\bf delimit}}|+l(\brr{x}) = l(\brr{x})+338. \]
+\[ KP(x) \leq |\widehat{{\bf delimit}}|+l(\brr{x}) = l(\brr{x})+326. \]
 
 where {\bf delimit} is an optimized translation
 of the following code
@@ -934,17 +937,17 @@ let
                              ) (cont list);
  -- inc list returns incremented list
  inc = incc (\r\z z (\x\y x) r) id;
-in dlmt (\n\l\z z (n inc nil) l)
+in dlmt (\n\l n inc nil)
 \end{verbatim}
 }
 
 The prefix complexity of a pair is upper bounded by the sum of
 individual prefix complexities, one of which is conditional on
 the shortest program of the other:
-\[  K(x,y) \leq K(x) + K(y|x^{\ast}) + 657. \]
+\[  KP(x,y) \leq KP(x) + KP(y|x^{\ast}) + 784. \]
 
 This is the easy side of the fundamental ``Symmetry of information''
-theorem $K(x)-K(x|y^{\ast}) = K(y)-K(y|x^{\ast}) + O(1)$, which
+theorem $KP(x)-KP(x|y^{\ast}) = KP(y)-KP(y|x^{\ast}) + O(1)$, which
 says that $y$ contains as much information about $x$ as $x$ does about $y$.
 
 In~\cite{ch01}, Chaitin proves the same theorem using a resource bounded evaluator,
@@ -964,54 +967,82 @@ nil)))) (' (lambda (p) (if(= success (car (try no-time-limit (' (eval
 of length 2872 bits.
 
 We constructed an equivalent of "try" from scratch.
-The constant 657 is the size of the term {\tt pairup} defined below,
+The constant 784 is the size of the term {\tt pairup} defined below,
 containing a monadic lambda calculus interpreter that tracks the input bits read so far
 (which due to space restrictions is only sparsely commented):
 
 {\small
 \begin{verbatim}
-let
+\io. let
   id = \x x;
   true = \x \y x;
   false = \x \y y;
   nil = false;
-  -- monadic parser
-  uni = \abs \app let uni0 = \cnt \ps \xs
-    xs (\b0 let ps0 = \ts ps (\p p b0 ts) in
-      \ys \uni0 \cnt ys (\b1
-        let ps1 = \ts ps0 (\p p b1 ts) in
-          b0 (uni0 (\v1 (b1 (cnt (\ctx abs (\v2 v1 (\p p v2 ctx))))
-                           (uni0 (\v2 cnt (\ctx app (v1 ctx) (v2 ctx)))))))
-             (b1 (cnt (\ctx ctx b1))
-                 (\d \d uni0 (\v cnt (\ctx v (ctx b1))) ps0 ys)) ps1)) uni0 cnt
+  -- parse binary lambda calculus using HOAS, capturing program.
+  -- uni :: ((t -> t) -> t)     -- abstraction
+  --     -> (t -> (t -> t))     -- application
+  --     -> (([t] -> t) -> ([Bool] -> [Bool]) -> [Bool] -> r)
+  --        -- continuation taking program, parsed string, remainder of input
+  --     -> ([Bool] -> [Bool])  -- initial difference list (id)
+  --     -> [Bool]              -- input
+  --     -> r
+  uni = \abs\app.let uni0 = \cnt\ps\xs.
+    xs (\b0.let ps0 = \ts.ps (\p.p b0 ts) in
+      \ys\uni0\cnt.ys (\b1.
+        let ps1 = \ts.ps0 (\p.p b1 ts) in
+          b0 (uni0 (\v1.(b1 (cnt (\ctx.abs (\v2.v1 (\p.p v2 ctx))))
+                           (uni0 (\v2.cnt (\ctx.app (v1 ctx) (v2 ctx)))))))
+             (b1 (cnt (\ctx.ctx b1))
+                 (\d\d.uni0 (\v.cnt (\ctx.v (ctx b1))) ps0 ys)) ps1)) uni0 cnt
   in uni0;
-  -- this monad pairs up lambdas with some attribute
-  abs = \v \p v; app = \ca ca false;
-  -- pair each suffix with a prefix attribute
-  list = \x \xs \ys
-     let mx = abs (\e abs (x e));
-         mxs = xs list (\rs ys (\p p x rs)) in
-     \p p ys (\e e false mx false mxs);
-  pairup = uni abs app (\prog \ps \pi
-    let pspi = \d (
-          prog d             -- provide ctx
-          d                  -- monadic apply
-          (pi list ps)       -- to monadic input, expect monadic <poM,qsM>
-          false              -- get <poM,qsM>; can't use d here in case prog is id
-          (\p \e \p \e e) )  -- monadic tail
-          true               -- head of qsM is difflist of bits read
-          nil);              -- terminate list
-        -- Direct evaluator, using the identity monad.
-        eval = uni id id id pi
-    in eval (ps pi) (\po \qs eval qs (pspi qs) (\qo \rs \p p (\p p po qo) rs))) id;
+
+  -- data T = A (V -> V)  -- abstraction
+  --        | V           -- free variable
+  --        | O           -- "Omega" marking the end of the available input
+  caseT = \t\a\v\o. t a v o;
+  A = \f. \a\v\o. a f;
+  V = \a\v\o. v;
+  O = \a\v\o. o;
+
+  nfT = \t. caseT t
+    (\f. nfT (f V))  -- A: apply to a free variable to further reduce whnf
+    t                -- V: done, this is a normal form
+    t;               -- O: done, we've hit the "Omega"
+
+  appT = \t\u. caseT t
+    (\f. f u)        -- A: apply
+    (nfT u)          -- V: reduce argument to normal form next
+    t;               -- O: preserve O
+  appT = \t. caseT t (\f. f) nfT (\u. t); -- same but smaller
+
+  absT = A;
+
+  boolT = \x. absT (\t. absT (\f. x t f));
+  consT = \x\xs. absT (\p. appT (appT p x) xs);
+
+  result = \pspi\rs. \p.
+    let uni1 = uni id id (\prog\ps\rs. prog ps rs) id in
+    p (uni1 io) (uni1 rs pspi);
+
+  rest = \prog\ps.
+    let go = \is\pspi\xs.
+         caseT (nfT (appT (prog xs) (is O)))
+            xs -- A: impossible case
+            (result (pspi nil) xs) -- V: we've found the remainder
+            -- O: start over with a longer input list
+            (xs (\x\xs. go (\tl. is (consT (boolT x) tl))
+                           (\tl. pspi (\p. p x tl)) xs))
+    in  go id ps;
+
+  pairup = uni absT appT rest id io;
 in pairup
 \end{verbatim}
 }
 
-Although more involved, our program is less than a quarter the size of Chaitin's
+Although more involved, our program is almost a quarter the size of Chaitin's
 when measured in bits. Chaitin also offered a program of size 2104 bits,
 at the cost of introducing yet another primitive into his language,
-which is still 220\% longer than ours.
+which is still 2.7x longer than ours.
 
 %%\[ KP(x,y) \leq |\widehat{M}| + KP(x) + KP(y) = KP(x) + KP(y) +  ,\]
 %%where $M \equiv (\lambda u\ . )U$ corresponds to the Haskell program

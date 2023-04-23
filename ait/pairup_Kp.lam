@@ -1,3 +1,5 @@
+-- this is a rather inefficient pairup for Kp
+-- a much better one is in pairupKp.lam, while pairupKP.lam is for the new prefix complexity
 let
   -- booleans
   true  = \t\f.t; false = \t\f.f;

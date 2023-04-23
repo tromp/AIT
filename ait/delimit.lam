@@ -21,14 +21,14 @@ let
  inc = incc (cons true) id;
 
  nil = false;
- -- 197 bit converter
- church2bits = \n.cons (n inc nil);
-in delimit church2bits -- 2 + 139 + 197 =  338 bits
+ -- 185 bit converter
+ church2bits = \n\_.n inc nil;
+in delimit church2bits -- 2 + 139 + 185 =  326 bits
 
 -- test with
 
 -- echo -n 1111000111001110 | ./blc run delimit.lam
 -- which should output
--- <11010,110>
+-- 11010
 
 -- is also tested in uni.lam and pairup.lam
