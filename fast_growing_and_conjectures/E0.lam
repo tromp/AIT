@@ -2,7 +2,7 @@
 -- design inspired from https://codegolf.stackexchange.com/questions/44560/combinator-quines/235867#235867 by Code Golf user https://codegolf.stackexchange.com/users/98257/2014melo03
 -- optimized down from 106 bits by Bertram Felgenhauer
 let
-  D = \cont\s\x.cont(\h.s h x);
+  D = \d\s\x.d(\n.s n x);
   id = \x.x;
   G = \c\d. c (D d) (d id);
   false = \x\y.y;
@@ -11,18 +11,55 @@ let
   2 = \f\x.f(f x);
 in E
 
+-- Let _di = i D _d0
+-- _d0 = \s\n.s n n
+-- _d1 = D _d0
+--     = \s\x1._d0 (\n.s n x1)
+--     = \s\x1\n.(\n.s n x1) n n
+--     = \s\x1\n.s n x1 n
+-- _d2 = D _d1
+--     = \s\x2._d1 (\n.s n x2)
+--     = \s\x2\x1\n.(\n.s n x2) n x1 n
+--     = \s\x2\x1\n.s n x2 x1 n
+-- and generally
+-- _di = \s\xi...\x2\x1\n. s n xi ... x2 x1 n
+
+-- or we can view D as Tuple transformer:
 -- = 3 D (\s\n.s n n) id
 -- = D (D (D (\s\n.s n n))) id
--- = \x1. D (D (\s\n.s n n)) (\h.id h x1)
+-- = \x1. D (D (\s\n.s n n)) (\n.id n x1)
 -- = \x1. D (D (\s\n.s n n)) <x1>
 -- = \x1 \x2. D (\s\n.s n n) <x1 x2>
 -- = \x1 \x2 \x3. (\s\n.s n n) <x1 x2 x3>
 -- = \x1 \x2 \x3. \n. n x1 x2 x3 n
--- Bertram instead viewed D as a function transformer
--- e.g. D (\s\n\c\b\a. s n c b a n) = (\s\n\d\c\b\a. s n d c b a n)
 
 -- E 3 = G (G (G false)) _d0 3
 --     = G (G false) _d1 d0 3
 --     = G false _d2 d1 d0 3
 --     = false _d3 d2 d1 d0 3
 --     = d2 d1 d0 3
+
+-- Renaming d1,d2,... as A B ...
+--        A [α] n = n [α] n = [α+1] n                                        A = +1
+--     B +β [α] n = n +β [α] n = [α+β*n] n = [α+β*ω] n                    B +β = +β*ω
+--                                                                      i B +β = +β*ω^i
+--   C B +β [α] n = n B +β [α] n = [α+β*ω^n] n = [α+β*ω^ω] n             CB +β = +β*ω^ω
+--                                                                j (i C B) +β = +β*ω^{ω^i*j}          for i=j=1
+-- 1+j iCB +β = i C B (j iCB +β) = i C B +β*ω^{ω^i*j} = +β*ω^{ω^i*j}*ω^{ω^i} = +β*ω^{ω^i*(j+1)}              j>1
+-- 1+i C B +β [α] n = C (i C B) +β [α] n = n (i C B) +β [α] n = [α+β*ω^{ω^i*n}] n = [α+β*ω^ω^{i+1}] n      i>1
+-- 
+-- D C B +β [α] n = n C B +β [α] n = [α+β*ω^ω^n] n = [α+β*ω^ω^ω] n      DCB +β = +β*ω^ω^ω
+-- 
+-- 
+--        A [α] n = n [α] n = [α+1] n                                        A = +1
+--     B +β [α] n = n +β [α] n = [α+β*n] n = [α+β*ω] n                    B +β = +β*ω
+--                                                                           B = *ω
+--                                                                         i B = *ω^i
+--   C *γ +β [α] n = n *γ +β [α] n = [α+β*γ^n] n = [α+β*γ^ω] n            C *γ = *γ^ω
+--                                                                      i C *γ = *γ^ω^i
+-- D C *γ +β [α] n = n C *γ +β [α] n = [α+β*γ^ω^n] n = [α+β*γ^ω^ω] n    D C *γ = *γ^ω^ω
+--                                                                j (i D C) *γ = *γ^ω^{ω^i*j}              (i=j=1)
+-- 1+j iDC *γ = i D C (j iDC *γ) = i D C *γ^ω^{ω^i*j} = *γ^ω^{ω^i*j}^ω^{ω^i} = *γ^ω^{ω^i*(j+1)}              (j>1)
+-- 1+i D C *γ +β [α] n = D iDC *γ +β [α] n = n iDC *γ +β [α] n = [α+β*γ^ω^{ω^i*n}] n = [α+β*γ^ω^ω^{i+1}] n   (i>1)
+-- E D C *γ +β [α] n = n D C *γ +β [α] n = [α+β*γ^ω^ω^n] n = [α+β*γ^ω^ω^ω] n
+--                                                                    E D C *γ = *γ^ω^ω^ω
