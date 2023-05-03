@@ -1,35 +1,79 @@
 -- See https://googology.fandom.com/wiki/Church-Kleene_ordinal for more
 let
-    -- Church numerals
-    C0 = \f\x. x;
+    -- Church numerals, corresponding to Church encoding of
+    -- data Nat = Zero | Succ Nat
+    -- type: N = forall r. r -> (r -> r) -> r
+    CZero = \f\x. x;
     Csucc = \n.\f\x. f (n f x);
+    C0 = CZero;
     C1 = Csucc C0;
     C2 = Csucc C1;
-    C16 = C2 C2 C2;
-    C64K = C2 C2 C2 C2;
-    -- Kleene ordinals, correspondong to data Ord = Zero | Succ Ord | Lim (Nat -> Ord)
-    Zero    =    \z\s\l. z;      -- ordinal 0
-    Succ    = \n.\z\s\l. s n;    -- successor ordinal n+1
-    Lim     = \f.\z\s\l. l f;    -- limit ordinal sup { f C0, f C1, f C2, ... }
+    C3 = Csucc C2;
+    C4 = Csucc C3;
+    C5 = Csucc C4;
+
+    -- Kleene ordinals, corresponding to Church encoding of
+    -- data Ord = Zero | Succ Ord | Lim (Nat -> Ord)
+    -- type: forall r. r -> (r -> r) -> ((N -> r) -> r) -> r
+    Zero =    \z\s\l. z;                 -- ordinal 0
+    Succ = \n.\z\s\l. s (n z s l);       -- successor ordinal n+1
+    Lim  = \f.\z\s\l. l (\n. f n z s l); -- limit ordinal sup { f C0, f C1, f C2, ... }
+
     -- The set K of ordinal notations is defined inductively by
     -- Zero is in K
     -- if n is in K, then Succ n is in K
     -- if f Cn is in K for all Church numerals Cn, then Lim f is in K
-    w  = Lim (\n.n Succ Zero); -- limit ordinal sup { 0, 1, 2, ... }
-    O0 = Zero;    -- size 10
-    O1 = Succ O0; -- size 21
-    O2 = Succ O1; -- size 40
-    O3 = Succ O2; -- size 44
-    Ow = w;       -- size 46
-    O4 = Succ O3; -- size 48
-    Ow1 = Succ Ow; -- size 60;
+
+    O0 = Zero;                 -- size 10
+    O1 = Succ O0;              -- size 15
+    O2 = Succ O1;              -- size 55
+    O3 = Succ O2;              -- size 59
+    O4 = Succ O3;              -- size 63
+    O5 = Succ O4;              -- size 67
+    O6 = Succ O5;              -- size 71
+    O7 = Succ O6;              -- size 75
+    -- limit ordinal sup { O0, O1, O2, ... }
+    Ow = Lim (\n.n Succ Zero); -- size 79
+    O8 = Succ O7;              -- size 79
+    Ow1 = Succ Ow;             -- size 93;
+
+    -- arithmetic
+    add  = \n\m. m n Succ Lim;
+    -- add n Zero = Zero n Succ Lim = n
+    -- add n (Succ m) = Succ m n Succ Lim
+    --               = Succ (m n Succ Lim) = Succ (add n m)
+    -- add n (Lim f) = Lim f n Succ Lim
+    --        = Lim (\i. f i n Succ Lim) = Lim (\i. add n (f i))
+    mul  = \n\m. m Zero (\x. add x n) Lim;
+    -- mul n Zero = Zero Zero (\x. add x n) Lim = Zero
+    -- mul n (Succ m) = Succ m Zero (\x. add x n) Lim
+    --      = (\x. add x n) (m Zero (\x. add x n) Lim)
+    --                = add (m Zero (\x. add x n) Lim) n = add (mul n m) n
+    -- mul n (Lim f) = Lim f Zero (\x. add x n) Lim
+    --        = Lim (\i. f i Zero (\x. add x n) Lim) = Lim (\i. mul n (f i))
+    expw = \n. n O1 (\x. mul x Ow) Lim;
+    -- expw Zero = Zero O1 (\x. mul x Ow) Lim = O1
+    -- expw (Succ n) = Succ n O1 (\x. mul x Ow) Lim
+    --    = (\x. mul x Ow) (n O1 (\x. mul x Ow) Lim)
+    --               = mul (n O1 (\x. mul x Ow) Lim) Ow = mul (expw n) Ow
+    -- expw (Lim f) = Lim f O1 (\x. mul x Ow) Lim
+    --       = Lim (\i. f i O1 (\x. mul x Ow) Lim) = Lim (\i. expw (f i))
+    Ow2 = add Ow Ow;             -- size 130
+    Oww = expw Ow;               -- size 189
+    Oeps0 = Lim (\n. n expw O0); -- size 217
+
     -- Fundamental sequence for w1CK
-    -- w1CKi is smallest (in BLC size) ordinal exceeding all w1CKj for j < i
+    -- w1CKi is the BLC-lexicographically-minimal ordinal exceeding all w1CKj for j < i
     -- similar to a Busy Beaver for ordinals
     w1CK0 = O0;
     w1CK1 = O1;
     w1CK2 = O2;
     w1CK3 = O3;
-    w1CK4 = Ow;  -- smaller than O4
-    w1CK5 = Ow1; -- must be larger than w1CK4 
-in Ow
+    w1CK3 = O3;
+    w1CK4 = O4;
+    w1CK5 = O5;
+    w1CK6 = O6;
+    w1CK7 = O7;
+    w1CK8 = Ow;  -- lexicographically prcedes O8
+    w1CK9 = Ow1; -- must be larger than w1CK8
+in Oeps0
