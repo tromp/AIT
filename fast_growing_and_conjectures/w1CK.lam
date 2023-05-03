@@ -1,3 +1,4 @@
+-- See https://googology.fandom.com/wiki/Church-Kleene_ordinal for more
 let
     -- Church numerals
     C0 = \f\x. x;
@@ -10,6 +11,10 @@ let
     Zero    =    \z\s\l. z;              -- ordinal 0
     Succ    = \n.\z\s\l. s (n z s l);    -- successor ordinal n+1
     Lim     = \f.\z\s\l. l f;            -- limit ordinal sup { f C0, f C1, f C2, ... }
+    -- The set K of ordinal notations is defined inductively by
+    -- Zero is in K
+    -- if n is in K, then Succ n is in K
+    -- if f Cn is in K for all Church numerals Cn, then Lim f is in K
     w  = Lim (\n.n Succ Zero); -- limit ordinal sup { 0, 1, 2, ... }
     O0 = Zero;    -- size 10
     O1 = Succ O0; -- size 15
@@ -22,6 +27,7 @@ let
     O7 = Succ O6; -- size 75
     Ow1 = Succ w; -- size 75
     -- Fundamental sequence for w1CK
+    -- w1CKi is smallest (in BLC size) ordinal exceeding all w1CKj for j < i
     w1CK0 = O0;
     w1CK1 = O1;
     w1CK2 = O2;
