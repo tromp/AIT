@@ -58,6 +58,7 @@ let
     --               = mul (n O1 (\x. mul x Ow) Lim) Ow = mul (expw n) Ow
     -- expw (Lim f) = Lim f O1 (\x. mul x Ow) Lim
     --       = Lim (\i. f i O1 (\x. mul x Ow) Lim) = Lim (\i. expw (f i))
+
     Ow2 = add Ow Ow;             -- size 130
     Oww = expw Ow;               -- size 189
     Oeps0 = Lim (\n. n expw O0); -- size 217
@@ -69,11 +70,10 @@ let
     w1CK1 = O1;
     w1CK2 = O2;
     w1CK3 = O3;
-    w1CK3 = O3;
     w1CK4 = O4;
     w1CK5 = O5;
     w1CK6 = O6;
     w1CK7 = O7;
-    w1CK8 = Ow;  -- lexicographically prcedes O8
+    w1CK8 = Ow;  -- lexicographically precedes O8
     w1CK9 = Ow1; -- must be larger than w1CK8
 in Oeps0
