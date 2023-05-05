@@ -57,19 +57,30 @@ let
   -- expw (Lim f) = Lim f O1 (\x. mul x Ow) Lim
   --       = Lim (\i. f i O1 (\x. mul x Ow) Lim) = Lim (\i. expw (f i))
 
-  Ow2 = add Ow Ow;             -- size 130  w * 2
-  Oww = expw Ow;               -- size 189  w^w
-  Oeps0 = Lim (\n. n expw O0); -- size 217  epsilon_0
+  Ow2      = add Ow Ow;                       -- size 130  w * 2
+  Oww      = expw Ow;                         -- size 189  w^w
+  Oeps0    = Lim (\n. n expw O0);             -- size 217  epsilon_0
+  OepsSucc = \e. Lim (\n. n expw (Succ e));   -- size 223  epsilon_i -> epsilon_i+1
+
+  iter = \f\n. n f n;             -- iterate
+  diag = \f\n. f n n;             -- diagonalize
 
   -- Fast Growing Hierarchy
   -- type: O -> N -> N
   fgh = \a. a
-              Csucc                    -- f_0 n = n+1
-              (\f\n. n f n)            -- f_a+1 = n f_a n
-              (\f\n. f n n);           -- f_a = f_a_n n
-  -- fgh (Lim f) n  = Lim f Csucc (\f\n. n f n) (\f\n. f n n) n =
-  -- (\f\n. f n n) (\i. f i Csucc (\f\n. n f n) (\f\n. f n n)) n
-  --  = f n Csucc (\f\n. n f n) (\f\n. f n n) n = fgh (f n) n
+              Csucc               -- f_0 n = n+1
+              iter                -- f_a+1 = n f_a n
+              diag;               -- f_a = f_a_n n
+  -- fgh (Lim f) n  = Lim f Csucc iter diag n =
+  -- (\f\n. f n n) (\i. f i Csucc iter diag) n
+  --  = f n Csucc iter diag n = fgh (f n) n
+
+  -- Hardy Hierarchy
+  -- type: O -> N -> N
+  hh = \a. a
+              C1                  -- f_0 n = n
+              (\f\n. f (Csucc n)) -- f_a+1 = f_a (n+1)
+              diag;               -- f_a = f_a_n n
 
   -- Fundamental sequence for w1CK
   -- w1CKi is the BLC-lexicographically-minimal ordinal exceeding all w1CKj for j < i
