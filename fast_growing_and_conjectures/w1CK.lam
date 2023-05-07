@@ -43,6 +43,8 @@ let
   --               = Succ (m Lim Succ n) = Succ (add n m)
   -- add n (Lim f) = Lim f Lim Succ n
   --        = Lim (\i. f i Lim Succ n) = Lim (\i. add n (f i))
+  -- add with arguments flipped
+  addf = \m\n. add n m;                  -- size 85
   mul  = \n\m. m Lim (\x. add x n) Zero; -- size 116
   -- mul n Zero = Zero Lim (\x. add x n) Zero = Zero
   -- mul n (Succ m) = Succ m Lim (\x. add x n) Zero
@@ -98,4 +100,4 @@ let
   w1CK8 = O8;
   w1CK9 = Ow;  -- lexicographically precedes O9
   w1CK10 = Ow1; -- must be larger than w1CK9
-in fgh -- fgh Oeps0
+in fgh Oeps0
