@@ -1,0 +1,77 @@
+-- Tree ordinals and Wainer's tau; see tree_ordinals.agda for details.
+let
+    id = \x. x;
+    true = \x\y. x;
+    false = \x\y. y;
+    UNUSED = id;
+
+    0 = \f\x. x;
+    1 = \f\x. f x;
+    2 = \f\x. f (f x);
+    3 = \f\x. f (f (f x));
+    suc = \n\f\x. f (n f x);
+    iterNat = id;
+
+    B = \l\B\L. B l;
+    L = \r\B\L. L r;
+    caseTL = \x\B\L. x B L;
+
+    Z = \Z\NZ. Z;
+    NZ = \l\Z\NZ. NZ l;
+    caseTZ = id;
+
+    T = \z\n\T. T z n;
+    caseTT  = id;
+
+    sucTT = \t. caseTT t (\z\n. T z (suc n));
+
+    liftTT = id;
+
+    liftTL = id;
+
+    w = \r. T (iterNat r B (L liftTT)) 0;
+
+    iterTT = \f.
+        let go =
+            let iterTL = \l\m. caseTL l
+                    (\x. B (iterTL x m))
+                    (\z. L (\i. go (z i) m));
+                iterNZ = \tz\m. caseTZ tz
+                    m
+                    (\l. T (NZ (iterTL l m)) 0);
+            in  \t. caseTT t (\nz\n\m. iterNat n f (iterNZ nz m));
+        in  go;
+
+    phi = \r.
+        let go =
+            let phiTL0 = \bs\l. caseTL l
+                    (UNUSED l)
+                    (\z\m. go (z m) m);
+                phiTLsuc = \phiTL. \bs\l. caseTL l
+                    (\x\m. phiTL (\x. bs (B x)) x m)
+                    (\z\m. bs (L (\i. phi r (z i) m)));
+                phiTL = r phiTLsuc phiTL0 (\l. T (NZ l) 0);
+                phiNZ = \tz. caseTZ tz
+                    sucTT
+                    (\l. phiTL l);
+            in  \t. caseTT t (\nz\n. iterNat n (\f\m. iterTT f m m) (phiNZ nz));
+        in  go;
+
+    TZ = T Z;
+    three = TZ 3;
+
+    phi_tau = \r. suc
+        r (\c\i\f. c (suc i) (\d. f (phi i (d (w i)))))
+          (\_\f. f (\_. three))
+          0 (\d. d)
+        (TZ r)
+        false;
+
+    phi_tau' = \r.
+        r (\c\i\f. c (suc i) (\d. f (phi i (d (w i)))))
+          (\_\f. f id)
+          0 (\d. d)
+        (T Z r)
+        false;
+in
+    f_tau
