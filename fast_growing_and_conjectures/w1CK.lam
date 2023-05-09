@@ -71,9 +71,9 @@ let
   -- Fast Growing Hierarchy
   -- type: O -> N -> N
   fgh = \a. a
-              diag                -- f_a = f_a_n n
-              iter                -- f_a+1 = n f_a n
-              Csucc;              -- f_0 n = n+1
+              diag                -- f_a   n = f_a_n n
+              iter                -- f_a+1 n = n f_a n
+              Csucc;              -- f_0   n = n+1
   -- fgh (Lim f) n  = Lim f diag iter Csucc n =
   -- (\f\n. f n n) (\i. f i diag iter Csucc) n
   --  = f n diag iter Csucc n = fgh (f n) n
@@ -81,9 +81,23 @@ let
   -- Hardy Hierarchy
   -- type: O -> N -> N
   hh = \a. a
-              diag                -- f_a = f_a_n n
-              (\f\n. f (Csucc n)) -- f_a+1 = f_a (n+1)
-              C1;                 -- f_0 n = n
+              diag                -- h_a   n = h_a_n n
+              (\f\n. f (Csucc n)) -- h_a+1 n = h_a (n+1)
+              C1;                 -- h_0   n = n
+
+  -- Middle Growing Hierarchy
+  -- type: O -> N -> N
+  mgh = \a. a
+              diag                -- m_a   n = m_a_n n
+              (\f\n. f (f n))     -- m_a+1 n = m_a (m_a n)
+              Csucc;              -- m_0   n = n+1
+
+  -- Slow Growing Hierarchy
+  -- type: O -> N -> N
+  sgh = \a. a
+              diag                -- s_a   n = s_a_n n
+              (\f\n. f (f n))     -- s_a+1 n = s_a (m_a n)
+              Csucc;              -- s_0   n = n+1
 
   -- Fundamental sequence for w1CK
   -- w1CKi is the BLC-lexicographically-minimal ordinal exceeding all w1CKj for j < i
