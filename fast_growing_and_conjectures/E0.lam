@@ -9,7 +9,7 @@ let
   _d0 = \s\n.s n n;
   E = \n.n G false _d0 n;
   2 = \f\x.f(f x);
-in E
+in E -- 2 2 E 2
 
 -- Let _di = i D _d0
 -- _d0 = \s\n.s n n
