@@ -27,11 +27,11 @@
    12 = \f.3(4 f);
    4k = 12 2;
 
-   -- (list (cn tk )) takes the first cn elements of the list
+   -- (list (cn tk tailarg)) gives the first cn elements of the list, followed by the remainder applied to tailarg
    tk = \cont\x\xs\z.z x (xs cont);
-   someprimes = primes (4k tk (B0 (B0 B1)));
+   someprimes = primes (4k tk (B0 (B0 B1))); -- tailarg is K (K Nil)
 
-   main = someprimes
+   main = primes
 in main
 
 -- test with ./blc run primes.lam
