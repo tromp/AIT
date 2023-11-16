@@ -1,4 +1,4 @@
--- see beyond_graham for documentation
+-- see wCubed for documentation
 let
   2 = \f\x.f (f x);
   H = \h\f\n.n h f n;

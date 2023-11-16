@@ -1,21 +1,22 @@
 -- https://codegolf.stackexchange.com/questions/139355/golf-a-number-bigger-than-tree3/219466#219466
 let
-  -- trees are made from pairing nodes and nil leaves
-  node  = \a\b\n.n a b;
-  -- inequality on trees; return tree that's empty only on equal inputs
+  -- trees are made from cons nodes and nil leaves
+  cons  = \a\b\c.c a b;
+  -- nil = \x\y.y -- false
+  -- inequality on trees; return (cons _ _) on different inputs; nil/false on equal inputs
   neq   = \s\t.s (\a\b\t.t (\a'\b'\s.neq a a' (\_\_\_.s) (neq b b')) s) t;
   -- substitute y for subtrees x in tree t
-  subs  = \x\y. let go = \t. neq t x (\_\_\_. t (\a\b\_. node (go a) (go b)) t) y in go;
+  subs  = \x\y. let go = \t. neq t x (\_\_\_. t (\a\b\_. cons (go a) (go b)) t) y in go;
   -- post applied non-nil-tree predecessor
-  tpred = \a\b. a (\_\_\b. let t' = node (a tpred) b in subs b t' t') b;
+  tpred = \a\b. a (\_\_\b. let t' = cons (a tpred) b in subs b t' t') b; -- 291 bits
 
   -- tree to church
   t2c = \t\f.let go = \t.t (\_\_\x.f (go (t tpred) x)) in go t;
 
   t0 = \x\y.y;
-  grow = \n.t2c (n (\t. node t t0) t0);
+  grow = \n.t2c (n (\t. cons t t0) t0); -- 389 bits
 
-  tsucc = node t0;
+  tsucc = cons t0;
   t1 = tsucc t0;
   t2 = tsucc t1;
   t3 = tsucc t2;
@@ -33,11 +34,11 @@ in 2 2 grow 2 -- 421 bits
 -- C2) (λf λx f (f x))
 
 
--- t2c (node tm tn)	0	1	2	3	4	5     n=6
+-- t2c (cons tm tn)	0	1	2	3	4	5     n=6
 ----------------+--------------------------------------------------------
 --	0	|	1	2	3	4	5	6	7
 --	1	|   2^2+1	4	5	6	7	8	9
---	2	|	    2^5+4	9	10	11	12	13
+--	2	| ~2^^2^63  2^5+4	9	10	11	12	13
 --	3	|		   2^10+9	18	19	20	21
 --	4	|			   2^19+18	35	36	37
 --	5	|				   2^36+35	68	69

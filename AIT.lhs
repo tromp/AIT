@@ -276,6 +276,7 @@ Bitstring functions -----------------------------------------------------
 >   "pbm"     -> toPBM   . diagram False . optimize . toDB $ prog
 >   "Pbm"     -> toPBM   . diagram  True . optimize . toDB $ prog
 >   "tex"     -> nl .         tex . show . optimize . toDB $ prog
+>   "nfhtml"  -> nl .              html . show . nf . toDB $ prog
 >   "html"    -> nl .        html . show . optimize . toDB $ prog
 >   "printlc" -> nl .               show . optimize . toDB $ prog
 >   "blc"     ->                  encode . optimize . toDB $ prog
@@ -304,6 +305,7 @@ Bitstring functions -----------------------------------------------------
 >   "pbm\tshow diagram in portable bitmap format",
 >   "Pbm\tshow alternative diagram in portable bitmap format",
 >   "tex\tshow program as TeX",
+>   "nfhtml\tshow normal form as html",
 >   "html\tshow program as html",
 >   "printlc\tshow lambda calculus program with de Bruijn indices",
 >   "blc\tencode as binary lambda calculus bits",

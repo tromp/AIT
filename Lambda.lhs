@@ -176,7 +176,7 @@ A ReadP parser for DeBruijn term
 > pDBAtom = pDBVar +++ (do schar '('; e <- pDB; schar ')'; return e)
 
 The following data type facilitates the Normal Form function by
-using Higher Order Abstract Syntax for the $\lambda$-expressions.
+using Higher Order Abstract Syntax (HOAS) for the $\lambda$-expressions.
 This makes it possible to use the native substitution of Haskell.
 
 > data HODB = HVar Int | HLam (HODB -> HODB) | HApp HODB HODB
