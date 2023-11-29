@@ -1,0 +1,11 @@
+let
+  -- binary CL tree with basis {S,K}
+  id = \x.x;
+  S = \x\y\z.x z(y z);
+  all = \cont\bit.bit (\bit.cont (bit bit S)) (all(\x.all(\y.cont(x y))));
+  bcl = all id;
+  0 = \x\y.x;
+  1 = \x\y.y;
+  2 = bcl 1 1 0 1 1 1 0 1 1 0 0 0 1 0 0 1 1 0 1 0 0 0 0 ;
+  3 = bcl 1 1 0 1 1 1 0 1 1 0 0 0 1 0 0 1 1 0 1 1 1 0 1 1 0 0 0 1 0 0 1 1 0 1 0 0 0 0
+in bcl -- 2 (3 2)

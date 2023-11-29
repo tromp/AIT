@@ -1,0 +1,12 @@
+let
+  -- binary CL tree with basis {A}
+  id = \x.x;
+  allA = \cont\bit.bit(cont(\x\y\z.x z(y(\_.z))))(allA(\x.allA(\y.cont(x y))));
+  all = allA id;
+  0 = \x\y.x;
+  1 = \x\y.y;
+  I = all 1 1 0 1 0 1 1 0 1 0 0 0 1 1 0 1 0 0 0;
+  K = all 1 1 0 1 0 0 1 1 1 1 1 1 0 1 0 0 0 0 0 0 0;
+  S = all 1 1 1 0 1 0 1 1 1 0 0 1 1 0 0 1 0 0 1 0 1 0 1 1 0 0 1 0 0 0 0;
+  A = all 0
+in all
