@@ -7,9 +7,9 @@ let
     (\bit1.bit1 (all (\exp (cont (\args\arg.exp (\z.z arg args)))))
                 (all (\exp1 (all (\exp2.cont (\args.exp1 args (exp2 args)))))))
     (\bit1.bit1 (cont (\args.args bit1))
-                (all (\var.cont (\args.var (args bit1))) 1)); -- needed int-e to come up with taking 1 subtree
+                (all (\var.cont (\args.var (args bit1))) bit1)); -- needed int-e to come up with taking 1 subtree
   
-  blc = all (\z.z z); -- size 199
+  blc = all (\z.z z); -- size 195
 
   -- inline blc!
   2 = blc 0 0 0 0 0 1 1 1 0 0 1 1 1 0 1 0;
