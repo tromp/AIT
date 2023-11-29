@@ -1,0 +1,12 @@
+let
+I = \x.x;
+K = \x\y.x;
+S = \x\y\z.x z(y z);
+0 = \c.c(\f.f S K);
+1 = \c\L.L(\l\R.R(\r.c(l r)));
+zot = \c.c I;
+i = zot 1 0 0;
+ki = zot 1 0 1 0 0;
+k = zot 1 0 1 0 1 0 0;
+s = zot 1 0 1 0 1 0 1 0 0
+in ki
