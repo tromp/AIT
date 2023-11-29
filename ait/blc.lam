@@ -1,0 +1,21 @@
+let
+  -- allV cont = TREE (!!var)
+  allV = \cont\bit1.bit1
+    (cont (\args.args bit1))
+    (allV (\var.cont (\args.var (args bit1))));
+
+  -- allL cont = TREE (\free.term)
+  allL = \cont\bit0.bit0
+    (\bit1.bit1 (allL (\exp (cont (\args\arg.exp (\z.z arg args)))))
+                (allL (\exp1 (allL (\exp2.cont (\args.exp1 args (exp2 args)))))))
+    (allV cont);
+  
+  0 = \x\y.x;
+  1 = \x\y.y;
+  blc = allL (\z.z z);
+
+  -- inline blc!
+  2 = blc 0 0 0 0 0 1 1 1 0 0 1 1 1 0 1 0;
+  3 = blc 0 0 0 0 0 1 1 1 0 0 1 1 1 0 0 1 1 1 0 1 0;
+
+in 2 (3 2)

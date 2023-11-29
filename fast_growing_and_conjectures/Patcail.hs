@@ -1,4 +1,6 @@
 -- https://codegolf.stackexchange.com/questions/139355/golf-a-number-bigger-than-tree3/219466#219466
+import Data.Char
+import Data.Bits
 import Data.List
 import Data.Maybe
 import Control.Applicative
@@ -16,16 +18,23 @@ instance Show Tree where
     Just n  -> show n
     Nothing -> let (Cons t0 t1) = t in "[" ++ show t0 ++ "," ++ show t1 ++ "]" where
 
+-- also see A014486.hs for computing decimal version directly
 showBin :: Tree -> String
 showBin Nil = "0"
 showBin (Cons c1 c2) = "1" ++ showBin c1 ++ showBin c2
 
-treesN :: Int -> [Tree]
-treesN n = concatMap (\n1 -> Cons <$> treesN n1 <*> treesN (n-1-n1)) [0..n-1]
+toDec :: String -> Int
+toDec = foldl' (\acc x -> acc * 2 + digitToInt x) 0
 
-trees :: [[Tree]]
-trees = [Nil] : map gen [1..] where
-  gen n = concatMap (\n1 -> Cons <$> trees!!n1 <*> trees!!(n-1-n1)) [0..n-1]
+treesN :: Int -> [Tree]
+treesN 0 = [Nil]
+treesN n = [Cons t0 t1 | (n0,t0) <- treesUpToN (n-1), t1 <- treesN (n-1-n0)]
+
+treesUpToN :: Int -> [(Int,Tree)]
+treesUpToN n = (0,Nil) : [(1+n0+n1,Cons t0 t1) | n > 0, (n0,t0) <- treesUpToN (n-1), (n1,t1) <- treesUpToN (n-1-n0)]
+
+trees :: [Tree]
+trees = [0..] >>= treesN
 
 predT :: Monad m => Tree -> m Tree
 predT (Cons Nil t) = return t
@@ -63,7 +72,7 @@ limIO lim t = do
     Just n -> putStrLn $ "->  " ++ show n
     Nothing -> putStrLn "FAIL"
 
-main = mapM_ (limIO 512) (concat trees)
+main = mapM_ (limIO 512) trees
 
 t1 :: Int -> Tree
 t1 0 = Nil
