@@ -25,6 +25,21 @@ Size in bits of an expression, assuming no free variables
 >     prebin (DBLam   e) s = '0':'0':(prebin e s)
 >     prebin (DBApp x y) s = '0':'1':(prebin x (prebin y s))
 
+Size in bits when variable i is encoded as 1 followed by i'th binary tree (as
+in https://oeis.org/A063171): 0, 100, 10100, 11000, 1010100, 1011000, 1100100, 1101000,
+1110000, 101010100, ...
+
+map (size .DBVar) [0..17] = [2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,16,17,18,19]
+map (size2.DBVar) [0..17] = [2, 4, 6, 6, 8, 8, 8, 8, 8,10,10,10,10,10,10,10,10,10]
+                               +1 +2 +1 +2 +1    -1 -2 -1 -2 -3 -4 -5 -6 -7 -8 -9 
+
+> size2 :: DB -> Int
+> size2 (DBVar i)   = 2 + 2 * length (takeWhile (<= i) cumcat) where
+>   cumcat = scanl1 (+) (cat 1 1)
+>   cat n c = c : let n' = n+1 in cat n' (2*(2*n-1) * c `div` n')
+> size2 (DBLam   e) = 2 + size2 e
+> size2 (DBApp x y) = 2 + size2 x + size2 y
+
 > {-- adaption for alternate encoding as used in int4.lam
 >     prebin (DBVar i) s | i>0 = '1':'1':(prebin (DBVar (i-1)) s)
 >     prebin l@(DBLam   e) s = succpref ++ '0':'0':(prebin se s) where
@@ -281,7 +296,8 @@ Bitstring functions -----------------------------------------------------
 >   "printlc" -> nl .               show . optimize . toDB $ prog
 >   "blc"     ->                  encode . optimize . toDB $ prog
 >   "Blc"     -> toBytes .        encode . optimize . toDB $ prog
->   "size"    -> nl .        show . size . optimize . toDB $ prog
+>   "size"    -> nl .       show . size  . optimize . toDB $ prog
+>   "size2"   -> nl .       show . size2 . optimize . toDB $ prog
 >   "help"    -> unlines usage
 >   a         -> "Action " ++ a ++ " not recognized.\n"
 
@@ -311,5 +327,6 @@ Bitstring functions -----------------------------------------------------
 >   "blc\tencode as binary lambda calculus bits",
 >   "Blc\tencode as Binary lambda calculus bytes",
 >   "size\tshow size in bits",
+>   "size2\tshow size with binary de bruijn index encoding in bits",
 >   "help\tshow this text"
 >   ]
