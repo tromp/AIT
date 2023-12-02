@@ -1,0 +1,91 @@
+let
+    zero = \f\x. x;
+    one  = \f\x. f x;
+    two  = \f\x. f (f x);
+    succ = \n\f\x. n f (f x);
+
+
+    -- === 0-based numerals ===
+
+    -- unary encoding
+    -- 0 = 0
+    -- 1 = 10
+    -- 2 = 110
+    unaryW = \c.
+        let r = \n\bit. bit
+                (c n)
+                (r (succ n))
+        in  r;
+    unaryC = \c. unaryW c zero; -- 77 bits
+    unary  = unaryC (\n. n);    -- 68 bits
+
+    -- Elias omega
+    -- 0 = 0
+    -- 1 = 10 0
+    -- 2 = 11 0
+    -- 3 = 10 100 0
+    omegaCons = \c\n\bit. c (\f\x. f (n f (n f (bit x (f x)))));
+    omegaW = \c.
+        let r = \n\bit. bit
+                (c n)
+                (succ n omegaCons r zero)
+        in r;
+    omegaC = \c. omegaW c zero; -- 149 bits
+    omega = omegaC (\n. n);     -- 140 bits
+
+    -- Levenshtein encoding
+    -- 0 = 0
+    -- 1 = 1 0
+    -- 2 = 1 10 0
+    -- 3 = 1 10 1
+    -- (see also `delimit.lam` which does the same thing for lists)
+    levCons = \c\n\bit. c (\f\x. n f (n f (bit x (f x))));
+    levW = \c\bit. bit
+        (c zero)
+        (levW (\n. n levCons c one));
+    levC = levW;         -- 120 bits
+    lev  = levC (\n. n); -- 126 bits
+
+
+    -- === 1-based numerals ===
+
+    -- unary encoding
+    -- 1 = 0
+    -- 2 = 10
+    -- 3 = 110
+    unaryW' = \c.
+        let r = \n\bit. bit
+                (c n)
+                (r (succ n))
+        in r;
+    unaryC' = \c. unaryW' c one; -- 75 bits
+    unary'  = unaryC' (\n. n);   -- 66 bits
+
+    -- Elias omega
+    -- 1 = 0
+    -- 2 = 10 0
+    -- 3 = 11 0
+    -- 4 = 10 100 0
+    omegaCons' = \c\n\bit. c (\f\x. n f (n f (bit x (f x))));
+    omegaW' = \c.
+        let r = \n\bit. bit
+                (c n)
+                (n omegaCons' r one)
+        in  r;
+    omegaC' = \c. omegaW' c one; -- 120 bits
+    omega'  = omegaC' (\n. n);   -- 111 bits
+
+
+    -- === tests ===
+
+    0 = \x\y. x;
+    1 = \x\y. y;
+
+    5U  = unary  1 1 1 1 1 0;
+    5O  = omega  1 0  1 1 0  0;
+    5L  = lev    1 1 1 0  0  0 1;
+
+    5U' = unary' 1 1 1 1 0;
+    5O' = omega' 1 0  1 0 1  0;
+in
+    lev
