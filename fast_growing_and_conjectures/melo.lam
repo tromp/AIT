@@ -1,0 +1,41 @@
+let
+  2 = \f\n.f (f n);
+  H = \g\m.m g 2;  -- tuple section < ,2>
+  J = \y.y (y H)
+in J J
+
+-- J J
+-- J (J H)
+-- J (H HH)
+-- H HH (H HH H)
+-- H HH H        HH 2
+-- H HH 2        HH 2
+-- 2 HH 2        HH 2
+-- HH (HH 2)     HH 2     (a)
+-- HH 2 H 2      HH 2
+-- 2 H 2 H 2     HH 2
+-- H (H 2) H 2   HH 2
+-- H (H 2) 2 2   HH 2
+-- 2 (H 2) 2 2   HH 2
+-- H 2 (H 2 2) 2 HH 2
+-- H 2 2 2 2 2   HH 2
+-- 2 2 2 2 2 2   HH 2
+-- 2^^6          HH 2     (b)
+
+-- 0 H 2 n = 2 n = n^2
+-- k+1 H 2 n = H (k H 2) n = n (k H 2) 2 > 3{k}H (\x.k H 2 x) n >= H (\x. 2{k}x) n
+--     = n (\x. 2{k}x) 2 = 2{k+1}(n+1) > 2{k+1}n
+
+-- LEMMA for k,n >= 2, k H 2 n > 3{k}(1+n)
+-- H2 n = H 2 n = n 2 2 = 2^2^n
+-- 2^^5 = 2^2^16 > 3^27 = 3^^3
+-- BASE   2 H 2 n = H     H2  n = n     H2  2 = 2^^(1+2n) > 3{2}(1+n)
+-- STEP 1+k H 2 n = H (k H 2) n = n (k H 2) 2 > 3{k}(1+ 3{k}(1+ ... 3{k}(1+2)...))
+--                                            > 3{k+1}(n+1)
+
+-- LEMMA for n >= 2, HH (HH n) > 3{n}3
+-- BASE Lines (a) through (b) show HH (HH 2) = 2^^6 > 3{2}3
+-- STEP HH (HH 1+n) = HH 1+n    H 2 = 1+n H 2   H 2 = H (n H 2) H 2 =
+-- H (n H 2) 2 2 = 2 (n H 2) 2 2 = n H 2 (n H 2 2) 2 > 3{n}(1+3{n}(1+2)) 2 > 3{n+1}3.
+
+-- So 2^^6 HH 2 > G(2^^6 / 2) >> G(64)
