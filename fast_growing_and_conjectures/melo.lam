@@ -20,10 +20,6 @@ in J J
 --           = 2 2 2 2 2 2   HH 2
 --           = 2^^6          HH 2
 
--- 0 H 2 n = 2 n = n^2
--- k+1 H 2 n = H (k H 2) n = n (k H 2) 2 > 3{k}H (\x.k H 2 x) n >= H (\x. 2{k}x) n
---     = n (\x. 2{k}x) 2 = 2{k+1}(n+1) > 2{k+1}n
-
 -- LEMMA for k,n >= 2, k H 2 n > 3{k}(1+n)
 -- PROOF by induction on k
 --        First note that H2 n = H 2 n = n 2 2 = 2^2^n
