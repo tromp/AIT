@@ -69,8 +69,8 @@ Size in bits of an expression, assuming no free variables
 > instance Encodeable CL where
 >   encode z = prebin z "" where
 >     prebin (CVar _) _ = error "can't encode variables"
->     prebin CombS s = '0':'0':s
->     prebin CombK s = '0':'1':s
+>     prebin CombK s = '0':'0':s
+>     prebin CombS s = '0':'1':s
 >     prebin (CApp x y) s = '1':(prebin x (prebin y s))
 
 Interpret an expression as a list of binary strings.
