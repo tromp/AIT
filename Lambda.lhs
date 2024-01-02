@@ -3,8 +3,8 @@ $\lambda$-calculus together with a parser and a printer for it.
 It also exports a simple type of identifiers that parse and
 print in a nice way.
 
-> {-# LANGUAGE PatternSynonyms #-}
-> module Lambda(LC(..), DB(..), CL(..),  Id(..), lam, isnf, nf, hnf, evalLC, toLC, toCL, strongCL, toDB, showBCW, toBCW) where
+> {-# LANGUAGE PatternSynonyms, LambdaCase #-}
+> module Lambda(LC(..), DB(..), CL(..),  Id(..), lam, isnf, nf, hnf, evalLC, toLC, toCL, toCLOK, strongCL, toDB, showBCW, toBCW) where
 > import Prelude hiding ((<>))
 > import Data.List(union, (\\), elemIndex)
 > import Data.Char(isAlphaNum)
@@ -291,7 +291,33 @@ Increase variable depth
 > bump (CApp x y) = CApp (bump x) (bump y)
 > bump x = x
 
+Oleg Kiselyov's compositional bracket abstraction
+as explained on https://crypto.stanford.edu/~blynn/lambda/kiselyov.html
+
+> toCLOK :: DB -> CL
+> toCLOK db = cl where
+>   (0,cl) = convert db
+>   convert :: DB -> (Int, CL)
+>   convert = \case
+>     DBVar 0 -> (1, CombI)
+>     DBVar e -> (n + 1, (0, CombK) # t) where t@(n, _) = convert $ DBVar (e-1)
+>     DBLam e -> case convert e of
+>       (0, d) -> (0, abstract d)                                         -- K d
+>       (n, d) -> (n - 1, d)
+>     DBApp e1 e2 -> (max n1 n2, t1 # t2) where
+>       t1@(n1, _) = convert e1
+>       t2@(n2, _) = convert e2
+>   (0 , d1) # (0 , d2) = CApp d1 d2
+>   (0 , d1) # (n , d2) = (0, CApp CombS (CApp CombK d1)) # (n - 1, d2)   -- B d1 where Bxyz=x(yz)
+>   (n , d1) # (0 , d2) = (0, CApp CombSS (CApp CombKK d2)) # (n - 1, d1) -- R d2 where Rxyz=yzx
+>   (n1, d1) # (n2, d2) = (n1 - 1, (0, CombS) # (n1 - 1, d1)) # (n2 - 1, d2)
+
 Implement improved bracket abstraction:
+
+> toCL :: DB -> CL
+> toCL (DBVar i) = CVar i
+> toCL (DBApp x y) = CApp (toCL x) (toCL y)
+> toCL (DBLam e) = abstract (toCL e)
 
 > abstract :: CL -> CL
 
@@ -345,11 +371,6 @@ Implement improved bracket abstraction:
 >       = CApp (CApp CombS (abstract e1)) (abstract e2)
 >   occabstract _ = error $ "Impossible occabstract argument"
 
-> toCL :: DB -> CL
-> toCL (DBVar i) = CVar i
-> toCL (DBApp x y) = CApp (toCL x) (toCL y)
-> toCL (DBLam e) = abstract (toCL e)
-
 > evalCL :: CL -> CL
 > evalCL (CApp x y) = eval2 (evalCL x) (evalCL y) where
 >   eval2 (CApp CombK u) _ = u
@@ -367,9 +388,11 @@ Implement improved bracket abstraction:
 
 BCWI+K terms: We reuse the CL type and represent combinators by their respective SK translation.
 
-> pattern CombSK, CombSSK :: CL
+> pattern CombSK, CombSS, CombKK, CombSSK :: CL
 > pattern CombSK = CApp CombS CombK
-> pattern CombSSK = CApp (CApp CombS CombS) CombK
+> pattern CombSS = CApp CombS CombS
+> pattern CombKK = CApp CombK CombK
+> pattern CombSSK = CApp CombSS CombK
 
 > type BCW = CL
 

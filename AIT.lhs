@@ -282,6 +282,7 @@ Bitstring functions -----------------------------------------------------
 >   "nf_size" -> nl .              show . size . nf . toDB $ prog
 >   "comb_nf" -> nl .        show . strongCL . toCL . toDB $ prog
 >   "comb"    -> nl .        show . toCL . optimize . toDB $ prog
+>   "combOK"  -> nl .      show . toCLOK . optimize . toDB $ prog
 >   "bcw"     -> nl .    showBCW . toBCW . optimize . toDB $ prog
 >   "bcl"     -> nl .      encode . toCL . optimize . toDB $ prog
 >   "diagram" -> elems   . diagram False . optimize . toDB $ prog
@@ -312,6 +313,7 @@ Bitstring functions -----------------------------------------------------
 >   "nf_size\tshow size of normal form",
 >   "comb_nf\tnormal form through SK reduction",
 >   "comb\tshow translation to combinatory logic",
+>   "combOK\tshow Oleg Kiselyov's translation to combinatory logic",
 >   "bcw\tencode in BCW combinators",
 >   "bcl\tencode in binary combinatory logic",
 >   "diagram\tshow ascii diagram",
