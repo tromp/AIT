@@ -15,7 +15,6 @@ let
   -- V' = \x\y\z.z y x;
   -- CL' = \f\cont T (V' (FB2 f cont) (BTCOMB cont));
   mtve = S(K(S(K(S(K(S(K(S(K(S I))K))))(S(S(K(S(K(S(K S)(S(K(S S S(K(S I))))K)))K))(S(K(S S(K(S(S S(K(K S)))(K K)))))  K)))))(S(K K))))(S S S(S(S K))(S S K(S(K S)K))); -- equivalent to CL only 194 bits
-  Y = \f.(\x.x x)(\x.f(x x));
   Y0 = \x\y.x y x;
   Y1 = \y\x.y (x y x);
   SKY = Y0 Y1
