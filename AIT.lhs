@@ -284,7 +284,7 @@ Bitstring functions -----------------------------------------------------
 >   "comb"    -> nl .        show . toCL . optimize . toDB $ prog
 >   "combOK"  -> nl .      show . toCLOK . optimize . toDB $ prog
 >   "bcw"     -> nl .    showBCW . toBCW . optimize . toDB $ prog
->   "bcl"     -> nl .      encode . toCL . optimize . toDB $ prog
+>   "bcl"     ->           encode . toCL . optimize . toDB $ prog
 >   "diagram" -> elems   . diagram False . optimize . toDB $ prog
 >   "Diagram" -> elems   . diagram  True . optimize . toDB $ prog
 >   "boxchar" -> boxChar False . diagram False . optimize . toDB $ prog
