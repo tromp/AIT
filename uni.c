@@ -8,7 +8,7 @@
 #include <time.h>
 
 typedef uint32_t u32;
-enum { MINMEMSZ = 1<<16, MAXMEMSZ = 1<<23 };
+enum { MINMEMSZ = 1<<20, MAXMEMSZ = 1<<29 };
 u32 memsize, *mem, *gcmem, *sp, *spTop, hp, dbgGC, dbgCL, dbgSTP;
 void die(char *s) { fprintf(stderr, "error: %s\n", s); exit(1); }
 static inline u32 isComb(u32 n) { return n < 128; }
@@ -39,18 +39,17 @@ u32 evac(u32 n) {
   return (hp += 2) - 2;
 }
 
-u32 steps, gccount;
+u32 steps, gccount, qDblMem;
 void gc() {
   gccount++;
-  u32 oldsize = memsize;
-  if (memsize < MAXMEMSZ)
-    memsize *= 2;
-  if (!gcmem) {
-    if (!(gcmem = malloc(memsize * sizeof(u32)))) die("malloc failed");
-    memset(gcmem, 0, hp);
-  }
   if (dbgGC) fprintf(stderr, "\nmemsize %u steps %u GC %u -> ", memsize, steps, hp - 128);
-  sp = gcmem + memsize - 1;
+  if (qDblMem) {
+    memsize *= 2;
+    gcmem = realloc(gcmem, memsize * sizeof(u32));
+    if (!gcmem) die("realloc failed");
+    memset(gcmem, 0, 128);
+  }
+  sp = gcmem + memsize-1;
   u32 di = hp = 128;
   for (*sp = evac(*spTop); di < hp; di++)
     gcmem[di] = evac(gcmem[di]);
@@ -58,10 +57,13 @@ void gc() {
   spTop = sp;
   u32 *old = mem;
   mem = gcmem;
-  if (oldsize < MAXMEMSZ) { 
-    free(old);
-    gcmem = 0;
-  } else gcmem = old;
+  gcmem = old;
+  if (qDblMem) {
+    gcmem = realloc(gcmem, memsize * sizeof(u32));
+    if (!gcmem) die("realloc failed");
+    memset(gcmem, 0, 128);
+  }
+  qDblMem = hp >= memsize/2 && memsize < MAXMEMSZ;
 }
 
 u32 getch() { return getchar(); }
@@ -183,7 +185,7 @@ void run(u32 x) {
 }
 
 int main(int argc, char **argv) {
-  dbgGC = dbgCL = dbgSTP = 0;
+  dbgGC = dbgCL = dbgSTP = qDblMem = 0;
   int opt;
   while ((opt = getopt(argc, argv, "gcs")) != -1) {
     switch (opt) {
@@ -192,9 +194,11 @@ int main(int argc, char **argv) {
       case 's': dbgSTP = 1; break;
     }
   }
-  mem = malloc((memsize = MINMEMSZ) * sizeof(u32)); gcmem = 0;
+  mem = malloc((memsize = MINMEMSZ) * sizeof(u32));
+  gcmem = malloc(memsize * sizeof(u32));
+  if (!mem || !gcmem) die("malloc failed");
   memset(mem, 0, hp = 128); // allow mem[x]=='C' test without !isComb(x)
-  if (!mem) die("malloc failed");
+  memset(gcmem, 0, 128);
   u32 db = parseBLC();
   u32 cl = toCL(db);
   if (dbgCL) { show(db); putch('\n'); show(cl); putch('\n'); }
