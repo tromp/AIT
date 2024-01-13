@@ -151,34 +151,37 @@ u32 toCL(u32 db) {
 }
 // Kiselyov bracket abstraction
 u32 combineK(u32 n1, u32 d1, u32 n2, u32 d2) {
-  if (n1) return n2 ? combineK(n1-1,combineK(0,'S', n1-1,d1), n2-1,d2)
-                    : combineK(0,app('R',d2), n1-1,d1) ;
-  else    return n2 ? combineK(0,app('B',d1), n2-1,d2)
-                    : app(d1,d2);
+  if (n1==1)
+    return n2==1 ? app(d1,d2)
+         : n2 &1 ? combineK(1,app('B',d1), n2>>1,d2)
+         :         combineK(1,        d1 , n2>>1,d2);
+  else if (n1&1)
+    return n2==1 ? combineK(1,app('R',d2), n1>>1,d1)
+         : n2 &1 ? combineK(n1>>1,combineK(1,'S', n1>>1,d1), n2>>1,d2)
+         :         combineK(n1>>1,combineK(1,'C', n1>>1,d1), n2>>1,d2);
+  else
+    return n2==1 ? combineK(n1>>1,d1, 1,d2)
+         : n2 &1 ? combineK(n1>>1,combineK(1,'B', n1>>1,d1), n2>>1,d2)
+         :         combineK(n1>>1,d1, n2>>1,d2);
 }
+// clear leading 1 //    ``RI``BS``B`BC``B`CII
+static inline u32 clo(u32 x) { return x & (((~0)>>1)>>(__builtin_clzl(x))); }
 void show(u32 n);
 u32 convertK(u32 db, u32 *pn) {
   u32 nf, cf, f = mem[db], na, ca, a = mem[db+1];
-  if (f == 'V') {
-    f = 'I';
-    for (nf = 1; a--; nf++) f = combineK(0,'K', nf, f);
-    *pn = nf;
-    return f;
-  }
+  if (f == 'V') { *pn = 3 << a; return 'I'; }
   if (f == 'L') {
     ca = convertK(a, &na);
-    if (na) { *pn = na-1; return ca; }
-    else    { *pn =    0; return app('K', ca); }
+    if (na==1) { *pn = na; return app('K', ca); }
+    else { *pn = na>>1; return (na&1) ? ca : combineK(1,'K', *pn,ca); }
   }
-  cf = convertK(f, &nf);
-  ca = convertK(a, &na);
-  u32 fCL = toCL(f);
-  *pn = nf > na ? nf : na;
+  cf = convertK(f, &nf); ca = convertK(a, &na);
+  *pn = nf > na ? nf | clo(na) : clo(nf) | na;
   return combineK(nf,cf, na,ca);
 }
 u32 toCLK(u32 db) {
   u32 n, cl = convertK(db,&n);
-  if (n) die("Kiselyov input not a combinator");
+  if (n != 1) die("Kiselyov input not a combinator");
   return cl;
 }
 
