@@ -117,12 +117,12 @@ u32 combineK(u32 n1, u32 d1, u32 n2, u32 d2) {
          :         combineK(n1>>1,combineK(1,'C', n1>>1,d1), n2>>1,d2);
   else
     return n2==1 ? combineK(n1>>1,d1, 1,d2)
-         : n2 &1 ? combineK(n1>>1,combineK(1,'B', n1>>1,d1), n2>>1,d2)
+         : n2 &1 ? (n2==3&&d2=='I' ? d1 // eta optimization not handled by clapp
+                 : combineK(n1>>1,combineK(1,'B', n1>>1,d1), n2>>1,d2))
          :         combineK(n1>>1,d1, n2>>1,d2);
 }
-// clear leading 1 //    ``RI``BS``B`BC``B`CII
+// clear leading 1
 static inline u32 clo(u32 x) { return x & (0x7fffffff >> __builtin_clz(x)); }
-void show(u32 n);
 u32 convertK(u32 db, u32 *pn) {
   u32 nf, cf, f = mem[db], na, ca, a = mem[db+1];
   if (f == 'V') { *pn = 3 << a; return 'I'; }
