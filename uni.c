@@ -10,7 +10,7 @@
 
 typedef uint32_t u32;
 enum { MINMEMSZ = 1<<20, MAXMEMSZ = 1<<29 };
-u32 memsize, *mem, *gcmem, *sp, *spTop, hp, dbgGC, dbgSTP;
+u32 memsize, *mem, *gcmem, *sp, *spTop, hp, qOpt, dbgGC, dbgSTP;
 void die(char *s) { fprintf(stderr, "error: %s\n", s); exit(1); }
 static inline u32 isComb(u32 n) { return n < 128; }
 static inline u32 app(u32 f, u32 x) { mem[hp] = f; mem[hp+1] = x; return (hp+=2)-2; }
@@ -20,22 +20,24 @@ u32 getbit() {
   if (!nbits) { nbits = mode; inbits = getchar(); } else nbits--;
   return (inbits>>nbits) & 1;
 }
+// switch(f) and switch(mem[f]) turn out to be WAY slower
 u32 clapp(u32 f, u32 a) {
-  return f=='F' ? 'I' // somehow way faster than a switch(f) and switch(mem[f])
-       : f=='K' && a=='I' ? 'F' 
-       : f=='S' && a=='K' ? 'F'
+  return f=='K' && a=='I' ? 'F'
        : f=='B' && a=='K' ? 'D'
-       : f=='B' && a=='I' ? 'I'
        : f=='C' && a=='I' ? 'T'
-       : f=='C' && a=='C' ? 'R'
        : mem[f]=='B' && a=='I'? mem[f+1]
+       : mem[f]=='R' && a=='I'? app('T',mem[f+1])
        : mem[f]=='B' && mem[f+1]=='C' &&  a=='T'? ':'
+       : mem[f]=='S' && mem[f+1]=='I' &&  a=='I'? 'M'
+       : !qOpt ? app(f, a)
+       : f=='F' ? 'I'
+       : f=='S' && a=='K' ? 'F'
+       : f=='B' && a=='I' ? 'I'
+       : f=='C' && a=='C' ? 'R'
        : mem[f]=='B' && mem[f+1]=='S' &&  a=='K'? 'B'
        : mem[f]=='B' && mem[mem[f+1]]=='S' &&  a=='K'? app('C',mem[mem[f+1]+1])
        : mem[a]=='K' && f=='S'? app('B',mem[a+1])
-       : mem[f]=='R' && a=='I'? app('T',mem[f+1])
        : mem[f]=='R' && mem[f+1]=='I' &&  a=='B'? 'I'
-       : mem[f]=='S' && mem[f+1]=='I' &&  a=='I'? 'M'
        : app(f, a);
 }
 u32 parseBCL() {
@@ -94,50 +96,63 @@ u32 unDoubleVar(u32 n, u32 db) {
   if (qf || qa) return 0;
   return (udf = unDoubleVar(n,f)) && (uda = unDoubleVar(n,a)) ? app(udf,uda) : 0;
 }
+// recognize recursive functions by (\x.x x) (\x. f (x x)) template
+u32 recursive(u32 f, u32 a) {
+  return f=='M' && mem[a]=='L' && mem[f=mem[a+1]]!='V' && (f=unDoubleVar(0,f)) ? app('L',f) : 0;
+}
+
 // convert de-bruijn lambda term to combinatory logic term
 u32 toCL(u32 db) {
   u32 f = mem[db];
   if (f == 'V') return db;
-  u32 a = mem[db+1], aCL = toCL(a);
-  if (f == 'L') return abstract(aCL);
-  u32 fCL = toCL(f);
-  return fCL=='M' && mem[a]=='L' && mem[a=mem[a+1]]!='V' && (a=unDoubleVar(0,a))
-    ? app(app('Y',app('S','I')),toCL(app('L',a))) // application to SI benefits GC
-    : clapp(fCL,aCL);
+  u32 a = mem[db+1];
+  if (f == 'L') return abstract(toCL(a));
+  u32 fCL = toCL(f), ra = recursive(fCL,a);
+  return ra ? app('Y',toCL(ra)) : clapp(fCL,toCL(a));
 }
-// Kiselyov bracket abstraction
+
+// Kiselyov bracket abstraction, explained in
+// https://crypto.stanford.edu/~blynn/lambda/kiselyov.html
+// storing list of booleans bools as foldr (\bool n-> app(n,bool?1:0)) 0 bools
 u32 combineK(u32 n1, u32 d1, u32 n2, u32 d2) {
-  if (n1==1)
-    return n2==1 ? clapp(d1,d2)
-         : n2 &1 ? combineK(1,clapp('B',d1), n2>>1,d2)
-         :         combineK(1,          d1 , n2>>1,d2);
-  else if (n1&1)
-    return n2==1 ? combineK(1,clapp('R',d2), n1>>1,d1)
-         : n2 &1 ? combineK(n1>>1,combineK(1,'S', n1>>1,d1), n2>>1,d2)
-         :         combineK(n1>>1,combineK(1,'C', n1>>1,d1), n2>>1,d2);
+  if (n1==0)
+    return n2==0 ? clapp(d1,d2)
+     : mem[n2+1] ? combineK(0,clapp('B',d1), mem[n2],d2)
+     :             combineK(0,          d1 , mem[n2],d2);
+  else if (mem[n1+1])
+    return n2==0 ? combineK(0,clapp('R',d2), mem[n1],d1)
+     : mem[n2+1] ? combineK(mem[n1],combineK(0,'S', mem[n1],d1), mem[n2],d2)
+     :             combineK(mem[n1],combineK(0,'C', mem[n1],d1), mem[n2],d2);
   else
-    return n2==1 ? combineK(n1>>1,d1, 1,d2)
-         : n2 &1 ? (n2==3&&d2=='I' ? d1 // eta optimization not handled by clapp
-                 : combineK(n1>>1,combineK(1,'B', n1>>1,d1), n2>>1,d2))
-         :         combineK(n1>>1,d1, n2>>1,d2);
+    return n2==0 ? combineK(mem[n1],d1, 0,d2)
+     : mem[n2+1] ? (!mem[n2] && mem[n2+1] && d2=='I' ? d1 // eta optimization not handled by clapp
+                 : combineK(mem[n1],combineK(0,'B', mem[n1],d1), mem[n2],d2))
+         :         combineK(mem[n1],d1, mem[n2],d2);
 }
-// clear leading 1
-static inline u32 clo(u32 x) { return x & (0x7fffffff >> __builtin_clz(x)); }
+u32 zip(u32 nf, u32 na) {
+  return !nf ? na : !na ? nf : app(zip(mem[nf],mem[na]),mem[nf+1]|mem[na+1]);
+}
 u32 convertK(u32 db, u32 *pn) {
-  u32 nf, cf, f = mem[db], na, ca, a = mem[db+1];
-  if (f == 'V') { *pn = 3 << a; return 'I'; }
+  u32 nf, cf, na, ca, f = mem[db], a = mem[db+1];
+  if (f == 'V') {
+    for (nf = app(0,1); a--; ) nf = app(nf,0);
+    *pn = nf;
+    return 'I';
+  }
   if (f == 'L') {
     ca = convertK(a, &na);
-    if (na==1) { *pn = na; return clapp('K', ca); }
-    else { *pn = na>>1; return (na&1) ? ca : combineK(1,'K', *pn,ca); }
+    if (na==0) { *pn = 0; return clapp('K', ca); }
+    else { *pn = mem[na]; return mem[na+1] ? ca : combineK(0,'K', *pn,ca); }
   }
-  cf = convertK(f, &nf); ca = convertK(a, &na);
-  *pn = nf > na ? nf | clo(na) : clo(nf) | na;
+  cf = convertK(f, &nf);
+  if (!nf && (ca = recursive(cf,a))) { cf = 'Y'; a = ca; }
+  ca = convertK(a, &na);
+  *pn = zip(nf, na);
   return combineK(nf,cf, na,ca);
 }
 u32 toCLK(u32 db) {
   u32 n, cl = convertK(db,&n);
-  if (n != 1) die("Kiselyov input not a combinator");
+  if (n) die("program not a closed term");
   return cl;
 }
 
@@ -156,9 +171,8 @@ u32 evac(u32 n) {
   }
   y = mem[n + 1];
   if (!x) return y;
-  if (!y) die("Cyclic!");
   if (x == 'I') {
-    mem[n] = mem[n+1] = 0;
+    mem[n] = 0;
     return mem[n+1] = evac(y);
   }
   gcmem[hp] = x; gcmem[hp+1] = y;
@@ -173,9 +187,18 @@ u32 *reheap(u32* m, u32 size) {
   return m;
 }
 u32 steps, nGC, qDblMem;
+void putch(u32 c) { putchar(c); fflush(stdout); }
+void stats() { fprintf(stderr, "\nsteps %u heap %u stack %td\n", steps, hp, spTop - sp); }
+static inline u32 arg(u32 n) { return mem[sp [n] + 1]; }
+static inline u32 apparg(u32 i, u32 j) { return app(arg(i), arg(j)); }
+static inline void lazy(u32 delta, u32 f, u32 x) {
+  sp += delta;
+  u32 *p = mem + sp[1];
+  p[0] = f; p[1] = x;
+}
 void gc() {
   nGC++;
-  if (dbgGC) fprintf(stderr, "\nmemsize %u steps %u GC %u -> ", memsize, steps, hp-128);
+  if (dbgGC) { stats(); fprintf(stderr, "memsize %u GC %u -> ", memsize, hp-128); }
   if (qDblMem) gcmem = reheap(gcmem, memsize *= 2);
   sp = gcmem + memsize-1;
   u32 di = hp = 128;
@@ -190,15 +213,6 @@ void gc() {
   qDblMem = hp >= memsize/2 && memsize < MAXMEMSZ;
 }
 
-void putch(u32 c) { putchar(c); fflush(stdout); }
-void stats() { printf("\nsteps %u heap %u stack %td\n", steps, hp, spTop - sp); }
-static inline u32 arg(u32 n) { return mem[sp [n] + 1]; }
-static inline u32 apparg(u32 i, u32 j) { return app(arg(i), arg(j)); }
-static inline void lazy(u32 delta, u32 f, u32 x) {
-  sp += delta;
-  u32 *p = mem + sp[1];
-  p[0] = f; p[1] = x;
-}
 void run(u32 x) {
   *(sp = spTop = mem + memsize - 1) = x;
   char outbits = 0;
@@ -209,7 +223,7 @@ void run(u32 x) {
     switch (x) {
       case 'M': x = arg(1); break;
       case 'I': x = mem[*++sp + 1]; break;
-      case 'Y': lazy(0, x = arg(1), sp[1]); break;
+      case 'Y': lazy(0, x = arg(1), app('Y',arg(1))); break;
       case '+': lazy(0, x = app(arg(1),'0'), '1'); break; // output bits
       case '>': lazy(0, x = app(arg(1),'+'), '!'); break; // output bytes
       case 'K': lazy(1, x = 'I', arg(1)); break;
@@ -249,23 +263,24 @@ void show(u32 n) {
 }
 void shownl(u32 n) { show(n); putchar('\n'); }
 int main(int argc, char **argv) {
-  u32 db, dbgProg, bcl, kisel;
-  dbgGC = dbgProg = dbgSTP = qDblMem = bcl = kisel = nbits = db = 0;
+  u32 db, dbgProg, bcl, plainBA;
+  dbgGC = dbgProg = dbgSTP = qOpt = qDblMem = bcl = plainBA = nbits = db = 0;
   mode = 7;                         // default byte mode
   int opt;
-  while ((opt = getopt(argc, argv, "bgckps")) != -1) {
+  while ((opt = getopt(argc, argv, "bcgkpqs")) != -1) {
     switch (opt) {
       case 'b': mode = 0; break;    // bit mode
       case 'c': bcl = 1; break;     // binary combinatory logic
       case 'g': dbgGC = 1; break;   // show garbage collection stats
-      case 'k': kisel = 1; break;   // use Kiselyov's abstraction
+      case 'k': plainBA = 1; break; // use plain bracket abstraction, no Kiselyov
       case 'p': dbgProg = 1; break; // print parsed program
+      case 'q': qOpt = 1; break;    // questionable clapp optimizations
       case 's': dbgSTP = 1; break;  // show steps every 2^28
     }
   }
   mem = reheap(NULL, memsize = MINMEMSZ); gcmem = reheap(NULL, memsize);
   hp = 128;
-  u32 cl = bcl ? parseBCL() : (kisel ? toCLK : toCL)(db = parseBLC());
+  u32 cl = bcl ? parseBCL() : (plainBA ? toCL : toCLK)(db = parseBLC());
   if (dbgProg) { if (db) shownl(db); shownl(cl); }
   nbits = 0;            // skip remaining bits in last program byte
   clock_t start = clock();
