@@ -201,9 +201,9 @@ Bitstring functions -----------------------------------------------------
 > bytestoLC :: String -> LC Id
 > bytestoLC = listtoLC . map (bitstoLC . fromByte)
 
-> toBytes :: String -> String
+> toBytes :: String -> [Word8]
 > toBytes [] = []
-> toBytes bytes = chr num : toBytes rest where
+> toBytes bytes = fromInteger num : toBytes rest where
 >   (byte,rest) = splitAt 8 bytes
 >   num = foldl (\x y -> 2*x + (digitToInt y)) 0 $ pad8 byte
 >   pad8 = take 8 . (++ repeat '0')
@@ -296,7 +296,6 @@ Bitstring functions -----------------------------------------------------
 >   "html"    -> nl .        html . show . optimize . toDB $ prog
 >   "printlc" -> nl .               show . optimize . toDB $ prog
 >   "blc"     ->                  encode . optimize . toDB $ prog
->   "Blc"     -> toBytes .        encode . optimize . toDB $ prog
 >   "size"    -> nl .       show . size  . optimize . toDB $ prog
 >   "size2"   -> nl .       show . size2 . optimize . toDB $ prog
 >   "help"    -> unlines usage
@@ -327,7 +326,6 @@ Bitstring functions -----------------------------------------------------
 >   "html\tshow program as html",
 >   "printlc\tshow lambda calculus program with de Bruijn indices",
 >   "blc\tencode as binary lambda calculus bits",
->   "Blc\tencode as Binary lambda calculus bytes",
 >   "size\tshow size in bits",
 >   "size2\tshow size with binary de bruijn index encoding in bits",
 >   "help\tshow this text"

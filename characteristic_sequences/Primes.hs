@@ -14,12 +14,12 @@ primes = let
 
 main2 = print . take 4096 $ primes
 
-main=print.take 4096$
+main=putStrLn.take 4096$
  let
- f='.'
+ f='0'
  o c(x:y)=x:c y
  z c(x:y)=f:c y
- p n='p':ap fix p(o.n)
+ p n='1':ap fix p(o.n)
  in f:f:p z
 
 --let f='.';o c(x:y)=x:c y;z c(x:y)=f:c y;p n='p':ap fix p(o.n)in f:f:p z

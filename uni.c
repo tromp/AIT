@@ -1,5 +1,6 @@
-// Binary Lambda Calculus universal machine heavily based on Ben Lynn's
+// John Tromp's Binary Lambda Calculus universal machine based on Ben Lynn's
 // ION machine at https://crypto.stanford.edu/~blynn/compiler/ION.html
+
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -8,19 +9,50 @@
 #include <getopt.h>
 #include <time.h>
 
+enum {
+  NCOMB = 128, // memory addresses 0..NCOMB-1 represent primitive combinators like 'S' or 'K'
+  MINMEMSZ = 1<<20, // starting memory size
+  MAXMEMSZ = 1<<31, // memory won't be doubled beyond this size
+  STEPMASK = (1<<28)-1 // how often to report on reducting steps
+};
+
 typedef uint32_t u32;
-enum { MINMEMSZ = 1<<20, MAXMEMSZ = 1<<29 };
-u32 memsize, *mem, *gcmem, *sp, *spTop, hp, qOpt, dbgGC, dbgSTP;
-void die(char *s) { fprintf(stderr, "error: %s\n", s); exit(1); }
-static inline u32 isComb(u32 n) { return n < 128; }
-static inline u32 app(u32 f, u32 x) { mem[hp] = f; mem[hp+1] = x; return (hp+=2)-2; }
+u32 memsize, // current size of both mem and gcmem heaps in units of u32
+    *mem,    // main memory heap holding LC and CL terms and on which graph reduction happens
+    *gcmem,  // 2nd heap where GC stores all accessible terms before swapping back with main
+    *spTop,  // top of stack which is at top of memory (mem + memsize-1)
+    *sp,     // stack pointer; stack grows down from top holding spine of CL applications
+    hp,      // heap pointer where new app nodes are allocated
+    qOpt,    // flag for whether to perform some rare/impossible combinator rewrites in parsing
+    dbgGC,   // flag for providing stats on all Garbage Collection operations
+    dbgSTP;  // flag for regularly reporting on number of graph reduction steps
+
+// Hello. My name is Inigo Montoya. You killed my father. Prepare to
+void die(char *s) {
+  fprintf(stderr, "error: %s\n", s);
+  exit(1);
+}
+
+static inline u32 isComb(u32 n) {
+  return n < NCOMB;
+}
+
+static inline u32 app(u32 f, u32 x) {
+  mem[hp] = f;
+  mem[hp+1] = x;
+  return (hp+=2)-2;
+}
 
 u32 nbits, inbits, mode;
+
 u32 getbit() {
-  if (!nbits) { nbits = mode; inbits = getchar(); } else nbits--;
+  if (!nbits) {
+    nbits = mode;
+    inbits = getchar();
+  } else nbits--;
   return (inbits>>nbits) & 1;
 }
-// switch(f) and switch(mem[f]) turn out to be WAY slower
+
 u32 clapp(u32 f, u32 a) {
   return f=='K' && a=='I' ? 'F'
        : f=='B' && a=='K' ? 'D'
@@ -38,13 +70,16 @@ u32 clapp(u32 f, u32 a) {
        : mem[f]=='B' && mem[mem[f+1]]=='S' &&  a=='K'? app('C',mem[mem[f+1]+1])
        : mem[a]=='K' && f=='S'? app('B',mem[a+1])
        : mem[f]=='R' && mem[f+1]=='I' &&  a=='B'? 'I'
-       : app(f, a);
+       : app(f, a);   // switch(f) and switch(mem[f]) turn out to be WAY slower
 }
+
 u32 parseBCL() {
-  if (!getbit()) return "KS"[getbit()];
+  if (!getbit())
+    return "KS"[getbit()];
   u32 f = parseBCL(), a = parseBCL();
   return clapp(f, a);
 }
+
 u32 parseBLC() {
   u32 x;
   if (getbit()) {
@@ -62,12 +97,14 @@ u32 hasVar0(u32 cl) {
   u32 f = mem[cl], a = mem[cl+1];
   return f == 'V' ? a == 0 : hasVar0(f) || hasVar0(a);
 }
+
 // decrease variable depth
 u32 drip(u32 cl) {
   if (isComb(cl)) return cl;
   u32 f = mem[cl], a = mem[cl+1];
   return f == 'V' ? app('V', a-1) : app(drip(f),drip(a));
 }
+
 // simple bracket abstraction
 u32 abstract(u32 cl) {
   if (isComb(cl)) return clapp('K',cl);
@@ -87,15 +124,18 @@ u32 abstract(u32 cl) {
 // if DB term has all occurances of Var n doubled, return undoubled version, else return 0
 u32 unDoubleVar(u32 n, u32 db) {
   u32 udf, f = mem[db];
-  if (f == 'V') return db;
+  if (f == 'V')
+    return db;
   u32 uda, a = mem[db+1];
-  if (f == 'L') return (uda = unDoubleVar(n+1,a)) ? app('L', uda) : 0;
+  if (f == 'L')
+    return (uda = unDoubleVar(n+1,a)) ? app('L', uda) : 0;
   u32 qf = mem[f]=='V' && mem[f+1]==n;
   u32 qa = mem[a]=='V' && mem[a+1]==n;
   if (qf && qa) return app('V',n);
   if (qf || qa) return 0;
   return (udf = unDoubleVar(n,f)) && (uda = unDoubleVar(n,a)) ? app(udf,uda) : 0;
 }
+
 // recognize recursive functions by (\x.x x) (\x. f (x x)) template
 u32 recursive(u32 f, u32 a) {
   return f=='M' && mem[a]=='L' && mem[f=mem[a+1]]!='V' && (f=unDoubleVar(0,f)) ? app('L',f) : 0;
@@ -104,16 +144,19 @@ u32 recursive(u32 f, u32 a) {
 // convert de-bruijn lambda term to combinatory logic term
 u32 toCL(u32 db) {
   u32 f = mem[db];
-  if (f == 'V') return db;
+  if (f == 'V')
+    return db;
   u32 a = mem[db+1];
-  if (f == 'L') return abstract(toCL(a));
+  if (f == 'L')
+    return abstract(toCL(a));
   u32 fCL = toCL(f), ra = recursive(fCL,a);
   return ra ? app('Y',toCL(ra)) : clapp(fCL,toCL(a));
 }
 
 // Kiselyov bracket abstraction, explained in
 // https://crypto.stanford.edu/~blynn/lambda/kiselyov.html
-// storing list of booleans bools as foldr (\bool n-> app(n,bool?1:0)) 0 bools
+// based on the paper https://okmij.org/ftp/tagless-final/ski.pdf
+// we store list of booleans bools as foldr (\bool n-> app(n,bool?1:0)) 0 bools
 u32 combineK(u32 n1, u32 d1, u32 n2, u32 d2) {
   if (n1==0)
     return n2==0 ? clapp(d1,d2)
@@ -129,9 +172,11 @@ u32 combineK(u32 n1, u32 d1, u32 n2, u32 d2) {
                  : combineK(mem[n1],combineK(0,'B', mem[n1],d1), mem[n2],d2))
          :         combineK(mem[n1],d1, mem[n2],d2);
 }
+
 u32 zip(u32 nf, u32 na) {
   return !nf ? na : !na ? nf : app(zip(mem[nf],mem[na]),mem[nf+1]|mem[na+1]);
 }
+
 u32 convertK(u32 db, u32 *pn) {
   u32 nf, cf, na, ca, f = mem[db], a = mem[db+1];
   if (f == 'V') {
@@ -150,6 +195,7 @@ u32 convertK(u32 db, u32 *pn) {
   *pn = zip(nf, na);
   return combineK(nf,cf, na,ca);
 }
+
 u32 toCLK(u32 db) {
   u32 n, cl = convertK(db,&n);
   if (n) die("program not a closed term");
@@ -157,7 +203,8 @@ u32 toCLK(u32 db) {
 }
 
 u32 evac(u32 n) {
-  if (isComb(n)) return n;
+  if (isComb(n))
+    return n;
   u32 x = mem[n];
   u32 y = mem[x];
   while (y == 'T') {
@@ -175,59 +222,94 @@ u32 evac(u32 n) {
     mem[n] = 0;
     return mem[n+1] = evac(y);
   }
-  gcmem[hp] = x; gcmem[hp+1] = y;
-    mem[ n] = 0;   mem[ n+1] = hp;
+  gcmem[hp] = x;
+  gcmem[hp+1] = y;
+  mem[ n] = 0;
+  mem[ n+1] = hp;
   return (hp += 2) - 2;
 }
 
 u32 *reheap(u32* m, u32 size) {
   m = realloc(m, (size_t)size * sizeof(u32));
-  if (!m) die("realloc failed");
-  memset(m, 0, 128); // allow mem[x]=='C' test without !isComb(x)
+  if (!m)
+    die("realloc failed");
+  memset(m, 0, NCOMB); // allow mem[x]=='C' test without !isComb(x)
   return m;
 }
+
 u32 steps, nGC, qDblMem;
-void putch(u32 c) { putchar(c); fflush(stdout); }
-void stats() { fprintf(stderr, "\nsteps %u heap %u stack %td\n", steps, hp, spTop - sp); }
-static inline u32 arg(u32 n) { return mem[sp [n] + 1]; }
-static inline u32 apparg(u32 i, u32 j) { return app(arg(i), arg(j)); }
+void putch(u32 c) {
+  putchar(c);
+  fflush(stdout);
+}
+
+void stats() {
+  fprintf(stderr, "\nsteps %u heap %u stack %td\n", steps, hp, spTop - sp);
+}
+
+static inline u32 arg(u32 n) {
+  return mem[sp[n] + 1];
+}
+
+static inline u32 apparg(u32 i, u32 j) {
+  return app(arg(i), arg(j));
+}
+
+void gc() {
+  nGC++;
+  if (dbgGC) {
+    stats();
+    fprintf(stderr, "memsize %u GC %u -> ", memsize, hp-NCOMB);
+  }
+  if (qDblMem)
+    gcmem = reheap(gcmem, memsize *= 2);
+  sp = gcmem + memsize-1;
+  u32 di = hp = NCOMB;
+  for (*sp = evac(*spTop); di < hp; di++)
+    gcmem[di] = evac(gcmem[di]);
+  if (dbgGC)
+    fprintf(stderr, "%u\n", hp-NCOMB);
+  spTop = sp;
+  u32 *old = mem;
+  mem = gcmem;
+  gcmem = old;
+  if (qDblMem)
+    gcmem = reheap(gcmem, memsize);
+  qDblMem = hp >= memsize/2 && memsize < MAXMEMSZ;
+}
+
 static inline void lazy(u32 delta, u32 f, u32 x) {
   sp += delta;
   u32 *p = mem + sp[1];
   p[0] = f; p[1] = x;
 }
-void gc() {
-  nGC++;
-  if (dbgGC) { stats(); fprintf(stderr, "memsize %u GC %u -> ", memsize, hp-128); }
-  if (qDblMem) gcmem = reheap(gcmem, memsize *= 2);
-  sp = gcmem + memsize-1;
-  u32 di = hp = 128;
-  for (*sp = evac(*spTop); di < hp; di++)
-    gcmem[di] = evac(gcmem[di]);
-  if (dbgGC) fprintf(stderr, "%u\n", hp-128);
-  spTop = sp;
-  u32 *old = mem;
-  mem = gcmem;
-  gcmem = old;
-  if (qDblMem) gcmem = reheap(gcmem, memsize);
-  qDblMem = hp >= memsize/2 && memsize < MAXMEMSZ;
+
+static inline void lazY(u32 delta, u32 f) {
+  sp += delta;
+  mem[sp[1]] = f;
 }
 
 void run(u32 x) {
-  *(sp = spTop = mem + memsize - 1) = x;
   char outbits = 0;
+  *(sp = spTop = mem + memsize - 1) = x;
   for (steps = nGC = 0; ; steps++) {
-    if (dbgSTP && !(steps & (1<<28)-1)) stats();
-    if (mem + hp > sp - 8) { gc(); x = *sp; }
-    for (; !isComb(x); x = mem[x]) *sp-- = x;
+    if (dbgSTP && !(steps & STEPMASK))
+      stats();
+    if (mem + hp > sp - 8) {
+      gc();
+      x = *sp;
+    }
+    for (; !isComb(x); x = mem[x])
+      *sp-- = x;
     switch (x) {
-      case 'M': x = arg(1); break;
-      case 'I': x = mem[*++sp + 1]; break;
+      case 'M': lazY(0, x = arg(1)); break;
+      case 'I': if (arg(2)==sp[1]) { lazy(1, x = arg(1), arg(1)); break; }
+                lazY(1, x = arg(1)); break;
       case 'Y': lazy(0, x = arg(1), app('Y',arg(1))); break;
       case '+': lazy(0, x = app(arg(1),'0'), '1'); break; // output bits
       case '>': lazy(0, x = app(arg(1),'+'), '!'); break; // output bytes
+      case 'F': lazY(1, x = 'I'); break;
       case 'K': lazy(1, x = 'I', arg(1)); break;
-      case 'F': lazy(1, x = 'I', arg(2)); break;
       case 'T': lazy(1, x = arg(2), arg(1)); break;
       case 'D': lazy(2, x = arg(1), arg(2)); break;
       case 'B': lazy(2, x = arg(1), apparg(2,3)); break;
@@ -235,13 +317,19 @@ void run(u32 x) {
       case 'R': lazy(2, x = apparg(2,3), arg(1)); break;
       case ':': lazy(2, x = apparg(3,1), arg(2)); break;
       case 'S': lazy(2, x = apparg(1,3), apparg(2,3)); break;
-      case '0': case '1': if (mode) outbits = outbits<<1 | (x&1);
-                          else putch(x);                  // output bit
+      case '0':
+      case '1': if (mode)                                 // output bit
+                  outbits = outbits<<1 | (x&1);
+                else putch(x);
                 lazy(0, x = arg(1), '+'); break;
       case '!': putch(outbits);                           // output byte
                 lazy(0, x = arg(1), '>'); break;
-      case '-': getbit(); nbits++;                        // input
-                if (inbits == EOF) { lazy(0, x = 'K', 'I'); break; }
+      case '-': getbit();                                 // input
+                nbits++;
+                if (inbits == EOF) {
+                  lazy(0, x = 'K', 'I');
+                  break;
+                }
                 if (mode) {
                   for (x='F'; nbits; nbits--,inbits>>=1)
                     x = app(app(':', "KF"[inbits&1]), x);
@@ -261,7 +349,12 @@ void show(u32 n) {
     else { putch('`'); show(f); show(a); }
   } else putch(n);
 }
-void shownl(u32 n) { show(n); putchar('\n'); }
+
+void showNL(u32 n) {
+  show(n);
+  putchar('\n');
+}
+
 int main(int argc, char **argv) {
   u32 db, dbgProg, bcl, plainBA;
   dbgGC = dbgProg = dbgSTP = qOpt = qDblMem = bcl = plainBA = nbits = db = 0;
@@ -278,10 +371,14 @@ int main(int argc, char **argv) {
       case 's': dbgSTP = 1; break;  // show steps every 2^28
     }
   }
-  mem = reheap(NULL, memsize = MINMEMSZ); gcmem = reheap(NULL, memsize);
-  hp = 128;
+  mem = reheap(NULL, memsize = MINMEMSZ);
+  gcmem = reheap(NULL, memsize);
+  hp = NCOMB;
   u32 cl = bcl ? parseBCL() : (plainBA ? toCL : toCLK)(db = parseBLC());
-  if (dbgProg) { if (db) shownl(db); shownl(cl); }
+  if (dbgProg) {
+    if (db) showNL(db);
+    showNL(cl);
+   }
   nbits = 0;            // skip remaining bits in last program byte
   clock_t start = clock();
   run(app(app(app(cl, app('-','?')), mode ? '>' : '+'),'.'));
