@@ -1,7 +1,7 @@
 > module AIT(Encodeable(..),reduce,optimize,strict,subst,occurs,noccurs,contracts,expands,reduct,uni,usage) where
 > import Lambda
-> import Data.List(unfoldr)
-> import Data.Char(chr,ord,intToDigit,digitToInt)
+> import Data.List(unfoldr,foldl')
+> import Data.Char(chr,ord,intToDigit)
 > import qualified Data.DList as DL
 > import Data.Array.Unboxed
 > import Control.Applicative
@@ -184,29 +184,19 @@ Bitstring functions -----------------------------------------------------
 > lcFalse :: LC Id
 > lcFalse = Lam (Id "x") $ Lam (Id "y") $ Var (Id "y")
 
-> listtoLC :: [LC Id] -> LC Id
-> listtoLC = foldr cons lcFalse
-
 > bittoLC :: Char -> LC Id
 > bittoLC '0' = lcTrue;
 > bittoLC '1' = lcFalse;
 > bittoLC _ = error "Character is not 0 or 1"
 
-> bitstoLC :: String -> LC Id
-> bitstoLC = listtoLC . map bittoLC
+> bitstoLC :: LC Id -> String -> LC Id
+> bitstoLC nil = foldr cons nil . map bittoLC
 
 > fromByte :: Char -> String
 > fromByte = reverse . take 8 . unfoldr (\x->Just(intToDigit(x`mod`2),x`div`2)) . ord
 
-> bytestoLC :: String -> LC Id
-> bytestoLC = listtoLC . map (bitstoLC . fromByte)
-
-> toBytes :: String -> [Word8]
-> toBytes [] = []
-> toBytes bytes = fromInteger num : toBytes rest where
->   (byte,rest) = splitAt 8 bytes
->   num = foldl (\x y -> 2*x + (digitToInt y)) 0 $ pad8 byte
->   pad8 = take 8 . (++ repeat '0')
+> bytestoLC :: LC Id -> String -> LC Id
+> bytestoLC nil = foldr cons nil . map (bitstoLC lcFalse . fromByte)
 
 > type Point = (Int,Int)
 
@@ -269,13 +259,14 @@ Bitstring functions -----------------------------------------------------
 > uni :: String -> String -> String -> [String] -> String
 > uni op progtext input args = let
 >   prog = read progtext :: LC Id
->   machine = \inp -> foldl (\p -> App p . bitstoLC) (App prog inp) args
+>   machine = \inp -> foldl' (\p -> App p . bitstoLC lcFalse) (App prog inp) args
 >   tex = concatMap (\c -> if c=='\\' then "\\lambda " else [c])
 >   html = concatMap (\c -> if c=='\\' then "\0955 " else [c])
 >   nl = (++ "\n")
 >  in case op of
->   "run"     -> nl .   bshow . nf . toDB . machine $  bitstoLC input
->   "run8"    -> nl .   bshow . nf . toDB . machine $ bytestoLC input
+>   "run"     -> nl .   bshow . nf . toDB . machine $  bitstoLC lcFalse input
+>   "runO"    -> nl .   bshow . nf . toDB . machine $  bitstoLC (error "Omega") input
+>   "run8"    -> nl .   bshow . nf . toDB . machine $ bytestoLC lcFalse input
 >   "print"   -> nl .                     show             $ prog
 >   "nf"      -> nl .                     show . nf . toDB $ prog
 >   "hnf"     -> nl .                    show . hnf . toDB $ prog

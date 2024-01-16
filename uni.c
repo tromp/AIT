@@ -54,14 +54,14 @@ u32 getbit() {
 }
 
 u32 clapp(u32 f, u32 a) {
-  return f=='K' && a=='I' ? 'F'
+  return f=='K' && a=='I' ? 'F' // these rewrites are known to help
        : f=='B' && a=='K' ? 'D'
        : f=='C' && a=='I' ? 'T'
        : mem[f]=='B' && a=='I'? mem[f+1]
        : mem[f]=='R' && a=='I'? app('T',mem[f+1])
        : mem[f]=='B' && mem[f+1]=='C' &&  a=='T'? ':'
        : mem[f]=='S' && mem[f+1]=='I' &&  a=='I'? 'M'
-       : !qOpt ? app(f, a)
+       : !qOpt ? app(f, a)      // ones below require -q but never seem to occur
        : f=='F' ? 'I'
        : f=='S' && a=='K' ? 'F'
        : f=='B' && a=='I' ? 'I'
@@ -295,12 +295,15 @@ void run(u32 x) {
   for (steps = nGC = 0; ; steps++) {
     if (dbgSTP && !(steps & STEPMASK))
       stats();
-    if (mem + hp > sp - 8) {
+    if (mem + hp > sp - 48) { // allow up to 40/2 apps after 8 sp--
       gc();
       x = *sp;
     }
-    for (; !isComb(x); x = mem[x])
-      *sp-- = x;
+    if (!isComb(x) && !isComb(x = mem[*sp-- = x]) && !isComb(x = mem[*sp-- = x])
+                   && !isComb(x = mem[*sp-- = x]) && !isComb(x = mem[*sp-- = x])
+                   && !isComb(x = mem[*sp-- = x]) && !isComb(x = mem[*sp-- = x])
+                   && !isComb(x = mem[*sp-- = x]) && !isComb(x = mem[*sp-- = x])
+       ) continue;
     switch (x) {
       case 'M': lazY(0, x = arg(1)); break;
       case 'I': if (arg(2)==sp[1]) { lazy(1, x = arg(1), arg(1)); break; }
@@ -318,8 +321,8 @@ void run(u32 x) {
       case ':': lazy(2, x = apparg(3,1), arg(2)); break;
       case 'S': lazy(2, x = apparg(1,3), apparg(2,3)); break;
       case '0':
-      case '1': if (mode)                                 // output bit
-                  outbits = outbits<<1 | (x&1);
+      case '1': if (mode)
+                  outbits = outbits<<1 | (x&1);           // output bit
                 else putch(x);
                 lazy(0, x = arg(1), '+'); break;
       case '!': putch(outbits);                           // output byte
@@ -379,7 +382,7 @@ int main(int argc, char **argv) {
     if (db) showNL(db);
     showNL(cl);
    }
-  nbits = 0;            // skip remaining bits in last program byte
+  nbits = 0;                        // skip remaining bits in last program byte
   clock_t start = clock();
   run(app(app(app(cl, app('-','?')), mode ? '>' : '+'),'.'));
   clock_t end = clock();

@@ -77,5 +77,22 @@
 
 in pairup
 
--- (cat delimito.blc; echo -n 1110101100000000001; cat pairlen.blc; echo -n 1010) | ./blc run pairupo.lam
--- <10000000000,<1110010,1010>>
+--         0       -> 0           aka ""
+--       1 0 ""    -> 0+1 = 1     aka "0"
+--      1 10 0     -> 1+1 = 2     aka "1"
+--    1 1100 01    -> 4+1 = 5     aka "10"
+-- 1 1110001 11001 -> 56+1 = 57   aka "11010"
+
+-- an example run with
+-- ps = delimit.blc    pi = 1110101100000000001     po = 10000000000
+-- qs = pairlen.blc    qi = 1010                    qo = <1101100,1010>
+-- (the length of ps++pi is 216+19 = 235 aka "1101100"
+-- outputting <po, qo> = <10000000000,<1101100,1010>>
+-- (cat delimito.blc; echo -n 1110101100000000001; cat pairlen.blc; echo -n 1010) | ../blc run pairupKP.lam
+
+-- another example run with
+-- ps = delimit.blc    pi = 1111000111001     po = 11010
+-- qs = pairlen.blc    qi = 1010              qo = <01010100,1010>
+-- (the length of ps++pi is 326+13 = 339 aka "01010100" = 0x54 = ASCII 'T'
+-- outputting <po, qo> = <11010,<01010100,1010>> which blc formats as <11010,T1010>
+-- (cat delimit.blc; echo -n 1111000111001; cat pairlen.blc; echo -n 1010) | ../blc run pairupKP.lam

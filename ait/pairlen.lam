@@ -1,3 +1,5 @@
+-- given a list and a program, output the pair of <program length, list>
+--  used for exercising pairup program
 let
  true = \x\y.x;
  zero = true;
