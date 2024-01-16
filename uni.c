@@ -91,36 +91,6 @@ u32 parseBLC() {
   return isApp ? app(x, parseBLC()) : app('L', x);
 }
 
-// does CL term have an occurance of Var 0 ?
-u32 hasVar0(u32 cl) {
-  if (isComb(cl)) return 0;
-  u32 f = mem[cl], a = mem[cl+1];
-  return f == 'V' ? a == 0 : hasVar0(f) || hasVar0(a);
-}
-
-// decrease variable depth
-u32 drip(u32 cl) {
-  if (isComb(cl)) return cl;
-  u32 f = mem[cl], a = mem[cl+1];
-  return f == 'V' ? app('V', a-1) : app(drip(f),drip(a));
-}
-
-// simple bracket abstraction
-u32 abstract(u32 cl) {
-  if (isComb(cl)) return clapp('K',cl);
-  u32 f = mem[cl], a = mem[cl+1];
-  if (f == 'V') return a ? app('K',app('V', a-1)) : 'I';
-  switch (2 * hasVar0(f) + hasVar0(a)) {
-    case 0: return clapp('K', drip(cl));
-    case 1: f=drip(f);
-            return mem[a]=='V' ? f
-                 : clapp(clapp('B',f), abstract(a));
-    case 2: return clapp(clapp('C',abstract(f)), drip(a));
-    case 3: return clapp(clapp('S',abstract(f)), abstract(a));
-  }
-  return 0;
-}
-
 // if DB term has all occurances of Var n doubled, return undoubled version, else return 0
 u32 unDoubleVar(u32 n, u32 db) {
   u32 udf, f = mem[db];
@@ -139,18 +109,6 @@ u32 unDoubleVar(u32 n, u32 db) {
 // recognize recursive functions by (\x.x x) (\x. f (x x)) template
 u32 recursive(u32 f, u32 a) {
   return f=='M' && mem[a]=='L' && mem[f=mem[a+1]]!='V' && (f=unDoubleVar(0,f)) ? app('L',f) : 0;
-}
-
-// convert de-bruijn lambda term to combinatory logic term
-u32 toCL(u32 db) {
-  u32 f = mem[db];
-  if (f == 'V')
-    return db;
-  u32 a = mem[db+1];
-  if (f == 'L')
-    return abstract(toCL(a));
-  u32 fCL = toCL(f), ra = recursive(fCL,a);
-  return ra ? app('Y',toCL(ra)) : clapp(fCL,toCL(a));
 }
 
 // Kiselyov bracket abstraction, explained in
@@ -359,8 +317,8 @@ void showNL(u32 n) {
 }
 
 int main(int argc, char **argv) {
-  u32 db, dbgProg, bcl, plainBA;
-  dbgGC = dbgProg = dbgSTP = qOpt = qDblMem = bcl = plainBA = nbits = db = 0;
+  u32 db, dbgProg, bcl;
+  dbgGC = dbgProg = dbgSTP = qOpt = qDblMem = bcl = nbits = db = 0;
   mode = 7;                         // default byte mode
   int opt;
   while ((opt = getopt(argc, argv, "bcgkpqs")) != -1) {
@@ -368,7 +326,6 @@ int main(int argc, char **argv) {
       case 'b': mode = 0; break;    // bit mode
       case 'c': bcl = 1; break;     // binary combinatory logic
       case 'g': dbgGC = 1; break;   // show garbage collection stats
-      case 'k': plainBA = 1; break; // use plain bracket abstraction, no Kiselyov
       case 'p': dbgProg = 1; break; // print parsed program
       case 'q': qOpt = 1; break;    // questionable clapp optimizations
       case 's': dbgSTP = 1; break;  // show steps every 2^28
@@ -377,7 +334,7 @@ int main(int argc, char **argv) {
   mem = reheap(NULL, memsize = MINMEMSZ);
   gcmem = reheap(NULL, memsize);
   hp = NCOMB;
-  u32 cl = bcl ? parseBCL() : (plainBA ? toCL : toCLK)(db = parseBLC());
+  u32 cl = bcl ? parseBCL() : toCLK(db = parseBLC());
   if (dbgProg) {
     if (db) showNL(db);
     showNL(cl);
