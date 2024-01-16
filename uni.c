@@ -319,19 +319,22 @@ void showNL(u32 n) {
 int main(int argc, char **argv) {
   u32 db, dbgProg, bcl;
   dbgGC = dbgProg = dbgSTP = qOpt = qDblMem = bcl = nbits = db = 0;
+  memsize = MINMEMSZ;
   mode = 7;                         // default byte mode
   int opt;
-  while ((opt = getopt(argc, argv, "bcgkpqs")) != -1) {
+  while ((opt = getopt(argc, argv, "bcglpqsx")) != -1) {
     switch (opt) {
       case 'b': mode = 0; break;    // bit mode
       case 'c': bcl = 1; break;     // binary combinatory logic
+      case 'l': memsize=1<<24;break;// large memory for parsing
       case 'g': dbgGC = 1; break;   // show garbage collection stats
       case 'p': dbgProg = 1; break; // print parsed program
       case 'q': qOpt = 1; break;    // questionable clapp optimizations
       case 's': dbgSTP = 1; break;  // show steps every 2^28
+      case 'x': memsize=1<<28;break;// xtra-large memory for parsing
     }
   }
-  mem = reheap(NULL, memsize = MINMEMSZ);
+  mem = reheap(NULL, memsize);
   gcmem = reheap(NULL, memsize);
   hp = NCOMB;
   u32 cl = bcl ? parseBCL() : toCLK(db = parseBLC());
