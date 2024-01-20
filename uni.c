@@ -248,9 +248,8 @@ static inline void lazY(u32 delta, u32 f) {
 }
 
 void run(u32 x) {
-  char outbits = 0;
   *(sp = spTop = mem + memsize - 1) = x;
-  for (steps = nGC = 0; ; steps++) {
+  for (char outbits = steps = nGC = 0; ; steps++) {
     if (dbgSTP && !(steps & STEPMASK))
       stats();
     if (mem + hp > sp - 48) { // allow up to 40/2 apps after 8 sp--
@@ -264,12 +263,14 @@ void run(u32 x) {
        ) continue;
     switch (x) {
       case 'M': lazY(0, x = arg(1)); break;
-      case 'I': if (arg(2)==sp[1]) { lazy(1, x = arg(1), arg(1)); break; }
-                lazY(1, x = arg(1)); break;
       case 'Y': lazy(0, x = arg(1), app('Y',arg(1))); break;
       case '+': lazy(0, x = app(arg(1),'0'), '1'); break; // output bits
       case '>': lazy(0, x = app(arg(1),'+'), '!'); break; // output bytes
+      case 'I': if (arg(2)==sp[1])
+              { lazy(1, x = arg(1), arg(1)); break; }
+                lazY(1, x = arg(1)); break;
       case 'F': lazY(1, x = 'I'); break;
+      case 'f':         x = mem[(++sp)[1] + 1]; break;
       case 'K': lazy(1, x = 'I', arg(1)); break;
       case 'T': lazy(1, x = arg(2), arg(1)); break;
       case 'D': lazy(2, x = arg(1), arg(2)); break;
@@ -280,23 +281,19 @@ void run(u32 x) {
       case 'S': lazy(2, x = apparg(1,3), apparg(2,3)); break;
       case '0':
       case '1': if (mode)
-                  outbits = outbits<<1 | (x&1);           // output bit
+                  outbits = outbits<<1 | x&1;             // output bit
                 else putch(x);
                 lazy(0, x = arg(1), '+'); break;
       case '!': putch(outbits);                           // output byte
                 lazy(0, x = arg(1), '>'); break;
-      case '-': getbit();                                 // input
-                nbits++;
-                if (inbits == EOF) {
-                  lazy(0, x = 'K', 'I');
-                  break;
-                }
+      case '-': getbit(); nbits++;                        // input
+                if (inbits == EOF) { lazy(0, x = 'K', 'I'); break; }
                 if (mode) {
                   for (x='F'; nbits; nbits--,inbits>>=1)
                     x = app(app(':', "KF"[inbits&1]), x);
                 } else x = "KF"[getbit()];
                 lazy(0, x = app(':', x), app('-','?')); break;
-      case '.': return;                                   // end-of-output
+      case 'V': return;                                   // end-of-output / variable
       default: die("unknown combinator");
     }
   }
@@ -316,18 +313,114 @@ void showNL(u32 n) {
   putchar('\n');
 }
 
+u32 combfree(u32 x) {
+  return isComb(x) ? 0: mem[x]=='V' ? 1 : 0; // combfree(mem[x]) && combfree(mem[x+1]);
+}
+
+u32 nETA;
+u32 eta(u32 x, u32 v0) {
+  if (combfree(x)) return x;
+  for (u32 i=0; i<nETA; i++)
+    x = app(x, app('V', v0+i));
+  return x;
+}
+
+u32 merge(u32 nf, u32 na) {
+  return !nf ? na : !na ? nf
+    : mem[nf] > mem[na] ? app(mem[nf],merge(mem[nf+1],na))
+    : mem[na] > mem[nf] ? app(mem[na],merge(nf,mem[na+1]))
+    : app(mem[nf],merge(mem[nf+1],mem[na+1]));
+}
+
+u32 boehmE(u32 x, u32 *pn, u32 nvar, u32 m);
+u32 boehmL(u32 x, u32 *pn, u32 nvar) {
+  u32 nf, f = mem[x], na, a = mem[x+1];
+  if (f == 'V') {
+    *pn = app(1+a,0);
+    return x;
+  }
+  x = app(boehmL(f, &nf, nvar), boehmE(a, &na, nvar, nETA));
+  *pn = merge(nf,na);
+  return x;
+}
+
+// add lambdas to boehmtree where necessary
+// return in nx the list of decreasing 1+variable in term
+u32 boehmE(u32 x, u32 *pn, u32 nvar, u32 m) {
+  u32 i, n, nf, f = mem[x], na, a = mem[x+1];
+  if (f == 'V') {
+    *pn = a >= nvar ? 0 : app(1+a,0);
+    for (; a >= nvar+m; m++) x = app(x,app('V',nvar+m));
+    if (a >= nvar)
+      while (m--) x = app('L',x);
+    return x;
+  }
+  if (m && mem[a]=='V' && mem[a+1] == nvar+m-1)
+    return boehmE(f, pn, nvar, m-1);
+  x = app(boehmL(f, &nf, nvar+nETA), boehmE(a, &na, nvar+nETA, nETA));
+  for (a = mem[n=merge(nf,na)]-1; a >= nvar+m; m++)
+    x = app(x,app('V',nvar+m));
+  if (a >= nvar)
+    while (m--) x = app('L',x);
+  for (u32 i=0; n && mem[n+1]-1 >= nvar; i++)
+    n = mem[n+1];
+  *pn = n;
+  return x;
+}
+
+u32 *clam(u32 i) { return &gcmem[NCOMB+i]; }
+
+u32 dbindex(u32 x, u32 depth, u32 nlam) {
+  u32 f = mem[x], a = mem[x+1];
+  return f == 'L' ? app('L',dbindex(a, depth, *clam(depth+1) = nlam+1)) :
+         f == 'V' ? app(f, nlam - *clam(a/nETA)-1 - a%nETA) :
+                    app(dbindex(f, depth, nlam), dbindex(a, depth+1, nlam));
+}
+
+void boehm(u32 x) {
+  u32 parent, nvar = 0;
+  for (x = eta(x, 0); ; x = *spTop) {
+    run(x);
+    if (++sp == spTop) die("top!");
+    u32 parent = sp[1];
+    for (; mem[parent = sp[1]] != *sp; sp++, nvar -= nETA) {
+      u32 left = mem[parent];
+      mem[parent] = mem[left+1];
+    }
+    if (parent == *spTop) break;
+    lazy(0, app('f', *sp), eta(mem[parent+1], nvar += nETA)); 
+  }
+  showNL(dbindex(boehmE(*spTop,&nvar,0,nETA), 0, *clam(0) = 0));
+  return;
+}
+
+// uni [options] prog1 prog2 prog3 could be equivalent to
+// (cat prog3.blc8; (cat prog2.blc8; (cat prog1.blc8 -) | uni) | uni) | uni [options]
+// for instance,  prog1 could compile some language to .lam,
+// prog2 could compile .lam to .blc, and
+// prog3 could deflate .blc to .blc8
+// the separate steps of section "Converting between bits and bytes"
+// in https://www.ioccc.org/2012/tromp/hint.html could be replaced by 
+// echo "\a a ((\b b b) (\b \c \d \e d (b b) (\f f c e))) (\b \c c)" |
+//   ./uni parse deflate > rev.blc8
+// it would make option -c redundant and
+// allow supporting many lambda calculus notations
+// maybe also ion compatibility
+// without complicating the C source code
+
 int main(int argc, char **argv) {
   u32 db, dbgProg, bcl;
-  dbgGC = dbgProg = dbgSTP = qOpt = qDblMem = bcl = nbits = db = 0;
+  dbgGC = dbgProg = dbgSTP = qOpt = qDblMem = bcl = nbits = db = nETA = 0;
   memsize = MINMEMSZ;
   mode = 7;                         // default byte mode
   int opt;
-  while ((opt = getopt(argc, argv, "bcglpqsx")) != -1) {
+  while ((opt = getopt(argc, argv, "bcgln:pqsx")) != -1) {
     switch (opt) {
       case 'b': mode = 0; break;    // bit mode
       case 'c': bcl = 1; break;     // binary combinatory logic
       case 'l': memsize=1<<24;break;// large memory for parsing
       case 'g': dbgGC = 1; break;   // show garbage collection stats
+      case 'n': nETA = atoi(optarg); break; // normal form
       case 'p': dbgProg = 1; break; // print parsed program
       case 'q': qOpt = 1; break;    // questionable clapp optimizations
       case 's': dbgSTP = 1; break;  // show steps every 2^28
@@ -344,10 +437,11 @@ int main(int argc, char **argv) {
    }
   nbits = 0;                        // skip remaining bits in last program byte
   clock_t start = clock();
-  run(app(app(app(cl, app('-','?')), mode ? '>' : '+'),'.'));
+  cl = app(cl,app('-','?'));
+  if (nETA) boehm(cl); else run(app(app(cl, mode ? '>' : '+'),'V'));
   clock_t end = clock();
   u32 ms = (end - start) * 1000 / CLOCKS_PER_SEC;
-  fprintf(stderr, "\nsteps %u time %ums steps/s %uM #GC %u HP %u\n",
+  fprintf(stderr, "steps %u time %ums steps/s %uM #GC %u HP %u\n",
     steps, ms, ms ? steps/ms/1000 : 666, nGC, hp);
   return 0;
 }

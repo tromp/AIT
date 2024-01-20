@@ -1,25 +1,10 @@
-import Control.Monad
-import Control.Monad.Fix
-
--- nubBy(((>1).).gcd)[2..]
-
 primes = let
-  one  = \cont (x:xs) ->     x:cont xs
-  zero = \cont (x:xs) -> False:cont xs
+  one  = \cont (x:xs) ->   x:cont xs
+  zero = \cont (x:xs) -> '0':cont xs
   succ n = one . n
-  primes n = True:f (primes sn) where
+  primes n = '1':f (primes sn) where
     f = sn f
     sn = succ n
- in False:False:primes zero
+ in '0':'0':primes zero
 
-main2 = print . take 4096 $ primes
-
-main=putStrLn.take 4096$
- let
- f='0'
- o c(x:y)=x:c y
- z c(x:y)=f:c y
- p n='1':ap fix p(o.n)
- in f:f:p z
-
---let f='.';o c(x:y)=x:c y;z c(x:y)=f:c y;p n='p':ap fix p(o.n)in f:f:p z
+main = putStr primes

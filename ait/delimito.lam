@@ -3,7 +3,7 @@
 -- nat []     = 1
 -- nat (x:xs) = 2*nat xs + x
 --
--- decode (0:xs) = ([], xs)
+-- decode (0:xs) = [], xs)
 -- decode (1:xs) = let (x, xs') = decode xs in revSplitAt (nat x) xs'
 --
 -- revSplitAt n xs = let (ys, zs) = splitAt n xs in (reverse ys, zs)
@@ -26,7 +26,7 @@
   list = \x\xs.
     x (\p. p nil xs)
       (xs list (\ns. revSplitAt (ns (fold consnat))));
-  decode = io list true;
+  decode = io list;
 
   -- 328 bit encoder
   ct = cons true;
@@ -38,7 +38,7 @@
 
   encode = list io nil;
 
-in decode
+in decode true
 
 -- echo -n 1110101100000000001 | ./blc run delimito.lam
 -- 10000000000
