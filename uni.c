@@ -205,14 +205,6 @@ void stats() {
   fprintf(stderr, "\nsteps %u heap %u stack %td\n", steps, hp, spTop - sp);
 }
 
-static inline u32 arg(u32 n) {
-  return mem[sp[n] + 1];
-}
-
-static inline u32 apparg(u32 i, u32 j) {
-  return app(arg(i), arg(j));
-}
-
 void gc() {
   nGC++;
   if (dbgGC) {
@@ -223,8 +215,11 @@ void gc() {
     gcmem = reheap(gcmem, memsize *= 2);
   sp = gcmem + memsize-1;
   u32 di = hp = NCOMB;
-  for (*sp = evac(*spTop); di < hp; di++)
-    gcmem[di] = evac(gcmem[di]);
+  for (*sp = evac(*spTop); di < hp; di++) {
+    u32 x = gcmem[di] = evac(gcmem[di]);
+    di++;
+    if (x != 'V') gcmem[di] = evac(gcmem[di]);
+  }
   if (dbgGC)
     fprintf(stderr, "%u\n", hp-NCOMB);
   spTop = sp;
@@ -234,6 +229,14 @@ void gc() {
   if (qDblMem)
     gcmem = reheap(gcmem, memsize);
   qDblMem = hp >= memsize/2 && memsize < MAXMEMSZ;
+}
+
+static inline u32 arg(u32 n) {
+  return mem[sp[n] + 1];
+}
+
+static inline u32 apparg(u32 i, u32 j) {
+  return app(arg(i), arg(j));
 }
 
 static inline void lazy(u32 delta, u32 f, u32 x) {
@@ -249,7 +252,7 @@ static inline void lazY(u32 delta, u32 f) {
 
 void run(u32 x) {
   *(sp = spTop = mem + memsize - 1) = x;
-  for (char outbits = steps = nGC = 0; ; steps++) {
+  for (char outbits = 0; ; steps++) {
     if (dbgSTP && !(steps & STEPMASK))
       stats();
     if (mem + hp > sp - 48) { // allow up to 40/2 apps after 8 sp--
@@ -390,6 +393,8 @@ void boehm(u32 x) {
     if (parent == *spTop) break;
     lazy(0, app('f', *sp), eta(mem[parent+1], nvar += nETA)); 
   }
+  x = boehmE(*spTop,&nvar,0,nETA);
+  // showNL(x);
   showNL(dbindex(boehmE(*spTop,&nvar,0,nETA), 0, *clam(0) = 0));
   return;
 }
@@ -410,7 +415,7 @@ void boehm(u32 x) {
 
 int main(int argc, char **argv) {
   u32 db, dbgProg, bcl;
-  dbgGC = dbgProg = dbgSTP = qOpt = qDblMem = bcl = nbits = db = nETA = 0;
+  dbgGC = dbgProg = dbgSTP = qOpt = qDblMem = bcl = nbits = db = nETA = steps = nGC = 0;
   memsize = MINMEMSZ;
   mode = 7;                         // default byte mode
   int opt;
@@ -420,7 +425,7 @@ int main(int argc, char **argv) {
       case 'c': bcl = 1; break;     // binary combinatory logic
       case 'l': memsize=1<<24;break;// large memory for parsing
       case 'g': dbgGC = 1; break;   // show garbage collection stats
-      case 'n': nETA = atoi(optarg); break; // normal form
+      case 'n': nETA = atoi(optarg); break; // nf assuming Boehm Tree node lambdas bound
       case 'p': dbgProg = 1; break; // print parsed program
       case 'q': qOpt = 1; break;    // questionable clapp optimizations
       case 's': dbgSTP = 1; break;  // show steps every 2^28
@@ -437,8 +442,8 @@ int main(int argc, char **argv) {
    }
   nbits = 0;                        // skip remaining bits in last program byte
   clock_t start = clock();
-  cl = app(cl,app('-','?'));
-  if (nETA) boehm(cl); else run(app(app(cl, mode ? '>' : '+'),'V'));
+  if (nETA) boehm(cl);              // output normal form
+  else run(app(app(app(cl,app('-','?')), mode ? '>' : '+'),'V'));
   clock_t end = clock();
   u32 ms = (end - start) * 1000 / CLOCKS_PER_SEC;
   fprintf(stderr, "steps %u time %ums steps/s %uM #GC %u HP %u\n",
