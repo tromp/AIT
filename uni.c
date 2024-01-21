@@ -24,6 +24,7 @@ u32 memsize, // current size of both mem and gcmem heaps in units of u32
     *sp,     // stack pointer; stack grows down from top holding spine of CL applications
     hp,      // heap pointer where new app nodes are allocated
     qOpt,    // flag for whether to perform some rare/impossible combinator rewrites in parsing
+    qBLC2,   // flag for parsing BLC2 in which de Bruijn indices are Levenshtein encoded
     dbgGC,   // flag for providing stats on all Garbage Collection operations
     dbgSTP;  // flag for regularly reporting on number of graph reduction steps
 
@@ -89,6 +90,23 @@ u32 parseBLC() {
   u32 isApp = getbit();
   x = parseBLC();
   return isApp ? app(x, parseBLC()) : app('L', x);
+}
+
+u32 levenshtein() {
+  if (!getbit()) return 0;
+  u32 x, l = levenshtein();
+  for (x=1; l--; ) x = 2*x + getbit();
+  return x;
+}
+
+u32 parseBLC2() {
+  u32 x;
+  if (getbit()) {
+    return app('V', levenshtein());
+  }
+  u32 isApp = getbit();
+  x = parseBLC2();
+  return isApp ? app(x, parseBLC2()) : app('L', x);
 }
 
 // if DB term has all occurances of Var n doubled, return undoubled version, else return 0
@@ -328,7 +346,7 @@ void showNL(u32 n) {
 
 int main(int argc, char **argv) {
   u32 db, dbgProg, bcl;
-  dbgGC = dbgProg = dbgSTP = qOpt = qDblMem = bcl = nbits = db = steps = nGC = 0;
+  dbgGC = dbgProg = dbgSTP = qBLC2 = qOpt = qDblMem = bcl = nbits = db = steps = nGC = 0;
   memsize = MINMEMSZ;
   mode = 7;                         // default byte mode
   int opt;
@@ -336,18 +354,18 @@ int main(int argc, char **argv) {
     switch (opt) {
       case 'b': mode = 0; break;    // bit mode
       case 'c': bcl = 1; break;     // binary combinatory logic
-      case 'l': memsize=1<<24;break;// large memory for parsing
+      case 'l': qBLC2=1;break;      // parse BLC2 aka Levenshtein coding
       case 'g': dbgGC = 1; break;   // show garbage collection stats
       case 'p': dbgProg = 1; break; // print parsed program
       case 'q': qOpt = 1; break;    // questionable clapp optimizations
       case 's': dbgSTP = 1; break;  // show steps every 2^28
-      case 'x': memsize=1<<28;break;// xtra-large memory for parsing
+      case 'x': memsize<<=1;break;  // double initial memory size
     }
   }
   mem = reheap(NULL, memsize);
   gcmem = reheap(NULL, memsize);
   hp = NCOMB;
-  u32 cl = bcl ? parseBCL() : toCLK(db = parseBLC());
+  u32 cl = bcl ? parseBCL() : toCLK(db = qBLC2 ? parseBLC2() : parseBLC());
   if (dbgProg) {
     if (db) showNL(db);
     showNL(cl);

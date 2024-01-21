@@ -24,7 +24,9 @@ let
   omega = omega;
 
   -- binary LC universal machine for closed programs
-  uni2 = int2 (\z.z omega);
+  -- uni2 = int2 (\z.z omega);
+  -- save some bits
+  uni2 = int2 (\z.z z);
 
   -- byte oriented LC universal machine for closed programs
   gamma = \cont\bytes.bytes (\byte.byte cont);
