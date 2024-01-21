@@ -270,7 +270,6 @@ void run(u32 x) {
               { lazy(1, x = arg(1), arg(1)); break; }
                 lazY(1, x = arg(1)); break;
       case 'F': lazY(1, x = 'I'); break;
-      case 'f':         x = mem[(++sp)[1] + 1]; break;
       case 'K': lazy(1, x = 'I', arg(1)); break;
       case 'T': lazy(1, x = arg(2), arg(1)); break;
       case 'D': lazy(2, x = arg(1), arg(2)); break;

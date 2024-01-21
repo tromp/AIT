@@ -21,6 +21,8 @@ u32 memsize, // current size of both mem and gcmem heaps in units of u32
     *mem,    // main memory heap holding LC and CL terms and on which graph reduction happens
     *gcmem,  // 2nd heap where GC stores all accessible terms before swapping back with main
     *spTop,  // top of stack which is at top of memory (mem + memsize-1)
+    *etaTop, // top of currrent boehm node subject to eta expansion
+    nvar,    // number of eta expansions in boehm path down to current node
     *sp,     // stack pointer; stack grows down from top holding spine of CL applications
     hp,      // heap pointer where new app nodes are allocated
     qOpt,    // flag for whether to perform some rare/impossible combinator rewrites in parsing
@@ -239,15 +241,13 @@ static inline u32 apparg(u32 i, u32 j) {
   return app(arg(i), arg(j));
 }
 
+u32 nETA = 5;
 static inline void lazy(u32 delta, u32 f, u32 x) {
+  if (etaTop - sp <= delta) {
+  }
   sp += delta;
   u32 *p = mem + sp[1];
   p[0] = f; p[1] = x;
-}
-
-static inline void lazY(u32 delta, u32 f) {
-  sp += delta;
-  mem[sp[1]] = f;
 }
 
 void run(u32 x) {
@@ -255,24 +255,18 @@ void run(u32 x) {
   for (char outbits = 0; ; steps++) {
     if (dbgSTP && !(steps & STEPMASK))
       stats();
-    if (mem + hp > sp - 48) { // allow up to 40/2 apps after 8 sp--
+    if (mem + hp > sp - 8) {
       gc();
       x = *sp;
     }
-    if (!isComb(x) && !isComb(x = mem[*sp-- = x]) && !isComb(x = mem[*sp-- = x])
-                   && !isComb(x = mem[*sp-- = x]) && !isComb(x = mem[*sp-- = x])
-                   && !isComb(x = mem[*sp-- = x]) && !isComb(x = mem[*sp-- = x])
-                   && !isComb(x = mem[*sp-- = x]) && !isComb(x = mem[*sp-- = x])
-       ) continue;
+    if (!isComb(x) && !isComb(x = mem[*sp-- = x]) && !isComb(x = mem[*sp-- = x])) continue;
     switch (x) {
-      case 'M': lazY(0, x = arg(1)); break;
+      case 'M': lazy(0, x = arg(1), arg(1)); break;
       case 'Y': lazy(0, x = arg(1), app('Y',arg(1))); break;
-      case '+': lazy(0, x = app(arg(1),'0'), '1'); break; // output bits
-      case '>': lazy(0, x = app(arg(1),'+'), '!'); break; // output bytes
       case 'I': if (arg(2)==sp[1])
               { lazy(1, x = arg(1), arg(1)); break; }
-                lazY(1, x = arg(1)); break;
-      case 'F': lazY(1, x = 'I'); break;
+                lazy(1, x = arg(1), arg(2)); break;
+      case 'F': lazy(1, x = 'I', arg(2)); break;
       case 'f':         x = mem[(++sp)[1] + 1]; break;
       case 'K': lazy(1, x = 'I', arg(1)); break;
       case 'T': lazy(1, x = arg(2), arg(1)); break;
@@ -282,21 +276,7 @@ void run(u32 x) {
       case 'R': lazy(2, x = apparg(2,3), arg(1)); break;
       case ':': lazy(2, x = apparg(3,1), arg(2)); break;
       case 'S': lazy(2, x = apparg(1,3), apparg(2,3)); break;
-      case '0':
-      case '1': if (mode)
-                  outbits = outbits<<1 | x&1;             // output bit
-                else putch(x);
-                lazy(0, x = arg(1), '+'); break;
-      case '!': putch(outbits);                           // output byte
-                lazy(0, x = arg(1), '>'); break;
-      case '-': getbit(); nbits++;                        // input
-                if (inbits == EOF) { lazy(0, x = 'K', 'I'); break; }
-                if (mode) {
-                  for (x='F'; nbits; nbits--,inbits>>=1)
-                    x = app(app(':', "KF"[inbits&1]), x);
-                } else x = "KF"[getbit()];
-                lazy(0, x = app(':', x), app('-','?')); break;
-      case 'V': return;                                   // end-of-output / variable
+      case 'V': return; // variable
       default: die("unknown combinator");
     }
   }
@@ -320,7 +300,6 @@ u32 combfree(u32 x) {
   return isComb(x) ? 0: mem[x]=='V' ? 1 : 0; // combfree(mem[x]) && combfree(mem[x+1]);
 }
 
-u32 nETA;
 u32 eta(u32 x, u32 v0) {
   if (combfree(x)) return x;
   for (u32 i=0; i<nETA; i++)
@@ -415,17 +394,16 @@ void boehm(u32 x) {
 
 int main(int argc, char **argv) {
   u32 db, dbgProg, bcl;
-  dbgGC = dbgProg = dbgSTP = qOpt = qDblMem = bcl = nbits = db = nETA = steps = nGC = 0;
+  dbgGC = dbgProg = dbgSTP = qOpt = qDblMem = bcl = nbits = db = steps = nGC = 0;
   memsize = MINMEMSZ;
   mode = 7;                         // default byte mode
   int opt;
-  while ((opt = getopt(argc, argv, "bcgln:pqsx")) != -1) {
+  while ((opt = getopt(argc, argv, "bcglpqsx")) != -1) {
     switch (opt) {
       case 'b': mode = 0; break;    // bit mode
       case 'c': bcl = 1; break;     // binary combinatory logic
       case 'l': memsize=1<<24;break;// large memory for parsing
       case 'g': dbgGC = 1; break;   // show garbage collection stats
-      case 'n': nETA = atoi(optarg); break; // nf assuming Boehm Tree node lambdas bound
       case 'p': dbgProg = 1; break; // print parsed program
       case 'q': qOpt = 1; break;    // questionable clapp optimizations
       case 's': dbgSTP = 1; break;  // show steps every 2^28
@@ -442,8 +420,7 @@ int main(int argc, char **argv) {
    }
   nbits = 0;                        // skip remaining bits in last program byte
   clock_t start = clock();
-  if (nETA) boehm(cl);              // output normal form
-  else run(app(app(app(cl,app('-','?')), mode ? '>' : '+'),'V'));
+  boehm(cl);
   clock_t end = clock();
   u32 ms = (end - start) * 1000 / CLOCKS_PER_SEC;
   fprintf(stderr, "steps %u time %ums steps/s %uM #GC %u HP %u\n",

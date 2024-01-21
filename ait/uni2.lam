@@ -1,0 +1,38 @@
+-- universal machine for levenshtein binary lambda calculus (LBLC)
+let
+ one = \x.x;
+ true = \x\y.x;
+ zero = \x\y.y;
+
+ -- readbit cont n (bit:list) = cont (2*n+bit) list
+ readbit = \cont\n\list.list (\bit.cont (\f\x.(n f (n f (bit x (f x))))));
+
+ -- 139 bit decoder
+ -- delimit cont (levenstein_code_for_n ++ list) = cont n list
+ delimit = \cont\list.list (\bit.bit (cont zero) (delimit (\len.len readbit cont one)));
+
+  -- binary LC interpreter
+  -- int2 cont bits = cont (\free.parsed) unparsed_bits
+  int2 = \cont\list.list (\bit0. bit0
+    (\list1.list1 (\bit1.
+       int2 (\exp.bit1 (cont (\args\arg.exp (\z.z arg args)))
+                       (int2 (\exp2.cont (\args.exp args (exp2 args)))))))
+    (delimit (\n. cont (\args. n (\l.l bit0) args true)))
+    );
+  
+  -- loop
+  omega = omega;
+
+  -- binary LC universal machine for closed programs
+  uni2 = int2 (\z.z omega);
+
+  -- byte oriented LC universal machine for closed programs
+  gamma = \cont\bytes.bytes (\byte.byte cont);
+  uni8 = int2 (\exp\bits.exp omega) gamma
+  
+in uni2
+
+-- test with
+-- (cat uniLVS.blc; echo -n 1111000111001) | ../blc run uni.lam
+-- which should output
+-- 11010
