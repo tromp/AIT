@@ -215,8 +215,11 @@ void gc() {
     gcmem = reheap(gcmem, memsize *= 2);
   sp = gcmem + memsize-1;
   u32 di = hp = NCOMB;
-  for (*sp = evac(*spTop); di < hp; di++)
-    gcmem[di] = evac(gcmem[di]);
+  for (*sp = evac(*spTop); di < hp; di++) {
+    u32 x = gcmem[di] = evac(gcmem[di]);
+    di++;
+    if (x != 'V') gcmem[di] = evac(gcmem[di]);
+  }
   if (dbgGC)
     fprintf(stderr, "%u\n", hp-NCOMB);
   spTop = sp;
@@ -313,6 +316,89 @@ void showNL(u32 n) {
   putchar('\n');
 }
 
+u32 combfree(u32 x) {
+  return isComb(x) ? 0: mem[x]=='V' ? 1 : 0; // combfree(mem[x]) && combfree(mem[x+1]);
+}
+
+u32 nETA;
+u32 eta(u32 x, u32 v0) {
+  if (combfree(x)) return x;
+  for (u32 i=0; i<nETA; i++)
+    x = app(x, app('V', v0+i));
+  return x;
+}
+
+u32 merge(u32 nf, u32 na) {
+  return !nf ? na : !na ? nf
+    : mem[nf] > mem[na] ? app(mem[nf],merge(mem[nf+1],na))
+    : mem[na] > mem[nf] ? app(mem[na],merge(nf,mem[na+1]))
+    : app(mem[nf],merge(mem[nf+1],mem[na+1]));
+}
+
+u32 boehmE(u32 x, u32 *pn, u32 nvar, u32 m);
+u32 boehmL(u32 x, u32 *pn, u32 nvar) {
+  u32 nf, f = mem[x], na, a = mem[x+1];
+  if (f == 'V') {
+    *pn = app(1+a,0);
+    return x;
+  }
+  x = app(boehmL(f, &nf, nvar), boehmE(a, &na, nvar, nETA));
+  *pn = merge(nf,na);
+  return x;
+}
+
+// add lambdas to boehmtree where necessary
+// return in nx the list of decreasing 1+variable in term
+u32 boehmE(u32 x, u32 *pn, u32 nvar, u32 m) {
+  u32 i, n, nf, f = mem[x], na, a = mem[x+1];
+  if (f == 'V') {
+    *pn = a >= nvar ? 0 : app(1+a,0);
+    for (; a >= nvar+m; m++) x = app(x,app('V',nvar+m));
+    if (a >= nvar)
+      while (m--) x = app('L',x);
+    return x;
+  }
+  if (m && mem[a]=='V' && mem[a+1] == nvar+m-1)
+    return boehmE(f, pn, nvar, m-1);
+  x = app(boehmL(f, &nf, nvar+nETA), boehmE(a, &na, nvar+nETA, nETA));
+  for (a = mem[n=merge(nf,na)]-1; a >= nvar+m; m++)
+    x = app(x,app('V',nvar+m));
+  if (a >= nvar)
+    while (m--) x = app('L',x);
+  for (u32 i=0; n && mem[n+1]-1 >= nvar; i++)
+    n = mem[n+1];
+  *pn = n;
+  return x;
+}
+
+u32 *clam(u32 i) { return &gcmem[NCOMB+i]; }
+
+u32 dbindex(u32 x, u32 depth, u32 nlam) {
+  u32 f = mem[x], a = mem[x+1];
+  return f == 'L' ? app('L',dbindex(a, depth, *clam(depth+1) = nlam+1)) :
+         f == 'V' ? app(f, nlam - *clam(a/nETA)-1 - a%nETA) :
+                    app(dbindex(f, depth, nlam), dbindex(a, depth+1, nlam));
+}
+
+void boehm(u32 x) {
+  u32 parent, nvar = 0;
+  for (x = eta(x, 0); ; x = *spTop) {
+    run(x);
+    if (++sp == spTop) die("top!");
+    u32 parent = sp[1];
+    for (; mem[parent = sp[1]] != *sp; sp++, nvar -= nETA) {
+      u32 left = mem[parent];
+      mem[parent] = mem[left+1];
+    }
+    if (parent == *spTop) break;
+    lazy(0, app('f', *sp), eta(mem[parent+1], nvar += nETA)); 
+  }
+  x = boehmE(*spTop,&nvar,0,nETA);
+  // showNL(x);
+  showNL(dbindex(boehmE(*spTop,&nvar,0,nETA), 0, *clam(0) = 0));
+  return;
+}
+
 // uni [options] prog1 prog2 prog3 could be equivalent to
 // (cat prog3.blc8; (cat prog2.blc8; (cat prog1.blc8 -) | uni) | uni) | uni [options]
 // for instance,  prog1 could compile some language to .lam,
@@ -329,16 +415,17 @@ void showNL(u32 n) {
 
 int main(int argc, char **argv) {
   u32 db, dbgProg, bcl;
-  dbgGC = dbgProg = dbgSTP = qOpt = qDblMem = bcl = nbits = db = steps = nGC = 0;
+  dbgGC = dbgProg = dbgSTP = qOpt = qDblMem = bcl = nbits = db = nETA = steps = nGC = 0;
   memsize = MINMEMSZ;
   mode = 7;                         // default byte mode
   int opt;
-  while ((opt = getopt(argc, argv, "bcglpqsx")) != -1) {
+  while ((opt = getopt(argc, argv, "bcgln:pqsx")) != -1) {
     switch (opt) {
       case 'b': mode = 0; break;    // bit mode
       case 'c': bcl = 1; break;     // binary combinatory logic
       case 'l': memsize=1<<24;break;// large memory for parsing
       case 'g': dbgGC = 1; break;   // show garbage collection stats
+      case 'n': nETA = atoi(optarg); break; // nf assuming Boehm Tree node lambdas bound
       case 'p': dbgProg = 1; break; // print parsed program
       case 'q': qOpt = 1; break;    // questionable clapp optimizations
       case 's': dbgSTP = 1; break;  // show steps every 2^28
@@ -355,7 +442,8 @@ int main(int argc, char **argv) {
    }
   nbits = 0;                        // skip remaining bits in last program byte
   clock_t start = clock();
-  run(app(app(app(cl,app('-','?')), mode ? '>' : '+'),'V'));
+  if (nETA) boehm(cl);              // output normal form
+  else run(app(app(app(cl,app('-','?')), mode ? '>' : '+'),'V'));
   clock_t end = clock();
   u32 ms = (end - start) * 1000 / CLOCKS_PER_SEC;
   fprintf(stderr, "steps %u time %ums steps/s %uM #GC %u HP %u\n",
