@@ -1,15 +1,14 @@
 -- universal machine for levenshtein binary lambda calculus (LBLC)
 let
- one = \x.x;
+ id = \x.x;
  true = \x\y.x;
- zero = \x\y.y;
 
- -- readbit cont n (bit:list) = cont (2*n+bit) list
- readbit = \cont\n\list.list (\bit.cont (\f\x.(n f (n f (bit x (f x))))));
+ -- readbit f cont n (bit:list) = cont (n . n . if bit then f else id) list
+ readbit = \f\cont\n\list.list (\bit.cont (\x. n (n (bit x (f x)))));
 
- -- 139 bit decoder
- -- delimit cont (levenstein_code_for_n ++ list) = cont n list
- delimit = \cont\list.list (\bit.bit (cont zero) (delimit (\len.len readbit cont one)));
+ -- delimit f cont (levenstein_code_for_n ++ list) = cont (f^n) list
+ delimit = \f\cont\list.list (\bit.bit (cont id)
+   (delimit (readbit f) (\n. n cont f)));
 
   -- binary LC interpreter
   -- int2 cont bits = cont (\free.parsed) unparsed_bits
@@ -17,7 +16,7 @@ let
     (\list1.list1 (\bit1.
        int2 (\exp.bit1 (cont (\args\arg.exp (\z.z arg args)))
                        (int2 (\exp2.cont (\args.exp args (exp2 args)))))))
-    (delimit (\n. cont (\args. n (\l.l bit0) args true)))
+    (delimit (\l.l bit0) (\n. cont (\args. n args true)))
     );
   
   -- loop
