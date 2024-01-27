@@ -13,9 +13,5 @@ let
 
   -- binary LC universal machine for closed programs
   uni = intL (\z.z omega);
-
-  -- byte oriented LC universal machine for closed programs
-  gamma = \cont\bytes.bytes (\byte.byte cont);
-  uni8 = intL (\exp\bits.exp omega) gamma
   
 in intL

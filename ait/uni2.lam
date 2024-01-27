@@ -1,39 +1,36 @@
--- universal machine for levenshtein binary lambda calculus (LBLC)
+-- universal machine for levenshtein binary lambda calculus (BLC2)
 let
  id = \x.x;
  true = \x\y.x;
 
- -- readbit f cont n (bit:list) = cont (n . n . if bit then f else id) list
- readbit = \f\cont\n\list.list (\bit.cont (\x. n (n (bit x (f x)))));
+ -- readbit f cont n (bit->blob) = cont (n . n . if bit then f else id) blob
+ readbit = \f\cont\n\blob.blob (\bit.cont (\x. n (n (bit x (f x)))));
 
- -- delimit f cont (levenstein_code_for_n ++ list) = cont (f^n) list
- delimit = \f\cont\list.list (\bit.bit (cont id)
+ -- delimit f cont (levenstein_code_for_n ++ blob) = cont (f^n) blob
+ delimit = \f\cont\blob.blob (\bit.bit (cont id)
    (delimit (readbit f) (\n. n cont f)));
 
   -- binary LC interpreter
   -- int2 cont bits = cont (\free.parsed) unparsed_bits
-  int2 = \cont\list.list (\bit0. bit0
-    (\list1.list1 (\bit1.
+  int2 = \cont\blob.blob (\bit0. bit0
+    (\blob1.blob1 (\bit1.
        int2 (\exp.bit1 (cont (\args\arg.exp (\z.z arg args)))
                        (int2 (\exp2.cont (\args.exp args (exp2 args)))))))
     (delimit (\l.l bit0) (\n. cont (\args. n args true)))
     );
   
+  -- blob cont = cont bytes nextbit nextblob
+  blob = \bits\bytes\cont. let go = \bs\bit\bits1\z. cont bytes bit (blob bits1 bs)
+                         in bits (go bytes)
+      (bytes (\byte\bytes1. byte (go bytes1) bytes1));
+ 
+
   -- loop
   omega = omega;
 
   -- binary LC universal machine for closed programs
   -- uni2 = int2 (\z.z omega);
   -- save some bits
-  uni2 = int2 (\z.z z);
+  uni2 = int2 omega
 
-  -- byte oriented LC universal machine for closed programs
-  gamma = \cont\bytes.bytes (\byte.byte cont);
-  uni8 = int2 (\exp\bits.exp omega) gamma
-  
 in uni2
-
--- test with
--- (cat uniLVS.blc; echo -n 1111000111001) | ../blc run uni.lam
--- which should output
--- 11010
