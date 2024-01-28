@@ -4,27 +4,29 @@ let
  true = \x\y.x;
  false = \x\y.y;
 
- -- readbit f cont n input = cont (n . n . if next_input_bit then f else id) input'
- readbit = \f\cont\n\inp.inp (\_\bit.cont (\x. n (n (bit x (f x)))));
+ -- readbit f cont n _ input = cont (n . n . if next_input_bit then f else id) bytes' input'
+ readbit = \f\cont\n\_\inp.inp (\bit.cont (\x. n (n (bit x (f x)))));
 
- -- delimit f cont (levenstein_code_for_n_on_input) = cont (f^n) input'
- delimit = \f\cont\inp.inp (\_\bit.bit (cont id) (delimit (readbit f) (\n. n cont f)));
+ -- delimit f cont _ (levenstein_code_for_n_on_input) = cont (f^n) bytes' input'
+ delimit = \f\cont\_\inp.inp (\bit.bit (cont id) (delimit (readbit f) (\n. n cont f)));
 
   -- binary LC interpreter
-  -- int2 cont input = cont (\free.parsed) input'
-  int2 = \cont\inp.inp (\_\bit0. bit0
-    (\inp1.inp1 (\_\bit1.
+  -- int2 cont input = cont (\free.parsed) bytes' input'
+  int2 = \cont\_\inp.inp (\bit0. bit0
+    (\_\inp1.inp1 (\bit1.
        int2 (\exp.bit1 (cont (\args\arg.exp (\z.z arg args)))
                        (int2 (\exp2.cont (\args.exp args (exp2 args)))))))
     (delimit (\l.l bit0) (\n. cont (\args. n args true))));
   
-  -- input cont = cont bytes nextbit nextinput
-  input = \bits\bytes\cont. let go = \bs\bit\bits1\z. cont bytes bit (input bits1 bs)
-                         in bits (go bytes) (bytes (\byte\bytes1. byte (go bytes1) bytes1));
+  -- input cont = cont nextbit nextbytes nextinput
+  input = \bytes. bytes (\bits\bytes.
+    let go = \bit\bits\next\cont.cont bit bytes (bits go next)
+    in  bits go (input bytes));
 
   -- loop
   omega = omega;
 
   -- binary LC universal machine for closed programs
-  uni2 = \bytes.int2 (\exp\inp.inp(\bytes\_\_. exp omega bytes)) (input false bytes)
-in uni2
+  uni2 = \bytes.int2 (\exp\bytes\_.exp omega bytes) bytes (input bytes)
+in
+  uni2
