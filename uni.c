@@ -58,6 +58,7 @@ u32 clapp(u32 f, u32 a) {
   return f=='K' && a=='I' ? 'F' // these rewrites are known to help
        : f=='B' && a=='K' ? 'D'
        : f=='C' && a=='I' ? 'T'
+       : f=='D' && a=='I' ? 'K'
        : mem[f]=='B' && a=='I'? mem[f+1]
        : mem[f]=='R' && a=='I'? app('T',mem[f+1])
        : mem[f]=='B' && mem[f+1]=='C' &&  a=='T'? ':'

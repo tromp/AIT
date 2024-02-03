@@ -11,14 +11,14 @@ let
  delimit = \f\cont\_\inp.inp (\bit.bit (cont id) (delimit (readbit f) (\n. n cont f)));
 
   -- binary LC interpreter
-  -- int2 cont input = cont (\free.parsed) bytes' input'
+  -- int2 cont _ input = cont (\free.parsed) bytes' input'
   int2 = \cont\_\inp.inp (\bit0. bit0
     (\_\inp1.inp1 (\bit1.
        int2 (\exp.bit1 (cont (\args\arg.exp (\z.z arg args)))
                        (int2 (\exp2.cont (\args.exp args (exp2 args)))))))
     (delimit (\l.l bit0) (\n. cont (\args. n args true))));
   
-  -- input cont = cont nextbit nextbytes nextinput
+  -- input bytes cont = cont nextbit nextbytes nextinput
   input = \bytes. bytes (\bits\bytes.
     let go = \bit\bits\next\cont.cont bit bytes (bits go next)
     in  bits go (input bytes));

@@ -59,6 +59,7 @@ u32 clapp(u32 f, u32 a) {
   return f=='K' && a=='I' ? 'F' // these rewrites are known to help
        : f=='B' && a=='K' ? 'D'
        : f=='C' && a=='I' ? 'T'
+       : f=='D' && a=='I' ? 'K'
        : mem[f]=='B' && a=='I'? mem[f+1]
        : mem[f]=='R' && a=='I'? app('T',mem[f+1])
        : mem[f]=='B' && mem[f+1]=='C' &&  a=='T'? ':'
@@ -158,7 +159,7 @@ u32 convertK(u32 db, u32 *pn) {
 
 u32 toCLK(u32 db) {
   u32 n, cl = convertK(db,&n);
-  if (n) die("program not a closed term");
+  // if (n) die("program not a closed term");
   return cl;
 }
 
@@ -233,55 +234,6 @@ void gc() {
   qDblMem = hp >= memsize/2 && memsize < MAXMEMSZ;
 }
 
-static inline u32 arg(u32 n) {
-  return mem[sp[n] + 1];
-}
-
-static inline u32 apparg(u32 i, u32 j) {
-  return app(arg(i), arg(j));
-}
-
-u32 nETA = 5;
-static inline void lazy(u32 delta, u32 f, u32 x) {
-  if (etaTop - sp <= delta) {
-  }
-  sp += delta;
-  u32 *p = mem + sp[1];
-  p[0] = f; p[1] = x;
-}
-
-void run(u32 x) {
-  *(sp = spTop = mem + memsize - 1) = x;
-  for (char outbits = 0; ; steps++) {
-    if (dbgSTP && !(steps & STEPMASK))
-      stats();
-    if (mem + hp > sp - 8) {
-      gc();
-      x = *sp;
-    }
-    if (!isComb(x) && !isComb(x = mem[*sp-- = x]) && !isComb(x = mem[*sp-- = x])) continue;
-    switch (x) {
-      case 'M': lazy(0, x = arg(1), arg(1)); break;
-      case 'Y': lazy(0, x = arg(1), app('Y',arg(1))); break;
-      case 'I': if (arg(2)==sp[1])
-              { lazy(1, x = arg(1), arg(1)); break; }
-                lazy(1, x = arg(1), arg(2)); break;
-      case 'F': lazy(1, x = 'I', arg(2)); break;
-      case 'f':         x = mem[(++sp)[1] + 1]; break;
-      case 'K': lazy(1, x = 'I', arg(1)); break;
-      case 'T': lazy(1, x = arg(2), arg(1)); break;
-      case 'D': lazy(2, x = arg(1), arg(2)); break;
-      case 'B': lazy(2, x = arg(1), apparg(2,3)); break;
-      case 'C': lazy(2, x = apparg(1,3), arg(2)); break;
-      case 'R': lazy(2, x = apparg(2,3), arg(1)); break;
-      case ':': lazy(2, x = apparg(3,1), arg(2)); break;
-      case 'S': lazy(2, x = apparg(1,3), apparg(2,3)); break;
-      case 'V': return; // variable
-      default: die("unknown combinator");
-    }
-  }
-}
-
 void show(u32 n) {
   if (!isComb(n)) {
     u32 f = mem[n], a = mem[n+1];
@@ -296,105 +248,95 @@ void showNL(u32 n) {
   putchar('\n');
 }
 
-u32 combfree(u32 x) {
-  return isComb(x) ? 0: mem[x]=='V' ? 1 : 0; // combfree(mem[x]) && combfree(mem[x+1]);
+static inline u32 arg(u32 n) {
+  return mem[sp[n] + 1];
 }
 
-u32 eta(u32 x, u32 v0) {
-  if (combfree(x)) return x;
-  for (u32 i=0; i<nETA; i++)
-    x = app(x, app('V', v0+i));
-  return x;
+static inline u32 apparg(u32 i, u32 j) {
+  return app(arg(i), arg(j));
 }
 
-u32 merge(u32 nf, u32 na) {
-  return !nf ? na : !na ? nf
-    : mem[nf] > mem[na] ? app(mem[nf],merge(mem[nf+1],na))
-    : mem[na] > mem[nf] ? app(mem[na],merge(nf,mem[na+1]))
-    : app(mem[nf],merge(mem[nf+1],mem[na+1]));
-}
-
-u32 boehmE(u32 x, u32 *pn, u32 nvar, u32 m);
-u32 boehmL(u32 x, u32 *pn, u32 nvar) {
-  u32 nf, f = mem[x], na, a = mem[x+1];
-  if (f == 'V') {
-    *pn = app(1+a,0);
-    return x;
-  }
-  x = app(boehmL(f, &nf, nvar), boehmE(a, &na, nvar, nETA));
-  *pn = merge(nf,na);
-  return x;
-}
-
-// add lambdas to boehmtree where necessary
-// return in nx the list of decreasing 1+variable in term
-u32 boehmE(u32 x, u32 *pn, u32 nvar, u32 m) {
-  u32 i, n, nf, f = mem[x], na, a = mem[x+1];
-  if (f == 'V') {
-    *pn = a >= nvar ? 0 : app(1+a,0);
-    for (; a >= nvar+m; m++) x = app(x,app('V',nvar+m));
-    if (a >= nvar)
-      while (m--) x = app('L',x);
-    return x;
-  }
-  if (m && mem[a]=='V' && mem[a+1] == nvar+m-1)
-    return boehmE(f, pn, nvar, m-1);
-  x = app(boehmL(f, &nf, nvar+nETA), boehmE(a, &na, nvar+nETA, nETA));
-  for (a = mem[n=merge(nf,na)]-1; a >= nvar+m; m++)
-    x = app(x,app('V',nvar+m));
-  if (a >= nvar)
-    while (m--) x = app('L',x);
-  for (u32 i=0; n && mem[n+1]-1 >= nvar; i++)
-    n = mem[n+1];
-  *pn = n;
-  return x;
-}
-
-u32 *clam(u32 i) { return &gcmem[NCOMB+i]; }
-
-u32 dbindex(u32 x, u32 depth, u32 nlam) {
-  u32 f = mem[x], a = mem[x+1];
-  return f == 'L' ? app('L',dbindex(a, depth, *clam(depth+1) = nlam+1)) :
-         f == 'V' ? app(f, nlam - *clam(a/nETA)-1 - a%nETA) :
-                    app(dbindex(f, depth, nlam), dbindex(a, depth+1, nlam));
-}
-
-void boehm(u32 x) {
-  u32 parent, nvar = 0;
-  for (x = eta(x, 0); ; x = *spTop) {
-    run(x);
-    if (++sp == spTop) die("top!");
-    u32 parent = sp[1];
-    for (; mem[parent = sp[1]] != *sp; sp++, nvar -= nETA) {
-      u32 left = mem[parent];
-      mem[parent] = mem[left+1];
+static inline void lazy(u32 delta, u32 f, u32 a) {
+  for (u32 i=1; i <= delta; i++) {
+    if (mem[sp[i+1]] != sp[i]) {
+      if (mem[sp[i+1]+1] != sp[i]) die("Lazy orphan");
+      sp -= 2;
+      mem[sp[i+3]+1] = sp[i+2] = app('L', sp[i+1] = app(sp[i] = sp[i+2], app('V', nvar++)));
+      if (mem[sp[i+1]] != sp[i]) die("Fucked orphan");
+      sp += i;
+      return;
     }
-    if (parent == *spTop) break;
-    lazy(0, app('f', *sp), eta(mem[parent+1], nvar += nETA)); 
   }
-  x = boehmE(*spTop,&nvar,0,nETA);
-  // showNL(x);
-  showNL(dbindex(boehmE(*spTop,&nvar,0,nETA), 0, *clam(0) = 0));
-  return;
+  sp += delta;
+  u32 *p = mem + sp[1];
+  *sp = p[0] = f; p[1] = a;
 }
 
-// uni [options] prog1 prog2 prog3 could be equivalent to
-// (cat prog3.blc8; (cat prog2.blc8; (cat prog1.blc8 -) | uni) | uni) | uni [options]
-// for instance,  prog1 could compile some language to .lam,
-// prog2 could compile .lam to .blc, and
-// prog3 could deflate .blc to .blc8
-// the separate steps of section "Converting between bits and bytes"
-// in https://www.ioccc.org/2012/tromp/hint.html could be replaced by 
-// echo "\a a ((\b b b) (\b \c \d \e d (b b) (\f f c e))) (\b \c c)" |
-//   ./uni parse deflate > rev.blc8
-// it would make option -c redundant and
-// allow supporting many lambda calculus notations
-// maybe also ion compatibility
-// without complicating the C source code
+void run(u32 x) {
+  *(sp = spTop = mem + memsize - 1) = x;
+  for (char outbits = 0; ; steps++) {
+    if (dbgSTP && !(steps & STEPMASK))
+      stats();
+    if (mem + hp > sp - 8) {
+      gc();
+    }
+    x = *sp;
+    if (!isComb(x) && !isComb(x = *--sp = mem[x]) && !isComb(x = *--sp = mem[x])) continue;
+    switch (x) {
+      case 'M': lazy(0, arg(1), arg(1)); break;
+      case 'Y': lazy(0, arg(1), app('Y',arg(1))); break;
+      case 'I': if (arg(2)==sp[1])
+              { lazy(1, x = arg(1), arg(1)); break; }
+                lazy(1, arg(1), arg(2)); break;
+      case 'F': isComb(x=arg(2)) ? lazy(1, 'I', x) : lazy(1, mem[x], mem[x+1]); break;
+      case 'f': x = mem[(++sp)[1] + 1]; *sp =
+                 isComb(x) ? (mem[sp[1]+1] = app('L',app(x,app('V',nvar++)))) : x; break;
+      case 'K': isComb(x=arg(1)) ? lazy(1, 'I', x) : lazy(1, mem[x], mem[x+1]); break;
+      case 'T': lazy(1, arg(2), arg(1)); break;
+      case 'D': lazy(2, arg(1), arg(2)); break; // D x y z = x y
+      case 'B': lazy(2, arg(1), apparg(2,3)); break;
+      case 'C': lazy(2, apparg(1,3), arg(2)); break;
+      case 'R': lazy(2, apparg(2,3), arg(1)); break;
+      case ':': lazy(2, apparg(3,1), arg(2)); break;
+      case 'S': lazy(2, apparg(1,3), apparg(2,3)); break;
+      case 'L': *sp = arg(1); break;
+      case 'V': ++sp;
+                u32 left, parent;
+                for (; mem[parent = sp[1]] != *sp; ) { // not left child
+                  if ((left = mem[parent]) == 'L') nvar--;
+                  else mem[parent] = mem[left+1]; // bypass mem[left] == 'f'
+                  if (++sp == spTop) return;
+                }
+                lazy(0, app('f', *sp), *sp = mem[parent+1]); break;
+      default: printf("ascii(%u)='%c'\n",x,x); die("unknown combinator");
+    }
+  }
+}
+
+u32 hasVar0(u32 db, u32 depth) {
+  u32 f = mem[db], a = mem[db+1];
+  if (f=='V') return a == depth;
+  if (f=='L') return hasVar0(a, depth+1);
+  return hasVar0(f, depth) || hasVar0(a, depth);
+}
+
+u32 eta(u32 x) {
+  u32 f = mem[x], a = mem[x+1];
+  if (!isComb(f) && mem[a] == 'V' && mem[a+1]==0 && !hasVar0(f, 0))
+    return f;
+  return app('L', x);
+}
+
+u32 dbindex(u32 x, u32 depth) {
+  u32 f = mem[x], a = mem[x+1];
+  return f == 'L' ? eta(dbindex(a, depth+1)) :
+         f == 'V' ? app(f, depth-1 - a) :
+                    app(dbindex(f, depth), dbindex(a, depth));
+}
 
 int main(int argc, char **argv) {
   u32 db, dbgProg, bcl;
-  dbgGC = dbgProg = dbgSTP = qOpt = qDblMem = bcl = nbits = db = steps = nGC = 0;
+  dbgGC = dbgProg = dbgSTP = qOpt = qDblMem = bcl = nbits = nvar = db = steps = nGC = 0;
   memsize = MINMEMSZ;
   mode = 7;                         // default byte mode
   int opt;
@@ -420,7 +362,8 @@ int main(int argc, char **argv) {
    }
   nbits = 0;                        // skip remaining bits in last program byte
   clock_t start = clock();
-  boehm(cl);
+  run(app('L',app(cl,app('V',nvar++))));
+  showNL(dbindex(*spTop,0));
   clock_t end = clock();
   u32 ms = (end - start) * 1000 / CLOCKS_PER_SEC;
   fprintf(stderr, "steps %u time %ums steps/s %uM #GC %u HP %u\n",
