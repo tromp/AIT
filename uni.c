@@ -192,6 +192,8 @@ u32 evac(u32 n) {
   if (y == 'K') {
     mem[n+1] = mem[x+1];
     x = mem[n] = 'I';
+  } else if (y == 'F') {
+    x = mem[n] = 'I';
   }
   y = mem[n + 1];
   if (!x) return y;
