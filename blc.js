@@ -1,7 +1,6 @@
-var fs = require('fs');
-var data; // = ''; fs.readFileSync(0, 'utf-8');
-var nchar = 0;
 let bytemode = process.argv.length <= 2;
+var data;
+var nchar = 0;
 var nbit = 0;
 var progchar;
 
@@ -15,7 +14,8 @@ function bit2lam(bit) {
 
 function byte2lam(bits,n) {
   return function(z) {
-    return n-- ? z(bit2lam((bits>>n)&1))(byte2lam(bits,n)) // cons bitn bits>n
+    return n-- ? z (function(a) { return bit2lam((bits>>n)&1)(a) })
+                   (function(b) { return byte2lam(bits,n)(b) }) // cons bitn bits>n
                : function(y) { return y }                                         // nil
   }
 }
@@ -26,7 +26,8 @@ function input(n) {           // input from n'th character onward
       return function(y) { return y }     // nil
     }
     let c = data[n]; // cons charn chars>n
-    return z(bytemode ? byte2lam(c,8) : bit2lam(c&1))(input(n+1))
+    return z (function(a) { return (bytemode ? byte2lam(c,8) : bit2lam(c&1))(a) })
+             (function(b) { return input(n+1)(b) })
   }
 }
 
@@ -56,11 +57,9 @@ function output(prog) {
 function getbit() {
   if (nbit==0) {
     progchar = data[nchar++];
-    // console.log(progchar);
     nbit = bytemode ? 8 : 1;
   }
   let bit = (progchar >> --nbit) & 1;
-  // process.stdout.write(bit?'1':'0');
   return bit;
 }
 
@@ -74,7 +73,6 @@ function program() {
     let q = program();
     return function(...args) {
       return p(...args)(function(arg) { return q(...args)(arg) }) // suspend argument
-      // return p(...args)(q(...args));
     }
   } else {
     let p = program();
@@ -84,18 +82,9 @@ function program() {
   }
 }
 
-id = function(x) { return x; }
-nil = function(x) { return function(y) { return y; } }
-cons = function(x) { return function(y) { return function(z) { return z(x)(y) } } }
-
 process.stdin.on('readable', () => {
   if ((data = process.stdin.read()) != null) {
     prog = program()();
     output(prog(input(nchar)))             // run program with empty env on input
   }
 });
-
-// console.log(lam2byte(byte2lam(65,8),0));
-// console.log(output(id(input(0))));
-// output(input(0))             // run program with empty env on input
-

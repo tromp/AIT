@@ -1,4 +1,4 @@
-$z=pop=~/8/;
+$bytemode = !pop; # no command line arguments
 
 sub bit2lam {
   my $bit = pop;
@@ -14,7 +14,8 @@ sub bit2lam {
 sub byte2lam {
   my ($bits,$n) = @_;
   sub {
-    $n-- ? pop->(bit2lam(vec$bits,$n,1))->(byte2lam($bits,$n)) # cons bitn bits>n
+    $n-- ? pop->(sub { bit2lam(vec$bits,$n,1)->(pop) })
+              ->(sub { byte2lam($bits,$n)->(pop) }) # cons bitn bits>n
          : sub { pop }                                         # nil
   }
 }
@@ -24,7 +25,8 @@ sub input {
   sub {
     my $c;
     ($B[$n] ||= defined($c=getc) ?
-       sub { pop->($z ? byte2lam($c,8) : bit2lam($c))->(input($n+1)) # cons charn chars>n
+       sub { pop->(sub { ($bytemode ? byte2lam($c,8) : bit2lam($c))->(pop) })
+                ->(sub { input($n+1)->(pop) }) # cons charn chars>n
        } :
        sub { sub { pop } }                                           # nil
     )->(pop)
@@ -49,7 +51,7 @@ sub lam2byte {
 sub output {
   pop->(sub {                              # more chars
           my $c = pop;
-          print($z ? lam2byte($c,0) : lam2bit($c));
+          print($bytemode ? lam2byte($c,0) : lam2bit($c));
           sub {
             my $tail = pop;
             sub { output($tail) }
@@ -58,7 +60,7 @@ sub output {
 }
 
 sub getbit {
-  $n ||= ($c = getc, $z?8:1);
+  $n ||= ($c = getc, $bytemode?8:1);
   vec $c,--$n,1
 }
 
