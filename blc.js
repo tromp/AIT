@@ -1,3 +1,4 @@
+#!/usr/local/bin/node --stack-size=8192
 let bytemode = process.argv.length <= 2;
 var data;
 var nchar = 0;
@@ -5,64 +6,44 @@ var nbit = 0;
 var progchar;
 
 function bit2lam(bit) {
-  return function(x0) {
-    return function(x1) {
-        return bit ? x1 : x0
-      }
-  }
+  return function(x0) { return function(x1) { return bit ? x1 : x0 } }
 }
-
 function byte2lam(bits,n) {
-  return function(z) {
-    return n-- ? z (function(a) { return bit2lam((bits>>n)&1)(a) })
-                   (function(b) { return byte2lam(bits,n)(b) }) // cons bitn bits>n
-               : function(y) { return y }                                         // nil
-  }
+  return n==0 ? (function(_) { return function(y) { return y } }) // nil
+              : (function(z) { return z (bit2lam((bits>>(n-1))&1))
+                                        (byte2lam(bits,n-1)) })  // cons bitn bits>n
 }
-
 function input(n) {           // input from n'th character onward
-  return function(z) {
-    if (n >= data.length) {
-      return function(y) { return y }     // nil
-    }
-    let c = data[n]; // cons charn chars>n
-    return z (function(a) { return (bytemode ? byte2lam(c,8) : bit2lam(c&1))(a) })
-             (function(b) { return input(n+1)(b) })
-  }
+  if (n >= data.length)
+    return function(z) { { return function(y) { return y } } }     // nil
+  let c = data[n];
+  return function(z) { return z (bytemode ? byte2lam(c,8) : bit2lam(c&1)) (input(n+1)) } // cons charn chars>n
 }
-
 function lam2bit(lambit) {
-  return lambit(function(){return 0})(function(){return 1})()  // force suspension
-  // return lambit(0)(1);
+  return lambit(function(_){return 0})(function(_){return 1})()  // force suspension
 }
-
 function lam2byte(lambits, x) {
   return lambits(function(lambit) {
-           y = 2*x + lam2bit(lambit);
            return function(lamtail) {
-             return function() { return lam2byte(lamtail, y) }
+             return function(_) { return lam2byte(lamtail, 2*x + lam2bit(lambit)) }
            }
          })(String.fromCharCode(x))              // end of byte
 }
-
 function output(prog) {
   return prog(function(c) {      // more chars
     process.stdout.write(bytemode ? lam2byte(c,0) : lam2bit(c) ? '1' : '0');
     return function(tail) {
-      return function() { return output(tail) }
+      return function(_) { return output(tail) }
     }
-  })(42)                         // end of output
+  })(0)                         // end of output
 }
-
 function getbit() {
   if (nbit==0) {
     progchar = data[nchar++];
     nbit = bytemode ? 8 : 1;
   }
-  let bit = (progchar >> --nbit) & 1;
-  return bit;
+  return (progchar >> --nbit) & 1;
 }
-
 function program() {
   if (getbit()) {               // variable
     var i = 0;
@@ -81,7 +62,6 @@ function program() {
     }
   }
 }
-
 process.stdin.on('readable', () => {
   if ((data = process.stdin.read()) != null) {
     prog = program()();

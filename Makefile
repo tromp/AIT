@@ -1,6 +1,6 @@
 GHC = ghc
 
-FILES = README Makefile Lambda.lhs AIT.lhs Main.lhs Bases.lhs arithmetic.lam delimit.lam pairup.lam uni.lam uni8.lam quine.lam bf.lam id.lam all.lam primes.lam none.lam thue-morse.lam even.lam odd.lam LC.pdf hw.bf
+FILES = README Makefile Lambda.lhs AIT.lhs Main.lhs Bases.lhs arithmetic.lam delimit.lam pairup.lam uni.lam uni8.lam quine.lam bf.lam id.lam all.lam primes.lam none.lam thue-morse.lam even.lam odd.lam LC.pdf hw.bf blc.pl blc.js blc.py primes256.blc
 
 .SUFFIXES : .lhs .lam .blc .Blc
 
@@ -15,6 +15,20 @@ blc:	AIT.lhs Lambda.lhs Main.lhs
 
 tar:	$(FILES)
 	tar -zcf AIT.tgz $(FILES)
+
+test:	blc.pl blc.js blc.py
+	echo ' hi' | ./blc.py
+	echo ' hi' | ./blc.js
+	echo ' hi' | ./blc.pl
+	cat primes256.blc | ./blc.py -b
+	cat primes256.blc | ./blc.js -b
+	cat primes256.blc | ./blc.pl -b
+	cat bf.blc8 ait/hw.bf | ./blc.py
+	cat bf.blc8 ait/hw.bf | ./blc.js
+	cat bf.blc8 ait/hw.bf | ./blc.pl
+	(cat tromp/hilbert.Blc; echo '12') | ./blc.py
+	(cat tromp/hilbert.Blc; echo '12') | ./blc.js
+	(cat tromp/hilbert.Blc; echo '12') | ./blc.pl
 
 bases:	Bases.lhs
 	$(GHC) -O2 -Wall --make Bases.lhs -o bases
