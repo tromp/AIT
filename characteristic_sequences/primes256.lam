@@ -1,0 +1,39 @@
+-- outputs characteristic sequence of primes
+\io.let
+   -- Bits
+   B0 = \x\y.x;                   -- bit 0
+   B1 = \x\y.y;                   -- bit 1
+   cons = \x\y\z.z x y;
+   cons0 = \y\z.z B0 y;
+   Y = \f. (\x. x x) (\x. f (x x));
+
+   -- Sieving numerals Sn = Ssucc^n S0
+   -- (x:xs) (Ssucc Sn cont) = Ssucc Sn cont x xs = x : xs (Sn cont)
+   -- (list (Y Sn)) sets every (n+1)'th element of list to B0
+   -- (11111111111111111111:T) (Y S0) = (00000000000000000000:T')
+   -- (11111111111111111111:T) (Y S1) = (10101010101010101010:T')
+   -- (11111111111111111111:T) (Y S2) = (11011011011011011011:T')
+
+   S0    = \cont\x\xs. cons0  (xs cont);
+   Ssucc = \Sn\c\x\xs. cons x (xs (Sn c));
+
+   sieve = \Sn. cons B1 (let Ssn = Ssucc Sn in (sieve Ssn) (Y Ssn));
+   primes = cons0 (cons0 (sieve S0));
+
+   -- church numerals
+   2 = \f\x.f (f x);
+   3 = \f\x.f (f (f x));
+   4 = 2 2;
+   8 = \f\x.f (f (f (f (f (f (f (f x))))))); -- 8 = 3 2;
+   12 = \f.3(4 f);
+   4k = 12 2;
+   256 = 8 2;
+
+   -- (list (cn tk tailarg)) gives the first cn elements of the list, followed by the remainder applied to tailarg
+   tk = \cont\x\xs\z.z x (xs cont);
+   someprimes = primes (256 tk (B0 (B0 B1))); -- tailarg is K (K Nil)
+
+   main = someprimes
+in main
+
+-- test with ./blc run primes.lam

@@ -27,7 +27,7 @@ function lam2byte(lambits, x) {
            return function(lamtail) {
              return function(_) { return lam2byte(lamtail, 2*x + lam2bit(lambit)) }
            }
-         })(String.fromCharCode(x))              // end of byte
+         })(Buffer.from([x]))              // end of byte
 }
 function output(prog) {
   return prog(function(c) {      // more chars
