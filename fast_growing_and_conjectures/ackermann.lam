@@ -6,12 +6,15 @@ let
   2 = \f\x.f (f x);
   3 = \f\x.f (f (f x));
   A = \f\n.n f n;
-  Ack = \n.n A n n
-in Ack
+  Ackerlike = \n.n A n n;         -- 29 bits
+  succ = \n\f\x. f(n f x);
+  AckSucc = \f\n. succ n f 1;
+  Ackermann = \m. m AckSucc succ; -- 63 bits
+in Ackerlike -- Ackerlike
 
--- Ack 0 = 0
--- Ack 1 = 1
--- Ack 2
+-- Ackerlike 0 = 0
+-- Ackerlike 1 = 1
+-- Ackerlike 2
 -- = 2 A 2 2
 -- = A (A 2) 2
 -- = 2 (A 2) 2
@@ -23,4 +26,4 @@ in Ack
 -- = 2^16 16
 -- = 16^2^16
 -- = 2^2^18 > 2^2^16 - 3 = Ackerman(4,2)
--- In general Ack n exceeds both n ↑^n n and Ackerman(2+n,n)
+-- In general Ackerlike n exceeds both n ↑^n n and Ackerman(2+n,n)
