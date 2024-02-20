@@ -1,0 +1,40 @@
+-- outputs characteristic sequence of squares
+-- by having i'th round flip every i'th door
+\io.let
+   -- Bits
+   B0 = \x\y.x;                   -- bit 0
+   B1 = \x\y.y;                   -- bit 1
+   not = \b\x\y.b y x;
+   cons = \x\y\z.z x y;
+   cons0 = \y\z.z B0 y;
+   Y = \f. (\x. x x) (\x. f (x x));
+
+   -- Dooring numerals Sn = Ssucc^n S0
+   -- (x:xs) (Ssucc Sn cont) = Ssucc Sn cont x xs = x : xs (Sn cont)
+   -- (list (Y Sn)) sets every (n+1)'th element of list to its negation
+   -- (00000000000000000000:T) (Y S0) = (11111111111111111111:T')
+   -- (11111111111111111111:T) (Y S1) = (10101010101010101010:T')
+   -- (10101010101010101010:T) (Y S2) = (10001110001110001110:T')
+
+   S0    = \cont\x\xs. cons (not x) (xs cont);
+   Ssucc = \Sn\c\x\xs. cons x (xs (Sn c));
+
+   0s = cons0 0s;
+   sieve = \Sn\b\xs. cons (not b) (xs (Y Sn) (sieve (Ssucc Sn)));
+   squares = 0s (sieve S0);
+
+   -- church numerals
+   2 = \f\x.f (f x);
+   3 = \f\x.f (f (f x));
+   4 = 2 2;
+   8 = 3 2;
+   10 = \f\x.2 f (8 f x);
+   100 = 2 10;
+
+   -- (list (cn tk tailarg)) gives the first cn elements of the list, followed by the remainder applied to tailarg
+   tk = \cont\x\xs\z.z x (xs cont);
+   100squares = squares (100 tk (B0 (B0 B1))); -- tailarg is K (K Nil)
+
+in 100squares
+
+-- test with ./blc run squares.lam
