@@ -1,0 +1,8 @@
+let
+  0 = \f\x.x;
+  nil = 0;
+  ksucc = \_\n\f\x.f(n f x);
+  cons0 = \y\z.z 0 y;
+  fold = \f\z (let go = \l.l(\h\t\z.f h (go t))z in go);
+  length = fold ksucc 0
+in length
