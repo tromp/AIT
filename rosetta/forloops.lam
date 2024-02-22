@@ -1,0 +1,19 @@
+    \io0.io0 (
+\ast\io1. io1 (
+\nl \0. let
+  1 = \x.x;
+  5 = \f\x. f(f(f(f(f x))));
+  nil = 0;
+  succ = \n\f\x.f(n f x);
+  cons = \x\y\z.z x y;
+  stars = \n\t. n (cons ast) (cons nl t);
+  F = \c\n.stars n (c (succ n))
+in 5 F (\_. nil) 1
+))
+
+-- 2 F nil 1 = F (F (\_. nil)) 1
+--           = stars 1 (F (\_. nil) 2)
+--           = cons ast (cons nl (F (\_. nil) 2))
+--           = cons ast (cons nl (stars 2 ((\_. nil) 3)))
+--           = cons ast (cons nl (cons ast (cons ast (cons nl nil))))
+--           = "*\n**\n"

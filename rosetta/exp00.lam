@@ -1,0 +1,5 @@
+\0. let
+  B1 = 0;
+  nil = 0;
+  cons = \x\y\z.z x y
+in 0 0 (cons B1) nil
