@@ -1,0 +1,5 @@
+let
+  rec = \x\xs\ys\p.p x (xs rec ys);
+  cat = \xs.xs rec;
+  cycle = \xs. let cyc = cat xs cyc in cyc
+in cycle
