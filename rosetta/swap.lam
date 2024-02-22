@@ -1,0 +1,4 @@
+let
+  pair = \x\y \z. z x y;
+  swap = \p.  p (\x\y. pair y x)
+in swap
