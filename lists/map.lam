@@ -1,0 +1,4 @@
+let
+  not = \b\x\y. b y x;
+  map = \f. (let go = \l.l(\h\t\_\z.z (f h) (go t))l in go)
+in map -- not
