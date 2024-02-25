@@ -44,12 +44,13 @@ static inline u32 app(u32 f, u32 x) {
   return (hp+=2)-2;
 }
 
+FILE *fp;
 u32 nbits, inbits, mode;
 
 u32 getbit() {
   if (!nbits) {
     nbits = mode;
-    inbits = getchar();
+    inbits = getc(fp);
   } else nbits--;
   return (inbits>>nbits) & 1;
 }
@@ -73,13 +74,6 @@ u32 clapp(u32 f, u32 a) {
        : mem[a]=='K' && f=='S'? app('B',mem[a+1])
        : mem[f]=='R' && mem[f+1]=='I' &&  a=='B'? 'I'
        : app(f, a);   // switch(f) and switch(mem[f]) turn out to be WAY slower
-}
-
-u32 parseBCL() {
-  if (!getbit())
-    return "KS"[getbit()];
-  u32 f = parseBCL(), a = parseBCL();
-  return clapp(f, a);
 }
 
 u32 parseBLC() {
@@ -176,6 +170,7 @@ u32 convertK(u32 db, u32 *pn) {
 u32 toCLK(u32 db) {
   u32 n, cl = convertK(db,&n);
   if (n) die("program not a closed term");
+  nbits = 0;                        // skip remaining bits in last program byte
   return cl;
 }
 
@@ -333,32 +328,33 @@ void showNL(u32 n) {
   putchar('\n');
 }
 
-// uni [options] prog1 prog2 prog3 could be equivalent to
-// (cat prog3.blc8; (cat prog2.blc8; (cat prog1.blc8 -) | uni) | uni) | uni [options]
-// for instance,  prog1 could compile some language to .lam,
-// prog2 could compile .lam to .blc, and
-// prog3 could deflate .blc to .blc8
-// the separate steps of section "Converting between bits and bytes"
-// in https://www.ioccc.org/2012/tromp/hint.html could be replaced by 
-// echo "\a a ((\b b b) (\b \c \d \e d (b b) (\f f c e))) (\b \c c)" |
-//   ./uni parse deflate > rev.blc8
-// it would make option -c redundant and
-// allow supporting many lambda calculus notations
-// maybe also ion compatibility
-// without complicating the C source code
+// Instead of running   (cat prog.blc8 -) | uni
+// or                   (cat prog.blc  -) | uni -b
+// one can now run these as                 uni [-b] prog
+// It's also possible to run multiple programs in sequence:
+// uni [options] prog1 prog2 prog3 is equivalent to (cat prog123 -) | uni [options]
+// where prog123 is the function composition prog3 . prog2 . prog1
+
+// Each prog$i is parsed from file $BLCPATH/prog$i.blc$suff
+// where suffix $suff is a substring of "28" depending on the options.
+// Digit '2' denotes Levenshtein coding, and digit '8' denotes byte mode.
+//
+// For example, the separate steps of section "Converting between bits and bytes"
+// in https://www.ioccc.org/2012/tromp/hint.html can be replaced by 
+// echo "\a a ((\b b b) (\b \c \d \e d (b b) (\f f c e))) (\b \c c)" | uni parse deflate > rev.blc8
 
 int main(int argc, char **argv) {
-  u32 db, dbgProg, bcl;
-  dbgGC = dbgProg = dbgSTP = qBLC2 = qOpt = qDblMem = bcl = nbits = db = steps = nGC = 0;
+  u32 db, dbgProg;
+  dbgGC = dbgProg = dbgSTP = qBLC2 = qOpt = qDblMem = nbits = db = steps = nGC = 0;
   memsize = MINMEMSZ;
   mode = 7;                         // default byte mode
   int opt;
-  while ((opt = getopt(argc, argv, "bcglpqsx")) != -1) {
+  while ((opt = getopt(argc, argv, "bghlpqsx")) != -1) {
     switch (opt) {
       case 'b': mode = 0; break;    // bit mode
-      case 'c': bcl = 1; break;     // binary combinatory logic
-      case 'l': qBLC2=1;break;      // parse BLC2 aka Levenshtein coding
+      case 'l': qBLC2 = 1;break;    // parse BLC2 aka Levenshtein coding
       case 'g': dbgGC = 1; break;   // show garbage collection stats
+      case 'h': printf("usage: see\t\tgrep -C 16 'main(int' uni.c\n"); exit(0);
       case 'p': dbgProg = 1; break; // print parsed program
       case 'q': qOpt = 1; break;    // questionable clapp optimizations
       case 's': dbgSTP = 1; break;  // show steps every 2^28
@@ -368,12 +364,23 @@ int main(int argc, char **argv) {
   mem = reheap(NULL, memsize);
   gcmem = reheap(NULL, memsize);
   hp = NCOMB;
-  u32 cl = bcl ? parseBCL() : toCLK(db = qBLC2 ? parseBLC2() : parseBLC());
+  u32 cl = 0;
+  char filepath[256];
+  const char *blcpath = getenv("BLCPATH");
+  for (; optind < argc; optind++) {
+    sprintf(filepath, "%s/%s.blc%s%s", blcpath, argv[optind], qBLC2?"2":"", mode?"8":"");
+    fprintf(stderr, "Opening file %s\n", filepath);
+    fp = fopen(filepath, "r");
+    if (!fp) die("file not found.");
+    u32 fcl = toCLK(db = qBLC2 ? parseBLC2() : parseBLC());
+    cl = !cl ? fcl : app(app('B',fcl), cl);
+  }
+  fp = stdin;
+  if (!cl) cl = toCLK(db = qBLC2 ? parseBLC2() : parseBLC());
   if (dbgProg) {
     if (db) showNL(db);
     showNL(cl);
    }
-  nbits = 0;                        // skip remaining bits in last program byte
   clock_t start = clock();
   run(app(app(app(cl,app('-','?')), mode ? '>' : '+'),'V'));
   clock_t end = clock();

@@ -34,6 +34,10 @@ test:	uni.pl uni.js uni.py
 	(cat hilbert; echo '12') | ./uni.js
 	(cat hilbert; echo '12') | ./uni.pl
 	(cat hilbert; echo '12') | ./uni.rb
+	cat tromp/symbolic.Blc tromp/threetwo.blc | ./uni.py
+	cat tromp/symbolic.Blc tromp/threetwo.blc | ./uni.js
+	cat tromp/symbolic.Blc tromp/threetwo.blc | ./uni.pl
+	cat tromp/symbolic.Blc tromp/threetwo.blc | ./uni.rb
 
 bases:	Bases.lhs
 	$(GHC) -O2 -Wall --make Bases.lhs -o bases
