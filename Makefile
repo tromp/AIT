@@ -1,43 +1,47 @@
 GHC = ghc
+CC = cc
 
-FILES = README Makefile Lambda.lhs AIT.lhs Main.lhs Bases.lhs arithmetic.lam delimit.lam pairup.lam uni.lam uni8.lam quine.lam bf.lam id.lam all.lam primes.lam none.lam thue-morse.lam even.lam odd.lam LC.pdf hw.bf uni.pl uni.js uni.py uni.rb primes256.blc
-
-.SUFFIXES : .lhs .lam .blc .Blc
+.SUFFIXES : .lhs .lam .blc .blc8
 
 %.blc: %.lam blc
 	./blc blc $< > $*.blc
 
-%.Blc: %.lam blc
-	./blc Blc $< > $*.Blc
+%.blc8: %.blc uni
+	./uni deflate $< > $*.blc8
 
 blc:	AIT.lhs Lambda.lhs Main.lhs
 	$(GHC) -O2 -Wall --make Main.lhs -o blc
 
-tar:	$(FILES)
-	tar -zcf AIT.tgz $(FILES)
+uni:	uni.c
+	$(CC) -O3 -Wall --make uni.c -o uni
 
 test:	uni.pl uni.js uni.py
 	echo ' hi' | ./uni.py
 	echo ' hi' | ./uni.js
 	echo ' hi' | ./uni.pl
 	echo ' hi' | ./uni.rb
+	./uni -b primes take256
 	./blc blc characteristic_sequences/primes256.lam | ./uni.py -b
 	./blc blc characteristic_sequences/primes256.lam | ./uni.js -b
 	./blc blc characteristic_sequences/primes256.lam | ./uni.pl -b
 	./blc blc characteristic_sequences/primes256.lam | ./uni.rb -b
 	./blc blc characteristic_sequences/primes256.lam | ./UniObf
-	cat bf.blc8 ait/hw.bf | ./uni.py
-	cat bf.blc8 ait/hw.bf | ./uni.js
-	cat bf.blc8 ait/hw.bf | ./uni.pl
-	cat bf.blc8 ait/hw.bf | ./uni.rb
+	cat ait/hw.bf | ./uni bf
+	cat bin/bf.blc8 ait/hw.bf | ./uni.py
+	cat bin/bf.blc8 ait/hw.bf | ./uni.js
+	cat bin/bf.blc8 ait/hw.bf | ./uni.pl
+	cat bin/bf.blc8 ait/hw.bf | ./uni.rb
+	echo '12' | ./uni hilbert
+	(cat hilbert; echo '12') | ./uni.py
 	(cat hilbert; echo '12') | ./uni.py
 	(cat hilbert; echo '12') | ./uni.js
 	(cat hilbert; echo '12') | ./uni.pl
 	(cat hilbert; echo '12') | ./uni.rb
-	cat tromp/symbolic.Blc tromp/threetwo.blc | ./uni.py
-	cat tromp/symbolic.Blc tromp/threetwo.blc | ./uni.js
-	cat tromp/symbolic.Blc tromp/threetwo.blc | ./uni.pl
-	cat tromp/symbolic.Blc tromp/threetwo.blc | ./uni.rb
+	printf '%s' '(\f\x f(f(f x)))(\f\x f(f x))' | ./uni parse | ./uni symbolic
+	cat bin/symbolic.blc8 bin/threetwo.blc | ./uni.py
+	cat bin/symbolic.blc8 bin/threetwo.blc | ./uni.js
+	cat bin/symbolic.blc8 bin/threetwo.blc | ./uni.pl
+	cat bin/symbolic.blc8 bin/threetwo.blc | ./uni.rb
 
 bases:	Bases.lhs
 	$(GHC) -O2 -Wall --make Bases.lhs -o bases

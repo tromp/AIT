@@ -1,0 +1,11 @@
+-- take 65536
+\io.let
+   knil = \_\x\y.y;
+   2 = \f\x.f (f x);
+   3 = \f\x.f (f (f x));
+   4 = 2 2;
+   16 = 4 2;
+   64k = 16 2;
+   -- (list (cn tk tailarg)) gives the first cn elements of the list, followed by the remainder applied to tailarg
+   tk = \cont\x\xs\z.z x (xs cont)
+in io (64k tk knil)

@@ -1,0 +1,9 @@
+-- take 1024
+\io.let
+   knil = \_\x\y.y;
+   2 = \f\x.f (f x);
+   10 = \f\x.f (f (f (f (f (f (f (f (f (f x)))))))));
+   1k = 10 2;
+   -- (list (cn tk tailarg)) gives the first cn elements of the list, followed by the remainder applied to tailarg
+   tk = \cont\x\xs\z.z x (xs cont)
+in io (1k tk knil)

@@ -14,28 +14,35 @@ The machine takes its input from stdin, so this works just like cat with no argu
 You can do
   make prog.blc
 or 
-  make prog.Blc
+  make prog.blc8
 to compile programs for universal machine uni.lam or the byte oriented uni8.lam
+The compiled code is best placed in the bin subdirectory.
+Setting environment variable BLCPATH allow ./uni to find binaries there.
 
 Run the bit-oriented universal machine with
 
   ./blc run uni.lam [conditional data]
 
-and the byte-oriented universal machine
+or in absence of conditional data, with
+
+  ./uni -b
+
+Run the byte-oriented universal machine with
 
   ./blc run8 uni8.lam [conditional data]
 
-For a list of more actions, run
+or in absence of conditional data, with
 
-  ./blc help
+  ./uni
+
+Running ./blc without arguments will show all available actions.
+
+  ./uni -h will show how to see all options and typical uses
 
 See the lambda source files *.lam for more examples.
 
-In the absence of a Haskell runtime environment, one can use
-the perl blc interpreter blc.pl to run blc programs;
-perl blc.pl is equivalent to ./blc run uni.lam, while perl blc.pl -8 is the
-byte oriented verion, equivalent to ./blc run8 uni.lam.
-This interpreter doesn't support conditional arguments though.
+Implementations of the universal machine in many other languages
+may be found at https://rosettacode.org/wiki/Universal_Lambda_Machine
 
 See http://en.wikipedia.org/wiki/Binary_lambda_calculus
 for background information and the paper LC.pdf for technical details.

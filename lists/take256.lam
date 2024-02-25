@@ -1,0 +1,10 @@
+-- take 256
+\io.let
+   knil = \_\x\y.y;
+   2 = \f\x.f (f x);
+   3 = \f\x.f (f (f x));
+   8 = 3 2;
+   256 = 8 2;
+   -- (list (cn tk tailarg)) gives the first cn elements of the list, followed by the remainder applied to tailarg
+   tk = \cont\x\xs\z.z x (xs cont)
+in io (256 tk knil)

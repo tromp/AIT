@@ -170,7 +170,6 @@ u32 convertK(u32 db, u32 *pn) {
 u32 toCLK(u32 db) {
   u32 n, cl = convertK(db,&n);
   if (n) die("program not a closed term");
-  nbits = 0;                        // skip remaining bits in last program byte
   return cl;
 }
 
@@ -302,7 +301,11 @@ void run(u32 x) {
       case '!': putch(outbits);                           // output byte
                 lazy(0, x = arg(1), '>'); break;
       case '-': getbit(); nbits++;                        // input
-                if (inbits == EOF) { lazy(0, x = 'K', 'I'); break; }
+                if (inbits == EOF) {
+                  if (fp == stdin) lazy(0, x = 'K', 'I');
+                  else { fp = stdin; nbits = 0; }         // allow reading from program file
+                  break;
+                }
                 if (mode) {
                   for (x='F'; nbits; nbits--,inbits>>=1)
                     x = app(app(':', "KF"[inbits&1]), x);
@@ -328,12 +331,16 @@ void showNL(u32 n) {
   putchar('\n');
 }
 
-// Instead of running   (cat prog.blc8 -) | uni
-// or                   (cat prog.blc  -) | uni -b
-// one can now run these as                 uni [-b] prog
+// Instead of running   (cat prog.blc8 -) | ./uni
+// or                   (cat prog.blc  -) | ./uni -b
+// one can now run these as                 ./uni [-b] prog
 // It's also possible to run multiple programs in sequence:
 // uni [options] prog1 prog2 prog3 is equivalent to (cat prog123 -) | uni [options]
 // where prog123 is the function composition prog3 . prog2 . prog1
+
+// The final program can have input embedded in its file after its lambda term,
+// which will be effectively preprended to stdin
+// Earlier programs must have no embedded input
 
 // Each prog$i is parsed from file $BLCPATH/prog$i.blc$suff
 // where suffix $suff is a substring of "28" depending on the options.
@@ -341,7 +348,8 @@ void showNL(u32 n) {
 //
 // For example, the separate steps of section "Converting between bits and bytes"
 // in https://www.ioccc.org/2012/tromp/hint.html can be replaced by 
-// echo "\a a ((\b b b) (\b \c \d \e d (b b) (\f f c e))) (\b \c c)" | uni parse deflate > rev.blc8
+/* echo "\a a ((\b b b) (\b \c \d \e d (b b) (\f f c e))) (\b \c c)" | uni parse deflate > rev.blc8
+HELP */
 
 int main(int argc, char **argv) {
   u32 db, dbgProg;
@@ -354,7 +362,7 @@ int main(int argc, char **argv) {
       case 'b': mode = 0; break;    // bit mode
       case 'l': qBLC2 = 1;break;    // parse BLC2 aka Levenshtein coding
       case 'g': dbgGC = 1; break;   // show garbage collection stats
-      case 'h': printf("usage: see\t\tgrep -C 16 'main(int' uni.c\n"); exit(0);
+      case 'h': printf("usage: grep -C 19 ^HELP uni.c\n"); exit(0);
       case 'p': dbgProg = 1; break; // print parsed program
       case 'q': qOpt = 1; break;    // questionable clapp optimizations
       case 's': dbgSTP = 1; break;  // show steps every 2^28
@@ -373,10 +381,14 @@ int main(int argc, char **argv) {
     fp = fopen(filepath, "r");
     if (!fp) die("file not found.");
     u32 fcl = toCLK(db = qBLC2 ? parseBLC2() : parseBLC());
+    nbits = 0;                        // skip remaining bits in last program byte
     cl = !cl ? fcl : app(app('B',fcl), cl);
   }
-  fp = stdin;
-  if (!cl) cl = toCLK(db = qBLC2 ? parseBLC2() : parseBLC());
+  if (!cl) {
+    fp = stdin;
+    cl = toCLK(db = qBLC2 ? parseBLC2() : parseBLC());
+    nbits = 0;                        // skip remaining bits in last program byte
+  }
   if (dbgProg) {
     if (db) showNL(db);
     showNL(cl);
