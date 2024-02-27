@@ -15,7 +15,7 @@ blc:	AIT.lhs Lambda.lhs Main.lhs
 uni:	uni.c
 	$(CC) -O3 -Wall uni.c -o uni
 
-test:	uni.pl uni.js uni.py
+test:	uni.pl uni.js uni.py uni.rb uni
 	echo ' hi' | ./uni.py
 	echo ' hi' | ./uni.js
 	echo ' hi' | ./uni.pl

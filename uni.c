@@ -334,13 +334,14 @@ void showNL(u32 n) {
 // Instead of running   (cat prog.blc8 -) | ./uni
 // or                   (cat prog.blc  -) | ./uni -b
 // one can now run these as                 ./uni [-b] prog
-// It's also possible to run multiple programs in sequence:
-// uni [options] prog1 prog2 prog3 is equivalent to (cat prog123 -) | uni [options]
-// where prog123 is the function composition prog3 . prog2 . prog1
 
-// The final program can have input embedded in its file after its lambda term,
-// which will be effectively preprended to stdin
-// Earlier programs must have no embedded input (uni will error if they do)
+// Any input that prog has embedded in its file after its lambda term
+// will be effectively preprended to stdin
+
+// It's also possible to run multiple programs in sequence,
+// provided they have no embedded input (uni will error if they do):
+// uni [options] prog1 prog2 prog3 is equivalent to ./uni [options] prog123
+// where prog123 is the function composition prog3 . prog2 . prog1
 
 // Each prog$i is parsed from file $BLCPATH/prog$i.blc$suff
 // where suffix $suff is a substring of "28" depending on the options.
@@ -350,6 +351,7 @@ void showNL(u32 n) {
 // in https://www.ioccc.org/2012/tromp/hint.html can be replaced by 
 /* echo "\a a ((\b b b) (\b \c \d \e d (b b) (\f f c e))) (\b \c c)" | uni parse deflate > rev.blc8
 HELP */
+// since neither parse nor deflate has embedded input.
 
 int main(int argc, char **argv) {
   u32 db, dbgProg;
@@ -375,16 +377,16 @@ int main(int argc, char **argv) {
   u32 cl = 0;
   char filepath[256];
   const char *blcpath = getenv("BLCPATH");
-  for (; optind < argc; optind++) {
+  for (int qComp = optind < argc-1; optind < argc; optind++) {
     sprintf(filepath, "%s/%s.blc%s%s", blcpath, argv[optind], qBLC2?"2":"", mode?"8":"");
     fprintf(stderr, "Opening file %s\n", filepath);
     fp = fopen(filepath, "r");
     if (!fp) die("file not found.");
     u32 fcl = toCLK(db = qBLC2 ? parseBLC2() : parseBLC());
     nbits = 0;           // skip remaining bits in last lambda term byte
-    if (optind < argc-1) {
+    if (qComp) {
       getbit(); nbits=0; // check for embedded input following lambda term
-      if (inbits != EOF) die("program input lost in composition");
+      if (inbits != EOF) die("program input gets misplaced in composition");
     }
     cl = !cl ? fcl : app(app('B',fcl), cl);
   }
