@@ -13,7 +13,7 @@ blc:	AIT.lhs Lambda.lhs Main.lhs
 	$(GHC) -O2 -Wall --make Main.lhs -o blc
 
 uni:	uni.c
-	$(CC) -O3 -Wall --make uni.c -o uni
+	$(CC) -O3 -Wall uni.c -o uni
 
 test:	uni.pl uni.js uni.py
 	echo ' hi' | ./uni.py

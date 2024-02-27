@@ -295,7 +295,7 @@ void run(u32 x) {
       case 'S': lazy(2, x = apparg(1,3), apparg(2,3)); break;
       case '0':
       case '1': if (mode)
-                  outbits = outbits<<1 | x&1;             // output bit
+                  outbits = outbits<<1 | (x&1);             // output bit
                 else putch(x);
                 lazy(0, x = arg(1), '+'); break;
       case '!': putch(outbits);                           // output byte
@@ -340,7 +340,7 @@ void showNL(u32 n) {
 
 // The final program can have input embedded in its file after its lambda term,
 // which will be effectively preprended to stdin
-// Earlier programs must have no embedded input
+// Earlier programs must have no embedded input (uni will error if they do)
 
 // Each prog$i is parsed from file $BLCPATH/prog$i.blc$suff
 // where suffix $suff is a substring of "28" depending on the options.
@@ -381,13 +381,17 @@ int main(int argc, char **argv) {
     fp = fopen(filepath, "r");
     if (!fp) die("file not found.");
     u32 fcl = toCLK(db = qBLC2 ? parseBLC2() : parseBLC());
-    nbits = 0;                        // skip remaining bits in last program byte
+    nbits = 0;           // skip remaining bits in last lambda term byte
+    if (optind < argc-1) {
+      getbit(); nbits=0; // check for embedded input following lambda term
+      if (inbits != EOF) die("program input lost in composition");
+    }
     cl = !cl ? fcl : app(app('B',fcl), cl);
   }
   if (!cl) {
     fp = stdin;
     cl = toCLK(db = qBLC2 ? parseBLC2() : parseBLC());
-    nbits = 0;                        // skip remaining bits in last program byte
+    nbits = 0;           // skip remaining bits in last program byte
   }
   if (dbgProg) {
     if (db) showNL(db);
