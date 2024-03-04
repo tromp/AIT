@@ -1,0 +1,16 @@
+\io.let
+  1 = \x.x;
+  2 = \f\x. f(f x);
+  3 = \f\x. f(f(f x));
+  mul = \m\n\f.m(n f);
+  pred = \n\f\x.n(\g\h.h(g f))(\u.x)1;
+  6 = mul 2 3;
+  Y = \f. (\x. x x) (\x. f (x x));
+  fac = \f\n. n (\_. mul n (f (pred n))) 1;
+  cons = \x\y\z.z x y
+in io (\c\nil. Y fac 6 (cons c) nil)
+
+-- output 6! in unary:
+-- 11 c2 a3 40 b0 bf 65 ee 05 7c 0c ef 18 89 70 39
+-- d0 39 ce 81 6e c0 3c e8 31              
+
