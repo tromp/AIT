@@ -30,4 +30,4 @@
   evenLen = \fs\l. l (\_\t\_.fs false true t) true;
   oddLen  = \fs\l. l (\_\t\_.fs       true t) l;
   evenOdd = Ygen2 (cons evenLen (cons oddLen nil))
-in Ygen2 -- cons (evenOdd true io) nil
+in cons (evenOdd true io) nil
