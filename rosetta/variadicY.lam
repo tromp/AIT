@@ -19,8 +19,9 @@
 
   map = \f. (let go = \l.l(\h\t\_\z.z (f h) (go t))l in go);
 
-  iffy = \fi\xs. fi (map (\xi. xi xs) xs);
-  Ygen = \fs. map (\fi. iffy fi (map iffy fs)) fs;
+  foo = \fi\xs. fi (map (\xi. xi xs) xs);
+  Ygen  = \fs. map (\fi. foo fi (map foo fs)) fs;
+  Ygen2 = \fs. map (\fi.     fi (Ygen2   fs)) fs; -- somehow equivalent to Ygen
 
   true = \x\y.x;
   false = \x\y.y;
@@ -28,5 +29,5 @@
   cons = \x\y\z.z x y;
   evenLen = \fs\l. l (\_\t\_.fs false true t) true;
   oddLen  = \fs\l. l (\_\t\_.fs       true t) l;
-  evenOdd = Ygen (cons evenLen (cons oddLen nil))
-in cons (evenOdd true io) nil
+  evenOdd = Ygen2 (cons evenLen (cons oddLen nil))
+in Ygen2 -- cons (evenOdd true io) nil
