@@ -1,4 +1,4 @@
-let
+\io. let
   -- general form for mutual recursion
   -- https://www.khoury.northeastern.edu/home/shivers/papers/scheme02/article/variadic-y.pdf
   Y20 = \f0\f1. (
@@ -22,5 +22,11 @@ let
   iffy = \fi\xs. fi (map (\xi. xi xs) xs);
   Ygen = \fs. map (\fi. iffy fi (map iffy fs)) fs;
 
-  Y = \f. (\x. x x) (\x. f (x x))
-in Y
+  true = \x\y.x;
+  false = \x\y.y;
+  nil = false;
+  cons = \x\y\z.z x y;
+  evenLen = \fs\l. l (\_\t\_.fs false true t) true;
+  oddLen  = \fs\l. l (\_\t\_.fs       true t) l;
+  evenOdd = Ygen (cons evenLen (cons oddLen nil))
+in cons (evenOdd true io) nil
