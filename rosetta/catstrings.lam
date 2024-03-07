@@ -1,0 +1,4 @@
+\io.let
+  rec = \x\xs\ys\p.p x (xs rec ys);
+  cat = \xs.xs rec
+in io (\_\t. cat t io)
