@@ -272,6 +272,7 @@ Bitstring functions -----------------------------------------------------
 >   nl = (++ "\n")
 >  in case op of
 >   "run"     -> nl .   bshow . nf . toDB . machine $  bitstoLC lcFalse input
+>   "runf"    -> nl .    show . nf . toDB . machine $  bitstoLC lcFalse input
 >   "runO"    -> nl .   bshow . nf . toDB . machine $  bitstoLC (error "Omega") input
 >   "run8"    -> nl .   bshow . nf . toDB . machine $ bytestoLC lcFalse input
 >   "print"   -> nl .                     show             $ prog

@@ -1,0 +1,36 @@
+let
+  I  = \x. x;
+  T = \x\y.x;
+  F = \x\y.y;
+  nil = F;-- \p\n.n
+  cons = \x\y\p\n.p x y;
+  K = T;
+  B = \x\y\z.x   (y z);
+  C = \x\y\z.x z y;
+  R = \x\y\z.y z x;
+  S = \x\y\z.x z (y z);
+
+  -- compose cont tm m tn n = cont (\...\ tm ...0 (tn ...0)) (max m n)
+  cmps = \cont\tm\m\tn\n.m (\bm.n (\bn\n1. bm bm bn (cmps (\t\m1.cmps (\t\l.cont t (cons T l)) t m1 tn n1)
+                                                          (bm (bn S C) (bn B I)) nil tm)
+                                                    (\m1. cmps (\t\l. cont t (cons F l)) tm m1 tn n1))
+                                  (bm (    cmps (\t\_.cont t m) (R tn) n tm)
+                                      (\m1. cmps (\t\_.cont t m) tm m1 tn n)))
+                           (n (\b.cmps (\t\_.cont t n) (b B I tm) m tn)
+                              (cont (tm tn) n));
+  -- Kiselyov LC interpreter
+  -- intK cont bits = cont closedup unlambdas unparsed_bits
+  intK = \cont\list.list (\bit0\list1.list1 (\bit1.bit0
+    (intK (\tm\m.bit1 (m (\b.b (cont tm)
+                               (cmps cont K nil tm))
+                         (cont (K tm) m))
+                      (intK (cmps cont tm m))))
+    (bit1 (cont I (cons T nil))
+         (\list2.intK (\t\n.cont t (cons F n)) list1))));
+  
+  -- loop
+  omega = omega;
+
+  -- binary LC universal machine for closed programs
+  uni = intK (\t\n. n omega t)
+in uni
