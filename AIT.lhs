@@ -36,39 +36,51 @@ map (size2.DBVar) [0..17] = [2, 3, 5, 5, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 9, 9,13,1
 
 > encode2 :: DB -> String
 > encode2 z = prebin z "" where
->     prebin (DBVar 0) s = '1':'0':s
->     prebin (DBVar i) s | i>0 = ('1':) . prebin (DBVar (length (showi "") - 1)) . tail . showi $ s where
->       showi = showBin i
->       showBin = showIntAtBase 2 intToDigit 
->     prebin (DBVar   _) _ = error "Negative de-Bruijn index"
->     prebin (DBLam   e) s = '0':'0':(prebin e s)
->     prebin (DBApp x y) s = '0':'1':(prebin x (prebin y s))
+>   prebin (DBVar 0) s = '1':'0':s
+>   prebin (DBVar i) s | i>0 = ('1':) . prebin (DBVar (length (showi "") - 1)) . tail . showi $ s where
+>     showi = showBin i
+>     showBin = showIntAtBase 2 intToDigit 
+>   prebin (DBVar   _) _ = error "Negative de-Bruijn index"
+>   prebin (DBLam   e) s = '0':'0':(prebin e s)
+>   prebin (DBApp x y) s = '0':'1':(prebin x (prebin y s))
 
 > size2 :: DB -> Int
 > size2 = length . encode2
 
+> encode0 :: DB -> String
+> encode0 z = prebin 0 z "" where
+>   prebin :: Int -> DB -> String -> String
+>   prebin 0 (DBVar _) _ = error "bad index"
+>   prebin n (DBVar 0) s = if n==1 then '1':s else '1':'0':s
+>   prebin n (DBVar i) s = '1':(prebin (n-1) (DBVar (i-1)) s)
+>   prebin n (DBLam   e) s = (if n==0 then id else ('0':)) $ '0':(prebin (n+1) e s)
+>   prebin n (DBApp x y) s = (if n==0 then id else ('0':)) $ '1':(prebin n x (prebin n y s))
+
+> size0 :: DB -> Int
+> size0 = length . encode0
+
 > {-- adaption for alternate encoding as used in int4.lam
->     prebin (DBVar i) s | i>0 = '1':'1':(prebin (DBVar (i-1)) s)
->     prebin l@(DBLam   e) s = succpref ++ '0':'0':(prebin se s) where
->       mf = minFree 0 l
->       succpref = trace ("mf "++show l++" ="++show mf) $ if mf > 0 then replicate (2*mf) '+' else ""
->       se = if mf > 0 then adjust mf 1 e else e
->     prebin a@(DBApp x y) s = succpref ++ ('0':'1':(prebin sx (prebin sy s))) where
->       mf = minFree 0 a
->       succpref = if mf > 0 then replicate (2*mf) '+' else ""
->       sx = if mf > 0 then adjust mf 0 x else x
->       sy = if mf > 0 then adjust mf 0 y else y
->     adjust by n e@(DBVar j) | j >= n = DBVar (j-by)
->                          | otherwise = e
->     adjust by n (DBLam body) = DBLam (adjust by (succ n) body)
->     adjust by n (DBApp fun arg) = DBApp (adjust by n fun) (adjust by n arg)
->     minFree :: Int -> DB -> Int
->     minFree n (DBVar i) = if i < n then -1 else i-n
->     minFree n (DBLam e) = minFree (n+1) e
->     minFree n (DBApp fun arg) = posmin (minFree n fun) (minFree n arg)
->     posmin (-1) x = x
->     posmin x (-1) = x
->     posmin x y = min x y
+>   prebin (DBVar i) s | i>0 = '1':'1':(prebin (DBVar (i-1)) s)
+>   prebin l@(DBLam   e) s = succpref ++ '0':'0':(prebin se s) where
+>     mf = minFree 0 l
+>     succpref = trace ("mf "++show l++" ="++show mf) $ if mf > 0 then replicate (2*mf) '+' else ""
+>     se = if mf > 0 then adjust mf 1 e else e
+>   prebin a@(DBApp x y) s = succpref ++ ('0':'1':(prebin sx (prebin sy s))) where
+>     mf = minFree 0 a
+>     succpref = if mf > 0 then replicate (2*mf) '+' else ""
+>     sx = if mf > 0 then adjust mf 0 x else x
+>     sy = if mf > 0 then adjust mf 0 y else y
+>   adjust by n e@(DBVar j) | j >= n = DBVar (j-by)
+>                        | otherwise = e
+>   adjust by n (DBLam body) = DBLam (adjust by (succ n) body)
+>   adjust by n (DBApp fun arg) = DBApp (adjust by n fun) (adjust by n arg)
+>   minFree :: Int -> DB -> Int
+>   minFree n (DBVar i) = if i < n then -1 else i-n
+>   minFree n (DBLam e) = minFree (n+1) e
+>   minFree n (DBApp fun arg) = posmin (minFree n fun) (minFree n arg)
+>   posmin (-1) x = x
+>   posmin x (-1) = x
+>   posmin x y = min x y
 > --}
 
 Size in bits of an expression, assuming no free variables
@@ -298,6 +310,7 @@ Bitstring functions -----------------------------------------------------
 >   "blc2"    ->                 encode2 . optimize . toDB $ prog
 >   "size"    -> nl .       show . size  . optimize . toDB $ prog
 >   "size2"   -> nl .       show . size2 . optimize . toDB $ prog
+>   "size0"   -> nl .       show . size0 . optimize . toDB $ prog
 >   "help"    -> unlines usage
 >   a         -> "Action " ++ a ++ " not recognized.\n"
 
@@ -329,5 +342,6 @@ Bitstring functions -----------------------------------------------------
 >   "blc2\tencode as Levenshtein binary lambda calculus bits",
 >   "size\tshow size in bits",
 >   "size2\tshow size with levenshtein encoded de bruijn indices",
+>   "size0\tshow size with Mateusz encoding",
 >   "help\tshow this text"
 >   ]
