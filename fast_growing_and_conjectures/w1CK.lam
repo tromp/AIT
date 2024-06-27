@@ -1,18 +1,25 @@
 -- See https://googology.fandom.com/wiki/Church-Kleene_ordinal for more
 let
   -- Church numerals, corresponding to Church encoding of
-  -- data Nat = Zero | Succ Nat
-  -- type: N = forall r. r -> (r -> r) -> r
+  -- data Nat = Succ Nat | Zero
+  -- type: N = forall r. (r -> r) -> r -> r
   CZero = \f\x. x;
   Csucc = \n.\f\x. f (n f x);
-  C0 = CZero;
-  C1 = Csucc C0;
-  C2 = Csucc C1;
-  C3 = Csucc C2;
+  C0 = CZero;      -- size 6
+  C1 = Csucc C0;   -- size 4
+  C2 = \s\z.s(s z);   -- size 16
+  C3 = \s\z.s(s(s z));   -- size 21
+  C4 = \s\z.s(s(s(s z)));   -- size 26
+  C5 = \s\z.s(s(s(s(s z))));   -- size 31
+  C6 = \s\z.s(s(s(s(s(s z)))));   -- size 36
+  C7 = \s\z.s(s(s(s(s(s(s z))))));   -- size 41
+  C8 = \s\z.s(s(s(s(s(s(s(s z)))))));   -- size 46
+  C9 = \s\z.s(s(s(s(s(s(s(s(s z))))))));   -- size 51
+  C10 = \s\z.s(s(s(s(s(s(s(s(s(s z)))))))));  -- size 56
 
   -- Kleene ordinals, corresponding to Church encoding of
-  -- data Ord = Zero | Succ Ord | Lim (Nat -> Ord)
-  -- type: forall r. r -> (r -> r) -> ((N -> r) -> r) -> r
+  -- data Ord = Lim (Nat -> Ord) | Succ Ord | Zero
+  -- type: forall r. ((N -> r) -> r) -> (r -> r) -> r -> r
   Zero =    \l\s\z.            z     ; -- ordinal 0
   Succ = \n.\l\s\z.       s (n l s z); -- successor ordinal n+1
   Lim  = \f.\l\s\z. l (\n. f n l s z); -- limit ordinal sup { f C0, f C1, f C2, ... }
@@ -23,18 +30,19 @@ let
   -- if f Cn is in K for all Church numerals Cn, then Lim f is in K
 
   O0 = Zero;                 -- size 8
-  O1 = Succ O0;              -- size 6
-  O2 = Succ O1;              -- size 53
-  O3 = Succ O2;              -- size 57
-  O4 = Succ O3;              -- size 61
-  O5 = Succ O4;              -- size 65
-  O6 = Succ O5;              -- size 69
-  O7 = Succ O6;              -- size 73
-  O8 = Succ O7;              -- size 77
+  O1 = \l.C1;                -- size 6
+  O2 = \l\s\z.s(s z);        -- size 18
+  O3 = \l\s\z.s(s(s z));     -- size 23
   -- limit ordinal sup { O0, O1, O2, ... }
-  Ow = Lim (\n.n Succ Zero); -- size 79
-  O9 = Succ O8;              -- size 81
-  Ow1 = Succ Ow;             -- size 93;
+  Ow = Lim (\n\l\s\z.n s z); -- size 27
+  O4 = \l.C4;                -- size 28
+  Ow1 = Succ Ow;             -- size 32
+  O5 = \l.C5;                -- size 33
+  O6 = \l.C7;                -- size 38
+  O7 = \l.C7;                -- size 43
+  O8 = \l.C8;                -- size 48
+  O9 = \l.C9;                -- size 53
+  O10 = \l.C10;              -- size 58
 
   -- arithmetic
   add  = \n\m. m Lim Succ n;             -- size 92
@@ -72,10 +80,10 @@ let
       (\p. cons (Succ (fst p)) (Succ (fst p)))
       (cons Zero Zero));
 
-  Ow2      = add Ow Ow;                       -- size 130  w * 2
-  Oww      = expw Ow;                         -- size 176  w^w
-  Oeps0    = Lim (\n. n expw O0);             -- size 202  epsilon_0
-  OepsSucc = \e. Lim (\n. n expw (Succ e));   -- size 210  epsilon_i -> epsilon_i+1
+  Ow2      = add Ow Ow;                       -- size 109  w * 2
+  Oww      = expw Ow;                         -- size 146  w^w
+  Oeps0    = Lim (\n. n expw O0);             -- size 167  epsilon_0
+  OepsSucc = \e. Lim (\n. n expw (Succ e));   -- size 187  epsilon_i -> epsilon_i+1
 
   iter = \f\n. n f n;             -- iterate
   diag = \f\n. f n n;             -- diagonalize
@@ -114,16 +122,17 @@ let
   -- Fundamental sequence for w1CK
   -- w1CKi is the BLC-lexicographically-minimal ordinal exceeding all w1CKj for j < i
   -- similar to a Busy Beaver for ordinals
-  -- Conjectured first 11 elements:
-  w1CK0 = O0;
-  w1CK1 = O1;
-  w1CK2 = O2;
-  w1CK3 = O3;
-  w1CK4 = O4;
-  w1CK5 = O5;
-  w1CK6 = O6;
-  w1CK7 = O7;
-  w1CK8 = O8;
-  w1CK9 = Ow;  -- lexicographically precedes O9
-  w1CK10 = Ow1; -- must be larger than w1CK9
+  -- Conjectured first 12 elements:
+  w1CK0 = O1;  -- size 6
+  w1CK1 = O2;  -- size 18
+  w1CK2 = O3;  -- size 23
+  w1CK3 = Ow;  -- size 27
+  w1CK4 = O4;  -- size 28
+  w1CK5 = Ow1; -- size 32
+  w1CK6 = O5;  -- size 33
+  w1CK7 = O6;  -- size 38
+  w1CK8 = O7;  -- size 43
+  w1CK9 = O8;  -- size 48
+  w1CK10 = O9; -- size 53
+  w1CK11 = O10;-- size 58
 in fgh Oeps0
