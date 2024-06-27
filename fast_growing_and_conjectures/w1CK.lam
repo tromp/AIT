@@ -60,6 +60,18 @@ let
   -- expw (Lim f) = Lim f Lim (\x. mul x Ow) O1
   --       = Lim (\i. f i Lim (\x. mul x Ow) O1) = Lim (\i. expw (f i))
 
+
+  -- extract fundamental sequence
+  True = \x\y.x;
+  False = \x\y.y;
+  cons = \x\y\z.z x y;
+  fst = \x. x True;
+  snd = \x. x False;
+  funseq = \o\ci. snd (o
+      (\f. cons (Lim (\n. fst (f n))) (fst (f ci)))
+      (\p. cons (Succ (fst p)) (Succ (fst p)))
+      (cons Zero Zero));
+
   Ow2      = add Ow Ow;                       -- size 130  w * 2
   Oww      = expw Ow;                         -- size 176  w^w
   Oeps0    = Lim (\n. n expw O0);             -- size 202  epsilon_0
