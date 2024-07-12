@@ -6,25 +6,23 @@ let
   gt = \x\y. notZero (y pred x); -- greater than
   succ = \n\f\x. f (n f x);
 
-  mod = \m. let go = \x. gt m x x (go (m pred x)) in go;
-
-  expand = \rows\m\i. let m1 = m 1 in
+  expand = \mod\m\i. let m1 = m 1 in
     gt i m1
       (m (m1 pred (succ i)))    --  copy array element i+1 - m1
       (let msis = m (succ i) succ;  in msis (
         notZero i
-          (gt (msis i) (m1 succ (mod rows (pred (m 0)))) m1 0)
+          (gt (msis i) (m1 succ mod) m1 0)
           (pred (m i))));        -- new array length = old length - 1 + m1
 
   matrix0 = \n\k. gt k n 0 n;    -- single column of n n's
 
   BMS = \rows. let
-    bms = \matrix. notZero (matrix 0) (succ (bms (expand rows matrix))) 1
-  in bms (matrix0 rows);
+    bms = \matrix\mod. notZero (matrix 0) (succ (bms (expand mod matrix) (pred (notZero mod mod rows)))) mod
+  in bms (matrix0 rows) (pred rows);
 
   2 = \f\x. f (f x)
 in
-  2 2 BMS 2                      -- 539 = 7 * 77 bits; 67.375 bytes
+  2 2 BMS 2                      -- 524 bits; 65.5 bytes
 
 --						G | B0 | C
 
@@ -72,45 +70,3 @@ in
 
 -- HALT            = (0,0)			|
 --  0                (0,0)			|
-
--- The above code is an optimized version of Patcail's code
--- in https://discord.com/channels/206932820206157824/376768078450786304/1260631065811484765 :
--- let
---   1 = \x.x
---   0 = \f.1
---   2 = \f\x. f (f x)
---   Self = \x.x x
---   Succ = \n\f\x. f (n f x)
---   Pred = \n\f\x. n (\g\h.h (g f))(\u.x)(\u.u)
---   IsZero = \n\a\b. n (\u.b) a
---   Greater = \x\y\a\b. y Pred x (\u.a) b
---   Greatereq = \x\y\a\b. x Pred y (\u.b) a
---   Mod = Self (\m\x\y. Greater y x x (m m (y Pred x) y))
---   Expand = \rows\matrix\index. IsZero index (Pred (matrix 0 Succ (matrix 1))) (Greater index (matrix 1) (matrix (matrix 1 Pred (Succ index))) (matrix (Succ index) Succ (Greater (matrix (Succ index) Succ index) (matrix 1 Succ (Mod (Pred (matrix 0)) rows)) (matrix 1) 0)))
---   BMS = \rows. Self (\b\matrix. IsZero (matrix 0) 1 (Succ (b b (Expand rows matrix)))) (\k. Greater k rows 0 rows)
---   BIGNUM = (\x. x x BMS x) 2
--- in
---   BIGNUM
-
--- The idea is that searching for parents and ancestors is hard. So instead, we just store the location (or how far away) the parent is directly. This pointer is inherently forward-looking. This means storage is in reverse order of regular BMS. This notation is known as Reversed Flattened Pointer Matrix System (RFPMS).
--- 
--- Example: Suppose we start with this
--- (0,0,0,0)(1,1,1,1)(2,1,0,0)(2,0,0,0)(1,1,1)
--- We flatten this. We will run using rows=4.
--- [0,0,0,0;1,1,1,1;2,1,0,0;2,0,0,0;1,1,1]
--- Then all nonzero entries become the distance they are to the parent. This is always a multiple of 4, since there are 4 rows.
--- 
--- Example- the bold is the parent of the italicized. Since the distance between them is 8, we replace the italicized number with 8:
--- [0,0,0,0;1,1,1,1;2,1,0,0;2,0,0,0;1,1,1]
--- 
--- Applying this transformation gets us here:
--- [0,0,0,0;4,4,4,4;4,8,0,0;8,0,0,0;16,16,16]
--- 
--- We reverse this, represented by this array:
--- [16,16,16,0,0,0,8,0,0,8,4,4,4,4,4,0,0,0,0]
--- 
--- It turns out this is much easier to expand than regular BMS. Expansion rule is literally "If you number+index is big enough, ascend." This handles all the ascension stuff, even ascension matrices.
--- 
--- Even better, remember those pesky zeroes? Those are parentless, so we call them orphans. It turns out PMS naturally handles these terms by deleting them, i.e. for successor case or simplification case. And if we let zeroes be default terms, we don't have to explicitly keep them in the array. So the above array is really [16,16,16,0,0,0,8,0,0,8,4,4,4,4,4]
--- 
--- You can read more here, but note that my codegolf entry used FAMS (Flattened Address Matrix System) rathert than the slightly more cryptic RFPMS: https://codegolf.stackexchange.com/questions/18028/largest-number-printable/273656#273656
