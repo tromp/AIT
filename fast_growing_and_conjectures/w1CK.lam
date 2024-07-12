@@ -60,7 +60,7 @@ let
   --                = add (m Lim (\x. add x n) Zero) n = add (mul n m) n
   -- mul n (Lim f) = Lim f Lim (\x. add x n) Zero
   --        = Lim (\i. f i Lim (\x. add x n) Zero) = Lim (\i. mul n (f i))
-  expw = \n. n Lim (\x. mul x Ow) O1;    -- size 175
+  expw = \n. n Lim (\x. mul x Ow) O1;    -- size 143
   -- expw Zero = Zero Lim (\x. mul x Ow) O1 = O1
   -- expw (Succ n) = Succ n Lim (\x. mul x Ow) O1
   --    = (\x. mul x Ow) (n Lim (\x. mul x Ow) O1)
@@ -75,9 +75,9 @@ let
   cons = \x\y\z.z x y;
   fst = \x. x True;
   snd = \x. x False;
-  funseq = \o\ci. snd (o
+  funseq = \o\ci. snd (o         -- 185 bits
       (\f. cons (Lim (\n. fst (f n))) (fst (f ci)))
-      (\p. cons (Succ (fst p)) (Succ (fst p)))
+      (\p. let sfp = (Succ (fst p)) in cons sfp sfp)
       (cons Zero Zero));
 
   Ow2      = add Ow Ow;                       -- size 109  w * 2
