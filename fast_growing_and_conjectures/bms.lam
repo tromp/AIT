@@ -8,13 +8,13 @@ let
 
   mod = \m. let go = \x. gt m x x (go (m pred x)) in go;
 
-  expand = \rows\m\i.
-    gt i (m 1)
-      (m (m 1 pred (succ i)))    --  copy array element i+1 - m 1
-      (let msis = m (succ i) succ in msis (
+  expand = \rows\m\i. let m1 = m 1 in
+    gt i m1
+      (m (m1 pred (succ i)))    --  copy array element i+1 - m1
+      (let msis = m (succ i) succ;  in msis (
         notZero i
-          (gt (msis i) (m 1 succ (mod rows (pred (m 0)))) (m 1) 0)
-          (pred (m 0))));        -- new array length = old length - 1 + m 1
+          (gt (msis i) (m1 succ (mod rows (pred (m 0)))) m1 0)
+          (pred (m i))));        -- new array length = old length - 1 + m1
 
   matrix0 = \n\k. gt k n 0 n;    -- single column of n n's
 
@@ -24,7 +24,7 @@ let
 
   2 = \f\x. f (f x)
 in
-  2 2 BMS 2
+  2 2 BMS 2                      -- 539 = 7 * 77 bits; 67.375 bytes
 
 --						G | B0 | C
 
