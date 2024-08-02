@@ -128,4 +128,4 @@ main = mapM_ (\(i,l) -> do
          putStr "GEN "
          print i
          mapM_ print l
-       ) (zip [0..5] gen0)
+       ) (zip [0..6] gen0)

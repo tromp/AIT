@@ -4,6 +4,8 @@ let
   C0 = \f\x.x;
   C1 = id;
   Csucc = \n\f\x. f (n f x);
+  C2 = Csucc C1;
+  C3 = Csucc C2;
   -- Scott numerals
   Ssucc = \n\s\z. s n;
   Spred = \n. n (\n1. n1) n;
@@ -37,15 +39,15 @@ let
   ;
 
   -- list equality		145 bits
-  eql = \eq \l\m. l (\t\l1\_. (m (\t2\m1\m. eq t t2 (eql l1 m1) F) m)) (m (\b\m1\_. l) T);
+  eql = \eq. let go = \l\m. l (\t\l1\_. (m (\t2\m1\m. eq t t2 (go l1 m1) F) m)) (m (\b\m1\_. l) T) in go;
 
-  -- term equality		564 bits
+  -- term equality		495 bits
   eqt = \t1\t2. eql eqb (ser t1 nil) (ser t2 nil);
 
-  -- context equality		578 bits
+  -- context equality		536 bits
   eqc = eql eqt;
 
-  subst = \v\e\d\t.let		-- 581 bits
+  subst = \v\e\d\t.let		-- 532 bits
     apply = \f\a.let kfa = \_. app f a in f
       (\b\ta. b kfa (subst S0 a Spred))
       (\ta. kfa)
@@ -53,9 +55,9 @@ let
       (     kfa)
     ;
     lift = subst S0 (var S1) Ssucc;
-  in t
-    (\b\ta\tb. pilam b (subst v e d ta) (subst (Ssucc v) (lift e) d tb))
-    (  \ta\tb. apply   (subst v e d ta) (subst        v        e  d tb))
+  in let sved = subst v e d in t
+    (\b\ta\tb. pilam b (sved ta) (subst (Ssucc v) (lift e) d tb))
+    (  \ta\tb. apply   (sved ta) (sved tb))
     (\b      . t)
     (\w      . let cmp = \v\u. v (\v1. u (cmp v1) t) (u (\u1. var (d w)) e) in cmp v w)
   ;
@@ -69,9 +71,9 @@ let
   ;
 
 -- either this or implement mutual recursion on subst + apply + lift
--- 				635 bits
+-- 				586 bits
   lift = subst S0 (var S1) Ssucc;
--- 				657 bits
+-- 				608 bits
   apply = \f\a. subst (let Sinf = Ssucc Sinf in Sinf) a a (app f a);
 
   judge = \ctx\trm\typ\z.z ctx trm typ;
@@ -79,7 +81,7 @@ let
 -- rule 1
   axiom = cons (judge nil star box);
 
--- rule 3+6			1697 bits
+-- rule 3+6			1649 bits
   weakenApp = \jdg\jdg2. jdg (\ctx\trm\typ. jdg2 (\ctx2\trm2\typ2\tail. eqc ctx ctx2 (
    let tail2 =
     typ
@@ -89,7 +91,7 @@ let
       (\w      . tail)
     in isSort typ2 (cons (judge (cons trm2 ctx2) (lift trm) (lift typ))) id tail2) tail));
 
--- rule 2			760 bits
+-- rule 2			711 bits
   iVar = \jdg. jdg (\ctx\trm\typ \tail. isSort typ
      (cons (judge (cons trm ctx) (var S0) (lift trm)) tail) tail);
 
@@ -99,7 +101,7 @@ let
   
   fold = \f\z. let go = \l. l (\h\t\z.f h (go t)) z in go;	-- 69 bits
 
--- expand list of judgements	2326 bits
+-- expand list of judgements	2281 bits
   expand = \l. fold (\j1. fold (\j2\f\x. weakenApp j1 j2 (f x)) (\t. iVar j1 ( iLamPi j1 t)) l) (axiom nil) l;
 
 -- list length		75 bits
@@ -114,7 +116,19 @@ let
   -- judgement list size			485 bits
   lsize = fold (\jdg. jdg (\ctx\trm\typ \sz\f\x. sz f (size trm f x))) C0;
 
--- derive			2458 bits
+-- derive			2413 bits
   derive = \n. jlsize (n expand nil)
 
-in derive
+in derive -- C3 expand nil
+
+-- C0 expand nil -- \\1
+--                  nil
+-- C1 expand nil -- \1 (\1 (\\1) (\\\\2 (\\1)) (\\\\2 (\\2))) (\\1)
+--                  cons (Judge nil star box) nil
+-- C2 expand nil -- \1 (\1 (\1 (\\\\2 (\\1)) (\\1)) (\\\\2 (\\1)) (\\\\2 (\\2))) (\1 (\1 (\1 (\\\\2 (\\1)) (\\1)) (\\\\1 (\\1)) (\\\\2 (\\1))) (\1 (\1 (\\1) (\\\\2 (\\1)) (\\\\2 (\\2))) (\\1)))
+--                  cons (Judge (cons star nil) star box)
+--                 (cons (Judge (cons star nil) (var S0) star)
+--                 (cons (Judge nil star box)
+--                  nil))
+-- C3 expand nil -- \1 (\1 (\1 (\\\\2 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\2 (\\1)) (\\\\2 (\\2))) (\1 (\1 (\1 (\\\\1 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\2 (\\1)) (\\\\2 (\\2))) (\1 (\1 (\1 (\\\\2 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\1 (\\1)) (\\\\2 (\\1))) (\1 (\1 (\\1) (\\\\4 (\\2) (\\\\2 (\\1)) (\\\\2 (\\1))) (\\\\2 (\\2))) (\1 (\1 (\1 (\\\\2 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\1 (\\2 (\\1))) (\\\\2 (\\1))) (\1 (\1 (\1 (\\\\1 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\1 (\\2 (\\1))) (\\\\2 (\\1))) (\1 (\1 (\1 (\\\\1 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\1 (\\1)) (\\\\1 (\\2 (\\1)))) (\1 (\1 (\\1) (\\\\4 (\\2) (\\\\2 (\\1)) (\\\\1 (\\1))) (\\\\2 (\\1))) (\1 (\1 (\1 (\\\\2 (\\1)) (\\1)) (\\\\2 (\\1)) (\\\\2 (\\2))) (\1 (\1 (\1 (\\\\2 (\\1)) (\\1)) (\\\\1 (\\1)) (\\\\2 (\\1))) (\1 (\1 (\\1) (\\\\2 (\\1)) (\\\\2 (\\2))) (\\1)))))))))))
+
