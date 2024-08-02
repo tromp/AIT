@@ -13,8 +13,8 @@ let
   T = \x\y. x;
   F = \x\y. y;
   --list ops
-  cons = \x\y\z.z x y;
   nil = F;
+  cons = \x\y\z.z x y;
 
   -- term constructors
   pilam = \b\ta\tb \pl\ap\bs\vr. pl b ta tb;
@@ -28,47 +28,19 @@ let
   -- boolean equality			30 bits
   eqb = \b1\b2.b1 b2 (not b2);
 
-  -- variable equality (S0==F)
-  -- variable (Scott numeral) equality	70 bits
-  eqv = \u\v. u (\u1. v (eqv u1) v) (v (\_.u) T);
-
-  -- serialize			342 bits
-  ser = \t\l. let c = cons in t
-    (\b. \ta\tb. c T (c T (c b (ser ta (ser tb l)))))
-    (    \ta\tb. c T (c F (ser ta (ser tb l))))
-    (\b   . c F (c T (c b l)))
-    (\v   . c F (c F (v (\v1. ser (var v1) l) (c T l))))
+  -- serialize			299 bits
+  ser = \t\l. let cT = cons T; cF = cons F in t
+    (\b. \ta\tb. cT (cT (cons b (ser ta (ser tb l)))))
+    (    \ta\tb. cT (cF (ser ta (ser tb l))))
+    (\b        . cF (cT (cons b l)))
+    (let go=\v . cF (cF (v go (cT l))) in go)
   ;
 
-  -- list equality		? bits
+  -- list equality		145 bits
   eql = \eq \l\m. l (\t\l1\_. (m (\t2\m1\m. eq t t2 (eql l1 m1) F) m)) (m (\b\m1\_. l) T);
 
   -- term equality		564 bits
   eqt = \t1\t2. eql eqb (ser t1 nil) (ser t2 nil);
-
-  -- term equality		480 bits
-  eqT = \t1\t2. t1
-    (\b1\ta1\tb1. t2
-      (\b2\ta2\tb2. eqb b1 b2 (eqT ta1 ta2 (eqT tb1 tb2) F) F)
-      (\ta2\tb2 . F)
-      (\b2      . F)
-      (\w2      . F))
-    (  \ta1\tb1. t2
-      (\b2\ta2\tb2. F)
-      (\ta2\tb2 . eqT ta1 ta2 (eqT tb1 tb2) F)
-      (\b2      . F)
-      (\w2      . F))
-    (\b1      . t2
-      (\b2\ta2\tb2. F)
-      (\ta2\tb2 . F)
-      (           eqb b1)
-      (\w2      . F))
-    (\w1      . t2
-      (\b2\ta2\tb2. F)
-      (\ta2\tb2 . F)
-      (\b2      . F)
-      (           eqv w1))
-  ;
 
   -- context equality		578 bits
   eqc = eql eqt;
@@ -97,9 +69,9 @@ let
   ;
 
 -- either this or implement mutual recursion on subst + apply + lift
--- 				648 bits
+-- 				635 bits
   lift = subst S0 (var S1) Ssucc;
--- 				670 bits
+-- 				657 bits
   apply = \f\a. subst (let Sinf = Ssucc Sinf in Sinf) a a (app f a);
 
   judge = \ctx\trm\typ\z.z ctx trm typ;
@@ -107,7 +79,7 @@ let
 -- rule 1
   axiom = cons (judge nil star box);
 
--- rule 3+6			1795 bits
+-- rule 3+6			1697 bits
   weakenApp = \jdg\jdg2. jdg (\ctx\trm\typ. jdg2 (\ctx2\trm2\typ2\tail. eqc ctx ctx2 (
    let tail2 =
     typ
@@ -117,37 +89,32 @@ let
       (\w      . tail)
     in isSort typ2 (cons (judge (cons trm2 ctx2) (lift trm) (lift typ))) id tail2) tail));
 
--- rule 2			773 bits
+-- rule 2			760 bits
   iVar = \jdg. jdg (\ctx\trm\typ \tail. isSort typ
      (cons (judge (cons trm ctx) (var S0) (lift trm)) tail) tail);
 
--- rule 4+5			263 bits
+-- rule 4+5			235 bits
   iLamPi = \jdg. jdg (\ctx\trm\typ. ctx (\tp\ctx1. cons (let b = isSort typ
     in judge ctx1 (pilam b tp trm) (b id (pilam T tp) typ))));
   
-  fold = \f\z. let go = \l. l (\h\t\z.f h (go t)) z in go;
+  fold = \f\z. let go = \l. l (\h\t\z.f h (go t)) z in go;	-- 69 bits
 
--- expand list of judgements	2392 bits
-  expand = \l. fold  (\j1. fold (weakenApp j1) (\t. iVar j1 ( iLamPi j1 t)) l)  (axiom nil) l;
+-- expand list of judgements	2326 bits
+  expand = \l. fold (\j1. fold (\j2\f\x. weakenApp j1 j2 (f x)) (\t. iVar j1 ( iLamPi j1 t)) l) (axiom nil) l;
 
 -- list length		75 bits
-  length = fold (\b\n. Csucc n) C0;
+  length = fold (\_. Csucc) C0;
 
-  -- term size		425 bits
-  size = \t. length (ser t);
+  -- term size		390 bits
+  size = \t. length (ser t nil);
 
-  -- exponential tower term size	106 bits
-  etsize = \t. let 2 = \f\x. f (f x); szab = \ta\tb. etsize ta (etsize tb) in t
-    (\b. szab)
-    (    szab)
-    (\b   . 2)
-    (\v   . 2)
-  ;
-
-  -- exponential tower judgement list size
+  -- exponential tower judgement list size	459 bits
   jlsize = fold (\jdg. jdg (\ctx\trm\typ \sz. sz (size trm))) C1;
 
--- derive			2466 bits
+  -- judgement list size			485 bits
+  lsize = fold (\jdg. jdg (\ctx\trm\typ \sz\f\x. sz f (size trm f x))) C0;
+
+-- derive			2458 bits
   derive = \n. jlsize (n expand nil)
 
 in derive
