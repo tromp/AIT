@@ -1,7 +1,9 @@
 let
   id = \x.x;
   -- Church numerals
+  C0 = \f\x.x;
   C1 = id;
+  Csucc = \n\f\x. f (n f x);
   -- Scott numerals
   Ssucc = \n\s\z. s n;
   Spred = \n. n (\n1. n1) n;
@@ -30,16 +32,30 @@ let
   -- variable (Scott numeral) equality	70 bits
   eqv = \u\v. u (\u1. v (eqv u1) v) (v (\_.u) T);
 
+  -- serialize			342 bits
+  ser = \t\l. let c = cons in t
+    (\b. \ta\tb. c T (c T (c b (ser ta (ser tb l)))))
+    (    \ta\tb. c T (c F (ser ta (ser tb l))))
+    (\b   . c F (c T (c b l)))
+    (\v   . c F (c F (v (\v1. ser (var v1) l) (c T l))))
+  ;
+
+  -- list equality		? bits
+  eql = \eq \l\m. l (\t\l1\_. (m (\t2\m1\m. eq t t2 (eql l1 m1) F) m)) (m (\b\m1\_. l) T);
+
+  -- term equality		564 bits
+  eqt = \t1\t2. eql eqb (ser t1 nil) (ser t2 nil);
+
   -- term equality		480 bits
-  eqt = \t1\t2. t1
+  eqT = \t1\t2. t1
     (\b1\ta1\tb1. t2
-      (\b2\ta2\tb2. eqb b1 b2 (eqt ta1 ta2 (eqt tb1 tb2) F) F)
+      (\b2\ta2\tb2. eqb b1 b2 (eqT ta1 ta2 (eqT tb1 tb2) F) F)
       (\ta2\tb2 . F)
       (\b2      . F)
       (\w2      . F))
     (  \ta1\tb1. t2
       (\b2\ta2\tb2. F)
-      (\ta2\tb2 . eqt ta1 ta2 (eqt tb1 tb2) F)
+      (\ta2\tb2 . eqT ta1 ta2 (eqT tb1 tb2) F)
       (\b2      . F)
       (\w2      . F))
     (\b1      . t2
@@ -54,8 +70,8 @@ let
       (           eqv w1))
   ;
 
-  -- context equality		628 bits
-  eqc = \l\m. l (\t\l1\_. (m (\t2\m1\m. eqt t t2 (eqc l1 m1) F) m)) (m (\t\m1\_. l) T);
+  -- context equality		578 bits
+  eqc = eql eqt;
 
   subst = \v\e\d\t.let		-- 581 bits
     apply = \f\a.let kfa = \_. app f a in f
@@ -114,6 +130,12 @@ let
 -- expand list of judgements	2392 bits
   expand = \l. fold  (\j1. fold (weakenApp j1) (\t. iVar j1 ( iLamPi j1 t)) l)  (axiom nil) l;
 
+-- list length		75 bits
+  length = fold (\b\n. Csucc n) C0;
+
+  -- term size		425 bits
+  size = \t. length (ser t);
+
   -- exponential tower term size	106 bits
   etsize = \t. let 2 = \f\x. f (f x); szab = \ta\tb. etsize ta (etsize tb) in t
     (\b. szab)
@@ -123,9 +145,9 @@ let
   ;
 
   -- exponential tower judgement list size
-  jlsize = fold (\jdg. jdg (\ctx\trm\typ \sz. sz (etsize trm))) C1;
+  jlsize = fold (\jdg. jdg (\ctx\trm\typ \sz. sz (size trm))) C1;
 
--- derive			2537 bits
+-- derive			2466 bits
   derive = \n. jlsize (n expand nil)
 
 in derive
