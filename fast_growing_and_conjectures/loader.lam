@@ -1,0 +1,131 @@
+let
+  id = \x.x;
+  -- Church numerals
+  C1 = id;
+  -- Scott numerals
+  Ssucc = \n\s\z. s n;
+  Spred = \n. n (\n1. n1) n;
+  S0    = \s\z. z;
+  S1    = Ssucc S0;
+  -- Booleans
+  T = \x\y. x;
+  F = \x\y. y;
+  --list ops
+  cons = \x\y\z.z x y;
+  nil = F;
+
+  -- term constructors
+  pilam = \b\ta\tb \pl\ap\bs\vr. pl b ta tb;
+  app   =   \ta\tb \pl\ap\bs\vr. ap   ta tb;
+  boxstar =  \b    \pl\ap\bs\vr. bs b;
+  var   = \v       \pl\ap\bs\vr. vr v;
+  box   = boxstar T;
+  star  = boxstar F;
+
+  not = \b\t\f. b f t;
+  -- boolean equality			30 bits
+  eqb = \b1\b2.b1 b2 (not b2);
+
+  -- variable equality (S0==F)
+  -- variable (Scott numeral) equality	70 bits
+  eqv = \u\v. u (\u1. v (eqv u1) v) (v (\_.u) T);
+
+  -- term equality		480 bits
+  eqt = \t1\t2. t1
+    (\b1\ta1\tb1. t2
+      (\b2\ta2\tb2. eqb b1 b2 (eqt ta1 ta2 (eqt tb1 tb2) F) F)
+      (\ta2\tb2 . F)
+      (\b2      . F)
+      (\w2      . F))
+    (  \ta1\tb1. t2
+      (\b2\ta2\tb2. F)
+      (\ta2\tb2 . eqt ta1 ta2 (eqt tb1 tb2) F)
+      (\b2      . F)
+      (\w2      . F))
+    (\b1      . t2
+      (\b2\ta2\tb2. F)
+      (\ta2\tb2 . F)
+      (           eqb b1)
+      (\w2      . F))
+    (\w1      . t2
+      (\b2\ta2\tb2. F)
+      (\ta2\tb2 . F)
+      (\b2      . F)
+      (           eqv w1))
+  ;
+
+  -- context equality		628 bits
+  eqc = \l\m. l (\t\l1\_. (m (\t2\m1\m. eqt t t2 (eqc l1 m1) F) m)) (m (\t\m1\_. l) T);
+
+  subst = \v\e\d\t.let		-- 581 bits
+    apply = \f\a.let kfa = \_. app f a in f
+      (\b\ta. b kfa (subst S0 a Spred))
+      (\ta. kfa)
+      (     kfa)
+      (     kfa)
+    ;
+    lift = subst S0 (var S1) Ssucc;
+  in t
+    (\b\ta\tb. pilam b (subst v e d ta) (subst (Ssucc v) (lift e) d tb))
+    (  \ta\tb. apply   (subst v e d ta) (subst        v        e  d tb))
+    (\b      . t)
+    (\w      . let cmp = \v\u. v (\v1. u (cmp v1) t) (u (\u1. var (d w)) e) in cmp v w)
+  ;
+
+-- 				48 bits
+  isSort = \srt\t\f. srt
+    (\b\ta\tb. f)
+    (  \ta\tb. f)
+    (\b      . t)
+    (\w      . f)
+  ;
+
+-- either this or implement mutual recursion on subst + apply + lift
+-- 				648 bits
+  lift = subst S0 (var S1) Ssucc;
+-- 				670 bits
+  apply = \f\a. subst (let Sinf = Ssucc Sinf in Sinf) a a (app f a);
+
+  judge = \ctx\trm\typ\z.z ctx trm typ;
+
+-- rule 1
+  axiom = cons (judge nil star box);
+
+-- rule 3+6			1795 bits
+  weakenApp = \jdg\jdg2. jdg (\ctx\trm\typ. jdg2 (\ctx2\trm2\typ2\tail. eqc ctx ctx2 (
+   let tail2 =
+    typ
+      (\b\ta\tb. eqt ta typ2 (cons (judge ctx2 (apply trm trm2) (subst S0 trm2 Spred tb))) id tail)
+      (  \ta\tb. tail)
+      (\b      . tail)
+      (\w      . tail)
+    in isSort typ2 (cons (judge (cons trm2 ctx2) (lift trm) (lift typ))) id tail2) tail));
+
+-- rule 2			773 bits
+  iVar = \jdg. jdg (\ctx\trm\typ \tail. isSort typ
+     (cons (judge (cons trm ctx) (var S0) (lift trm)) tail) tail);
+
+-- rule 4+5			263 bits
+  iLamPi = \jdg. jdg (\ctx\trm\typ. ctx (\tp\ctx1. cons (let b = isSort typ
+    in judge ctx1 (pilam b tp trm) (b id (pilam T tp) typ))));
+  
+  fold = \f\z. let go = \l. l (\h\t\z.f h (go t)) z in go;
+
+-- expand list of judgements	2392 bits
+  expand = \l. fold  (\j1. fold (weakenApp j1) (\t. iVar j1 ( iLamPi j1 t)) l)  (axiom nil) l;
+
+  -- exponential tower term size	106 bits
+  etsize = \t. let 2 = \f\x. f (f x); szab = \ta\tb. etsize ta (etsize tb) in t
+    (\b. szab)
+    (    szab)
+    (\b   . 2)
+    (\v   . 2)
+  ;
+
+  -- exponential tower judgement list size
+  jlsize = fold (\jdg. jdg (\ctx\trm\typ \sz. sz (etsize trm))) C1;
+
+-- derive			2537 bits
+  derive = \n. jlsize (n expand nil)
+
+in derive

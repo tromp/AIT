@@ -1,12 +1,10 @@
 let
   -- general form for mutual recursion
   -- https://www.khoury.northeastern.edu/home/shivers/papers/scheme02/article/variadic-y.pdf
-  Y20 = \f0\f1. (
-     (\x0\x1.f0 (x0 x0 x1) (x1 x0 x1))
-     (\x0\x1.f0 (x0 x0 x1) (x1 x0 x1))
-     (\x0\x1.f1 (x0 x0 x1) (x1 x0 x1))
-  );
-  Y21 = \f0\f1. (
+  Y20 = \f0\f1.  -- 92 bits
+     let g = \f\x0\x1. g (x0 x0 x1) (x1 x0 x1) in g f0 (g f0) (g f1)
+  ;
+  Y21 = \f0\f1. (  -- 115 bits
     (\x0\x1.f1 (x0 x0 x1) (x1 x0 x1))
     (\x0\x1.f0 (x0 x0 x1) (x1 x0 x1))
     (\x0\x1.f1 (x0 x0 x1) (x1 x0 x1))
@@ -20,7 +18,7 @@ let
   map = \f. (let go = \l.l(\h\t\_\z.z (f h) (go t))l in go);
 
   iffy = \fi\xs. fi (map (\xi. xi xs) xs);
-  Ygen = \fs. map (\fi. iffy fi (map iffy fs)) fs;
+  Ygen = \fs. map (\fi. iffy fi (map iffy fs)) fs; -- 151 bits
 
-  Y = \f. (\x. x x) (\x. f (x x))
-in Y
+  Y = \f. (\x. x x) (\x. f (x x)) -- 25 bits
+in Ygen

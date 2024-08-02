@@ -5,12 +5,12 @@ import Data.Set hiding (map, size, foldr)
 data Expr = Star | Box | Var Int | Lam Expr Expr | Pi Expr Expr | App Expr Expr deriving (Eq, Ord)
 
 instance Show Expr where
-  show Star = "*"
-  show Box = "[]"
-  show (Var i) = show i
-  show (Lam ta tb) = "λ" ++ show ta ++ "." ++ show tb
   show (Pi ta tb)  = "Π" ++ show ta ++ "." ++ show tb
+  show (Lam ta tb) = "λ" ++ show ta ++ "." ++ show tb
   show (App f a) = "(" ++ show f ++ " " ++ show a ++ ")"
+  show Box = "□"
+  show Star = "*"
+  show (Var i) = show i
 
 -- number of constructors
 size :: Expr -> Int
@@ -102,6 +102,15 @@ iApp :: Judge -> Judge -> [Judge]
 iApp (Judge f (Pi t tb) ctx) (Judge a ta ctx2) = [Judge (apply f a) (subst 0 a 1 tb) ctx | ctx==ctx2 && t==ta]
 iApp _ _ = []
 
+-- generate judgements in dumb way
+gen0 :: [[Judge]]
+gen0 = iterate xpand [] where
+  xpand prev = axiom ++ do
+                 j1 <- prev
+                 iVar j1 ++ iProd j1 ++ iLam j1 ++ do
+                   j2 <- prev
+                   iApp j1 j2 ++ weaken j1 j2
+
 -- generate judgements of given size
 gen :: [[Judge]]
 gen = [] : axiom : map geni [2..] where
@@ -119,4 +128,4 @@ main = mapM_ (\(i,l) -> do
          putStr "GEN "
          print i
          mapM_ print l
-       ) (zip [0..32] gen)
+       ) (zip [0..5] gen0)
