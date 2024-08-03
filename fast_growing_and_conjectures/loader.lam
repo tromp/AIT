@@ -1,11 +1,16 @@
 let
   id = \x.x;
+  -- function composition
+  comp = \f\g\x. f (g x);
   -- Church numerals
   C0 = \f\x.x;
   C1 = id;
   Csucc = \n\f\x. f (n f x);
   C2 = Csucc C1;
   C3 = Csucc C2;
+  Cadd = \m\n\f\x. m f (n f x);
+  Cmul = comp;
+  Cpow = \m\n. n m;
   -- Scott numerals
   Ssucc = \n\s\z. s n;
   Spred = \n. n (\n1. n1) n;
@@ -14,9 +19,14 @@ let
   -- Booleans
   T = \x\y. x;
   F = \x\y. y;
-  --list ops
+  not = \b\t\f. b f t;
+  eqb = \b1\b2.b1 b2 (not b2); -- boolean equality	30 bits
+  -- list ops
   nil = F;
   cons = \x\y\z.z x y;
+
+  -- list equality		146 bits
+  eql = \eq. let go = \l\m. l (\t\l1\_. (m (\t2\m1\m. eq t t2 (go l1 m1) F) m)) (m (\b\m1\_. l) T) in go;
 
   -- term constructors
   pilam = \b\ta\tb \pl\ap\bs\vr. pl b ta tb;
@@ -26,10 +36,6 @@ let
   box   = boxstar T;
   star  = boxstar F;
 
-  not = \b\t\f. b f t;
-  -- boolean equality			30 bits
-  eqb = \b1\b2.b1 b2 (not b2);
-
   -- serialize			299 bits
   ser = \t\l. let cT = cons T; cF = cons F in t
     (\b. \ta\tb. cT (cT (cons b (ser ta (ser tb l)))))
@@ -38,15 +44,16 @@ let
     (let go=\v . cF (cF (v go (cT l))) in go)
   ;
 
-  -- list equality		145 bits
-  eql = \eq. let go = \l\m. l (\t\l1\_. (m (\t2\m1\m. eq t t2 (go l1 m1) F) m)) (m (\b\m1\_. l) T) in go;
-
   -- term equality		495 bits
   eqt = \t1\t2. eql eqb (ser t1 nil) (ser t2 nil);
 
   -- context equality		536 bits
   eqc = eql eqt;
 
+  -- help define lift twice, in and out of subst mutual recursion
+  slift = \sub. sub S0 (var S1) Ssucc;
+
+  -- substitute term e for variable v in term t, applying d to outer variables
   subst = \v\e\d\t.let		-- 532 bits
     apply = \f\a.let kfa = \_. app f a in f
       (\b\ta. b kfa (subst S0 a Spred))
@@ -54,7 +61,7 @@ let
       (     kfa)
       (     kfa)
     ;
-    lift = subst S0 (var S1) Ssucc;
+    lift = slift subst;
   in let sved = subst v e d in t
     (\b\ta\tb. pilam b (sved ta) (subst (Ssucc v) (lift e) d tb))
     (  \ta\tb. apply   (sved ta) (sved tb))
@@ -62,7 +69,8 @@ let
     (\w      . let cmp = \v\u. v (\v1. u (cmp v1) t) (u (\u1. var (d w)) e) in cmp v w)
   ;
 
--- 				48 bits
+  -- whether a given term is either box or star		48 bits
+  -- serializing and testing initial bits takes more even when sorts are T T
   isSort = \srt\t\f. srt
     (\b\ta\tb. f)
     (  \ta\tb. f)
@@ -71,8 +79,8 @@ let
   ;
 
 -- either this or implement mutual recursion on subst + apply + lift
--- 				586 bits
-  lift = subst S0 (var S1) Ssucc;
+-- 				558 bits
+  lift = slift subst;
 -- 				608 bits
   apply = \f\a. subst (let Sinf = Ssucc Sinf in Sinf) a a (app f a);
 
@@ -81,28 +89,26 @@ let
 -- rule 1
   axiom = cons (judge nil star box);
 
--- rule 3+6			1649 bits
+-- rule 3+6			1624 bits
   weakenApp = \jdg\jdg2. jdg (\ctx\trm\typ. jdg2 (\ctx2\trm2\typ2\tail. eqc ctx ctx2 (
-   let tail2 =
-    typ
-      (\b\ta\tb. eqt ta typ2 (cons (judge ctx2 (apply trm trm2) (subst S0 trm2 Spred tb))) id tail)
-      (  \ta\tb. tail)
-      (\b      . tail)
-      (\w      . tail)
-    in isSort typ2 (cons (judge (cons trm2 ctx2) (lift trm) (lift typ))) id tail2) tail));
+   let tail2 = typ
+     (\b\ta\tb. eqt ta typ2 (cons (judge ctx2 (apply trm trm2) (subst S0 trm2 Spred tb))) id tail)
+     (  \ta\tb. tail)
+     (\b      . tail)
+     (\w      . tail)
+   in isSort typ2 (cons (judge (cons trm2 ctx2) (lift trm) (lift typ))) id tail2) tail));
 
--- rule 2			711 bits
-  iVar = \jdg. jdg (\ctx\trm\typ \tail. isSort typ
-     (cons (judge (cons trm ctx) (var S0) (lift trm)) tail) tail);
-
--- rule 4+5			235 bits
-  iLamPi = \jdg. jdg (\ctx\trm\typ. ctx (\tp\ctx1. cons (let b = isSort typ
-    in judge ctx1 (pilam b tp trm) (b id (pilam T tp) typ))));
+-- rule 2+4+5			922 bits
+  iVarLamPi = \jdg. jdg (\ctx\trm\typ \tail.
+    let
+      b = isSort typ;
+      tail2 = ctx (\tp\ctx1. cons (judge ctx1 (pilam b tp trm) (b id (pilam T tp) typ))) tail
+    in b (cons (judge (cons trm ctx) (var S0) (lift trm))) id tail2);
   
   fold = \f\z. let go = \l. l (\h\t\z.f h (go t)) z in go;	-- 69 bits
 
--- expand list of judgements	2281 bits
-  expand = \l. fold (\j1. fold (\j2\f\x. weakenApp j1 j2 (f x)) (\t. iVar j1 ( iLamPi j1 t)) l) (axiom nil) l;
+-- expand list of judgements	2238 bits
+  expand = \l. fold (\j1. fold (\j2. comp (weakenApp j1 j2)) (iVarLamPi j1) l) (axiom nil) l;
 
 -- list length		75 bits
   length = fold (\_. Csucc) C0;
@@ -111,15 +117,15 @@ let
   size = \t. length (ser t nil);
 
   -- exponential tower judgement list size	459 bits
-  jlsize = fold (\jdg. jdg (\ctx\trm\typ \sz. sz (size trm))) C1;
+  jlsize = fold (\jdg. jdg (\ctx\trm\typ. Cpow (size trm))) C1;
 
   -- judgement list size			485 bits
-  lsize = fold (\jdg. jdg (\ctx\trm\typ \sz\f\x. sz f (size trm f x))) C0;
+  lsize = fold (\jdg. jdg (\ctx\trm\typ \sz. Cadd sz (size trm))) C0;
 
--- derive			2413 bits
+-- derive			2366 bits
   derive = \n. jlsize (n expand nil)
 
-in derive -- C3 expand nil
+in derive -- length (Cmul C2 C3 expand nil)
 
 -- C0 expand nil -- \\1
 --                  nil
@@ -131,4 +137,16 @@ in derive -- C3 expand nil
 --                 (cons (Judge nil star box)
 --                  nil))
 -- C3 expand nil -- \1 (\1 (\1 (\\\\2 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\2 (\\1)) (\\\\2 (\\2))) (\1 (\1 (\1 (\\\\1 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\2 (\\1)) (\\\\2 (\\2))) (\1 (\1 (\1 (\\\\2 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\1 (\\1)) (\\\\2 (\\1))) (\1 (\1 (\\1) (\\\\4 (\\2) (\\\\2 (\\1)) (\\\\2 (\\1))) (\\\\2 (\\2))) (\1 (\1 (\1 (\\\\2 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\1 (\\2 (\\1))) (\\\\2 (\\1))) (\1 (\1 (\1 (\\\\1 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\1 (\\2 (\\1))) (\\\\2 (\\1))) (\1 (\1 (\1 (\\\\1 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\1 (\\1)) (\\\\1 (\\2 (\\1)))) (\1 (\1 (\\1) (\\\\4 (\\2) (\\\\2 (\\1)) (\\\\1 (\\1))) (\\\\2 (\\1))) (\1 (\1 (\1 (\\\\2 (\\1)) (\\1)) (\\\\2 (\\1)) (\\\\2 (\\2))) (\1 (\1 (\1 (\\\\2 (\\1)) (\\1)) (\\\\1 (\\1)) (\\\\2 (\\1))) (\1 (\1 (\\1) (\\\\2 (\\1)) (\\\\2 (\\2))) (\\1)))))))))))
+--                  cons (\1 (\1 (\\\\2 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\2 (\\1)) (\\\\2 (\\2)))
+--                 (cons (\1 (\1 (\\\\1 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\2 (\\1)) (\\\\2 (\\2)))
+--                 (cons (\1 (\1 (\\\\2 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\1 (\\1)) (\\\\2 (\\1)))
+--                 (cons (\1 (\\1) (\\\\4 (\\2) (\\\\2 (\\1)) (\\\\2 (\\1))) (\\\\2 (\\2)))
+--                 (cons (\1 (\1 (\\\\2 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\1 (\\2 (\\1))) (\\\\2 (\\1)))
+--                 (cons (\1 (\1 (\\\\1 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\1 (\\2 (\\1))) (\\\\2 (\\1)))
+--                 (cons (\1 (\1 (\\\\1 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\1 (\\1)) (\\\\1 (\\2 (\\1))))
+--                 (cons (\1 (\\1) (\\\\4 (\\2) (\\\\2 (\\1)) (\\\\1 (\\1))) (\\\\2 (\\1)))
+--                 (cons (\1 (\1 (\\\\2 (\\1)) (\\1)) (\\\\2 (\\1)) (\\\\2 (\\2)))
+--                 (cons (\1 (\1 (\\\\2 (\\1)) (\\1)) (\\\\1 (\\1)) (\\\\2 (\\1)))
+--                 (cons (\1 (\\1) (\\\\2 (\\1)) (\\\\2 (\\2)))
+--                 nil)))))))))))
 
