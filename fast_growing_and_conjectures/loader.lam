@@ -81,15 +81,15 @@ let
 -- either this or implement mutual recursion on subst + apply + lift
 -- 				558 bits
   lift = slift subst;
--- 				608 bits
-  apply = \f\a. subst (let Sinf = Ssucc Sinf in Sinf) a a (app f a);
+-- 				601 bits
+  apply = \f\a. subst S0 (var S0) id (app f a);
 
   judge = \ctx\trm\typ\z.z ctx trm typ;
 
 -- rule 1
   axiom = cons (judge nil star box);
 
--- rule 3+6			1624 bits
+-- rule 3+6			1609 bits
   weakenApp = \jdg\jdg2. jdg (\ctx\trm\typ. jdg2 (\ctx2\trm2\typ2\tail. eqc ctx ctx2 (
    let tail2 = typ
      (\b\ta\tb. eqt ta typ2 (cons (judge ctx2 (apply trm trm2) (subst S0 trm2 Spred tb))) id tail)
@@ -107,7 +107,7 @@ let
   
   fold = \f\z. let go = \l. l (\h\t\z.f h (go t)) z in go;	-- 69 bits
 
--- expand list of judgements	2238 bits
+-- expand list of judgements	2223 bits
   expand = \l. fold (\j1. fold (\j2. comp (weakenApp j1 j2)) (iVarLamPi j1) l) (axiom nil) l;
 
 -- list length		75 bits
@@ -122,7 +122,7 @@ let
   -- judgement list size			485 bits
   lsize = fold (\jdg. jdg (\ctx\trm\typ \sz. Cadd sz (size trm))) C0;
 
--- derive			2366 bits
+-- derive			2351 bits
   derive = \n. jlsize (n expand nil)
 
 in derive -- length (Cmul C2 C3 expand nil)

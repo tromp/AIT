@@ -12,12 +12,14 @@ instance Show Expr where
   show Star = "*"
   show (Var i) = show i
 
--- number of constructors
+-- number of binary encoding
 size :: Expr -> Int
-size (Lam ta tb) = 1 + size ta + size tb
-size (Pi ta tb) = 1 + size ta + size tb
-size (App f a) = 1 + size f + size a
-size _ = 1
+size (Lam ta tb) = 3 + size ta + size tb
+size (Pi ta tb) = 3 + size ta + size tb
+size (App f a) = 2 + size f + size a
+size Box = 3
+size Star = 3
+size (Var i) = 3 + 2*i
 
 -- type of free variables
 type Context = [Expr]
@@ -128,4 +130,6 @@ main = mapM_ (\(i,l) -> do
          putStr "GEN "
          print i
          mapM_ print l
+         putStr "sumsize "
+         print . sum . map (\(Judge trm _ _) -> size trm ) $ l
        ) (zip [0..6] gen0)
