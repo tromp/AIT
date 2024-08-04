@@ -76,18 +76,17 @@ let
     (\w       . f)
   ;
 
--- either this or implement mutual recursion on subst + apply + lift
--- 				582 bits
+  -- 				582 bits
   lift = slift subst;
--- 				626 bits
+  -- 				626 bits
   apply = \f\a. subst S0 (var S0) id (app f a);
 
   judge = \ctx\trm\typ\z.z ctx trm typ;
 
--- rule 1
+  -- rule 1
   axiom = cons (judge nil star box);
 
--- rule 3+6			1603 bits
+  -- rule 3+6			1603 bits
   weakenApp = \jdg\jdg2. jdg (\ctx\trm\typ. jdg2 (\ctx2\trm2\typ2\tail. eqc ctx ctx2 (
    let tail2 = typ -- DECON
      (\mb\ta\tb. mb (\b. eqt ta typ2 (cons (judge ctx2 (apply trm trm2) (subst S0 trm2 Spred tb))) id) id tail)
@@ -95,7 +94,7 @@ let
      (\w      . tail)
    in isSort typ2 (cons (judge (cons trm2 ctx2) (lift trm) (lift typ))) id tail2) tail));
 
--- rule 2+4+5			936 bits
+  -- rule 2+4+5			936 bits
   iVarLamPi = \jdg. jdg (\ctx\trm\typ \tail.
     let
       b = isSort typ;
@@ -104,11 +103,11 @@ let
   
   fold = \f\z. let go = \l. l (\h\t\z.f h (go t)) z in go;	-- 69 bits
 
--- expand list of judgements	2205 bits
+  -- expand list of judgements	2205 bits
   expand = \l. fold (\j1. fold (\j2. comp (weakenApp j1 j2)) (iVarLamPi j1) l) (axiom nil) l;
 
--- list length		75 bits
-  length = fold (\_. Csucc) C0;
+  -- succ list length		73 bits
+  length = fold (\_. Csucc) C1;
 
   -- term size		390 bits
   size = \t. length (ser t nil);
@@ -119,10 +118,12 @@ let
   -- judgement list size			485 bits
   lsize = fold (\jdg. jdg (\ctx\trm\typ \sz. Cadd sz (size trm))) C0;
 
--- derive			2351 bits
-  derive = \n. jlsize (n expand nil)
+  -- derive			2330 bits
+  derive = \n. jlsize (n expand nil);
 
-in derive -- length (Cmul C2 C3 expand nil)
+  golf = \x. let 3 = \f\x.f (f (f x)) in 3 3 x 3		-- adds 45 bits when applied
+
+in derive -- (Cmul C2 C3 expand nil)
 
 -- C0 expand nil -- \\1
 --                  nil
