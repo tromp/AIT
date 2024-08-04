@@ -29,59 +29,57 @@ let
   eql = \eq. let go = \l\m. l (\t\l1\_. (m (\t2\m1\m. eq t t2 (go l1 m1) F) m)) (m (\b\m1\_. l) T) in go;
 
   -- term constructors
-  pilam = \b\ta\tb \pl\ap\bs\vr. pl b ta tb;
-  app   =   \ta\tb \pl\ap\bs\vr. ap   ta tb;
-  boxstar =  \b    \pl\ap\bs\vr. bs b;
-  var   = \v       \pl\ap\bs\vr. vr v;
+  pilam = \b\ta\tb \pla\bs\vr. pla (Ssucc b) ta tb;
+  app   =   \ta\tb \pla\bs\vr. pla S0        ta tb;
+  boxstar =  \b    \pla\bs\vr. bs b;
+  var   = \v       \pla\bs\vr. vr v;
   box   = boxstar T;
   star  = boxstar F;
 
-  -- serialize			299 bits
-  ser = \t\l. let cT = cons T; cF = cons F in t
-    (\b. \ta\tb. cT (cT (cons b (ser ta (ser tb l)))))
-    (    \ta\tb. cT (cF (ser ta (ser tb l))))
+  -- serialize			263 bits
+  ser = \t\l. let cT = cons T; cF = cons F in t -- DECON
+    (\mb. \ta\tb. cT (mb (\b\tail. cT (cons b tail)) cF (ser ta (ser tb l))))
     (\b        . cF (cT (cons b l)))
     (let go=\v . cF (cF (v go (cT l))) in go)
+    -- 6 bits less than ((\v . cF (cF (v (\v1. ser (var v1)) cT l)))
   ;
 
-  -- term equality		495 bits
+  -- term equality		459 bits
   eqt = \t1\t2. eql eqb (ser t1 nil) (ser t2 nil);
 
-  -- context equality		536 bits
+  -- context equality		500 bits
   eqc = eql eqt;
 
   -- help define lift twice, in and out of subst mutual recursion
   slift = \sub. sub S0 (var S1) Ssucc;
 
   -- substitute term e for variable v in term t, applying d to outer variables
-  subst = \v\e\d\t.let		-- 532 bits
-    apply = \f\a.let kfa = \_. app f a in f
-      (\b\ta. b kfa (subst S0 a Spred))
-      (\ta. kfa)
+  subst = \v\e\d\t. let		-- 555 bits
+    apply = \f\a.let kfa = \_. app f a in f -- DECON
+      (\mb\ta. mb (\b. b kfa (subst S0 a Spred)) kfa)
       (     kfa)
       (     kfa)
     ;
     lift = slift subst;
-  in let sved = subst v e d in t
-    (\b\ta\tb. pilam b (sved ta) (subst (Ssucc v) (lift e) d tb))
-    (  \ta\tb. apply   (sved ta) (sved tb))
+    sved = subst v e d
+  in t -- DECON
+    (\mb\ta\tb. mb (\b. pilam b (sved ta) (subst (Ssucc v) (lift e) d tb)) (apply (sved ta) (sved tb)))
     (\b      . t)
     (\w      . let cmp = \v\u. v (\v1. u (cmp v1) t) (u (\u1. var (d w)) e) in cmp v w)
   ;
 
-  -- whether a given term is either box or star		48 bits
+  -- whether a given term is either box or star		38 bits
   -- serializing and testing initial bits takes more even when sorts are T T
-  isSort = \srt\t\f. srt
-    (\b\ta\tb. f)
-    (  \ta\tb. f)
-    (\b      . t)
-    (\w      . f)
+  isSort = \srt\t\f. srt -- DECON
+    (\mb\ta\tb. f)
+    (\b       . t)
+    (\w       . f)
   ;
 
 -- either this or implement mutual recursion on subst + apply + lift
--- 				558 bits
+-- 				582 bits
   lift = slift subst;
--- 				601 bits
+-- 				626 bits
   apply = \f\a. subst S0 (var S0) id (app f a);
 
   judge = \ctx\trm\typ\z.z ctx trm typ;
@@ -89,16 +87,15 @@ let
 -- rule 1
   axiom = cons (judge nil star box);
 
--- rule 3+6			1609 bits
+-- rule 3+6			1603 bits
   weakenApp = \jdg\jdg2. jdg (\ctx\trm\typ. jdg2 (\ctx2\trm2\typ2\tail. eqc ctx ctx2 (
-   let tail2 = typ
-     (\b\ta\tb. eqt ta typ2 (cons (judge ctx2 (apply trm trm2) (subst S0 trm2 Spred tb))) id tail)
-     (  \ta\tb. tail)
+   let tail2 = typ -- DECON
+     (\mb\ta\tb. mb (\b. eqt ta typ2 (cons (judge ctx2 (apply trm trm2) (subst S0 trm2 Spred tb))) id) id tail)
      (\b      . tail)
      (\w      . tail)
    in isSort typ2 (cons (judge (cons trm2 ctx2) (lift trm) (lift typ))) id tail2) tail));
 
--- rule 2+4+5			922 bits
+-- rule 2+4+5			936 bits
   iVarLamPi = \jdg. jdg (\ctx\trm\typ \tail.
     let
       b = isSort typ;
@@ -107,7 +104,7 @@ let
   
   fold = \f\z. let go = \l. l (\h\t\z.f h (go t)) z in go;	-- 69 bits
 
--- expand list of judgements	2223 bits
+-- expand list of judgements	2205 bits
   expand = \l. fold (\j1. fold (\j2. comp (weakenApp j1 j2)) (iVarLamPi j1) l) (axiom nil) l;
 
 -- list length		75 bits
@@ -149,4 +146,3 @@ in derive -- length (Cmul C2 C3 expand nil)
 --                 (cons (\1 (\1 (\\\\2 (\\1)) (\\1)) (\\\\1 (\\1)) (\\\\2 (\\1)))
 --                 (cons (\1 (\\1) (\\\\2 (\\1)) (\\\\2 (\\2)))
 --                 nil)))))))))))
-
