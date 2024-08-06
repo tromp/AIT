@@ -1,5 +1,7 @@
 import Data.List hiding ((\\))
 import Data.Set hiding (map, size, foldr)
+import Control.Monad
+import Debug.Trace
 
 -- CoC terms with de-Bruijn indices
 data Expr = Star | Box | Var Int | Lam Expr Expr | Pi Expr Expr | App Expr Expr deriving (Eq, Ord)
@@ -28,7 +30,8 @@ type Context = [Expr]
 data Judge = Judge Expr Expr Context deriving (Eq, Ord)
 
 instance Show Judge where
-  show (Judge trm typ ctx) = show (size trm) ++ "\t" ++ (intercalate ", " (map show.reverse$ctx)) ++ " |- " ++ show trm ++ " : " ++ show typ
+  show (Judge trm typ ctx) = -- (size trm) ++ "\t" ++
+    (intercalate ", " (map show.reverse$ctx)) ++ " |- " ++ show trm ++ " : " ++ show typ
 
 --type of natural numbers
 nat :: Expr
@@ -82,22 +85,22 @@ isSort t = t == Star || t == Box
 axiom = [Judge Star Box []]
 
 -- rule 2. / 1.(b) Variable
-iVar :: Judge -> [Judge]
-iVar (Judge trm srt ctx) = [Judge (Var 0) (lift trm) (trm:ctx) | isSort srt]
+iVar :: Judge -> Judge -> [Judge]
+iVar (Judge _ _ _) (Judge trm srt ctx)= [Judge (Var 0) (lift trm) (trm:ctx) | isSort srt]
 
 -- rule 3. / 2.(a) Weaken:
 weaken :: Judge -> Judge -> [Judge]
 weaken (Judge trm typ ctx) (Judge trm2 srt ctx2) = [Judge (lift trm) (lift typ) (trm2:ctx) | ctx==ctx2 && isSort srt]
 
 -- rule 4. / 1.(d) Abstraction -- doesn't check typ is well-typed
-iLam :: Judge -> [Judge]
-iLam (Judge trm typ (tp:ctx)) = [Judge (Lam tp trm) (Pi tp typ) ctx | not (isSort typ)]
-iLam _ = []
+iLam :: Judge -> Judge -> [Judge]
+iLam (Judge _ _ _) (Judge trm typ (tp:ctx)) = [Judge (Lam tp trm) (Pi tp typ) ctx | not (isSort typ)]
+iLam _ _ = []
 
 -- rule 5 / 1.(c) Product -- doesn't check typ is well-typed
-iProd :: Judge -> [Judge]
-iProd (Judge trm srt (tp:ctx)) = [Judge (Pi tp trm) srt ctx | isSort srt]
-iProd _ = []
+iProd :: Judge -> Judge -> [Judge]
+iProd (Judge _ _ _) (Judge trm srt ctx1@(tp:ctx)) = [Judge (Pi tp trm) srt ctx | isSort srt]
+iProd _ _ = []
 
 -- rule 6. / 1.(e) Application
 iApp :: Judge -> Judge -> [Judge]
@@ -107,29 +110,28 @@ iApp _ _ = []
 -- generate judgements in dumb way
 gen0 :: [[Judge]]
 gen0 = iterate xpand [] where
-  xpand prev = axiom ++ do
-                 j1 <- prev
-                 iVar j1 ++ iProd j1 ++ iLam j1 ++ do
-                   j2 <- prev
-                   iApp j1 j2 ++ weaken j1 j2
+  xpand prev = (do
+                 j1@(Judge _ _ ctx1) <- prev
+                 j2@(Judge _ _ ctx2) <- prev
+                 guard $ ctx1 == ctx2
+                 -- trace ("\t\t"++show j1++"\t"++show j2) $
+                 weaken j1 j2 ++ iApp j1 j2 ++ iProd j1 j2 ++ iLam j1 j2 ++ iVar j1 j2
+               ) ++ axiom
 
 -- generate judgements of given size
 gen :: [[Judge]]
 gen = [] : axiom : map geni [2..] where
   geni n = toList . (\s -> foldr prune s [1..n-1]) . fromList $ do
-             j1 <- gen !! (n-1)
-             iVar j1 ++ iProd j1 ++ iLam j1
-           ++ do
              i <- [1..n-1]
              j1 <- gen !! i
              j2 <- gen !! (n-i-1)
-             iApp j1 j2 ++ weaken j1 j2
+             iApp j1 j2 ++ weaken j1 j2 ++ iVar j1 j2 ++ iProd j1 j2 ++ iLam j1 j2
   prune i s = s \\ fromList (gen!!i)
 
 main = mapM_ (\(i,l) -> do
-         putStr "GEN "
+         putStr "EXPAND "
          print i
          mapM_ print l
          putStr "sumsize "
-         print . sum . map (\(Judge trm _ _) -> size trm ) $ l
-       ) (zip [0..6] gen0)
+         print . sum . map (\(Judge trm _ _) -> 1 + size trm ) $ l
+       ) (zip [0..5] gen0)

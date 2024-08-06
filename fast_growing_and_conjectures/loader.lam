@@ -1,4 +1,4 @@
-let
+let derive = (let
   id = \x.x;
   -- function composition
   comp = \f\g\x. f (g x);
@@ -25,23 +25,21 @@ let
   nil = F;
   cons = \x\y\z.z x y;
 
+  judge = \ctx\trm\typ\z.z ctx typ trm;
+
   -- list equality		146 bits
-  eql = \eq. let go = \l\m. l (\t\l1\_. (m (\t2\m1\m. eq t t2 (go l1 m1) F) m)) (m (\b\m1\_. l) T) in go;
+  eql = \eq. let go = \l\m. l (\t\l1\_. m (\t2\m1\m. eq t t2 (go l1 m1) F) m) (m (\b\m1\_. l) T) in go;
 
   -- term constructors
-  pilam = \b\ta\tb \pla\bs\vr. pla (Ssucc b) ta tb;
-  app   =   \ta\tb \pla\bs\vr. pla S0        ta tb;
+  app     = \ta\tb \pla\bs\vr. pla S0 ta tb;
   boxstar =  \b    \pla\bs\vr. bs b;
-  var   = \v       \pla\bs\vr. vr v;
-  box   = boxstar T;
-  star  = boxstar F;
+  var     = \v     \pla\bs\vr. vr v;
 
   -- serialize			263 bits
   ser = \t\l. let cT = cons T; cF = cons F in t -- DECON
-    (\mb. \ta\tb. cT (mb (\b\tail. cT (cons b tail)) cF (ser ta (ser tb l))))
+    (\mb. \ta\tb. cT (mb (\b. comp cT (cons b)) cF (ser ta (ser tb l))))
     (\b        . cF (cT (cons b l)))
     (let go=\v . cF (cF (v go (cT l))) in go)
-    -- 6 bits less than ((\v . cF (cF (v (\v1. ser (var v1)) cT l)))
   ;
 
   -- term equality		459 bits
@@ -51,10 +49,13 @@ let
   eqc = eql eqt;
 
   -- help define lift twice, in and out of subst mutual recursion
-  slift = \sub. sub S0 (var S1) Ssucc;
+  slift = \sub. sub S0 (var S1) Ssucc;		-- 56 bits
+
+  -- final term constructor
+  pilam = \b\ta\tb \pla\bs\vr. pla (Ssucc b) ta tb;
 
   -- substitute term e for variable v in term t, applying d to outer variables
-  subst = \v\e\d\t. let		-- 555 bits
+  subst = \v\e\d. let		-- 555 bits
     apply = \f\a.let kfa = \_. app f a in f -- DECON
       (\mb\ta. mb (\b. b kfa (subst S0 a Spred)) kfa)
       (     kfa)
@@ -62,88 +63,40 @@ let
     ;
     lift = slift subst;
     sved = subst v e d
-  in t -- DECON
+  in \t.t -- DECON
     (\mb\ta\tb. mb (\b. pilam b (sved ta) (subst (Ssucc v) (lift e) d tb)) (apply (sved ta) (sved tb)))
     (\b      . t)
     (\w      . let cmp = \v\u. v (\v1. u (cmp v1) t) (u (\u1. var (d w)) e) in cmp v w)
   ;
 
-  -- whether a given term is either box or star		38 bits
-  -- serializing and testing initial bits takes more even when sorts are T T
-  isSort = \srt\t\f. srt -- DECON
-    (\mb\ta\tb. f)
-    (\b       . t)
-    (\w       . f)
-  ;
-
-  -- 				582 bits
   lift = slift subst;
-  -- 				626 bits
   apply = \f\a. subst S0 (var S0) id (app f a);
 
-  judge = \ctx\trm\typ\z.z ctx trm typ;
-
-  -- rule 1
-  axiom = cons (judge nil star box);
-
-  -- rule 3+6			1603 bits
-  weakenApp = \jdg\jdg2. jdg (\ctx\trm\typ. jdg2 (\ctx2\trm2\typ2\tail. eqc ctx ctx2 (
-   let tail2 = typ -- DECON
-     (\mb\ta\tb. mb (\b. eqt ta typ2 (cons (judge ctx2 (apply trm trm2) (subst S0 trm2 Spred tb))) id) id tail)
-     (\b      . tail)
-     (\w      . tail)
-   in isSort typ2 (cons (judge (cons trm2 ctx2) (lift trm) (lift typ))) id tail2) tail));
-
-  -- rule 2+4+5			936 bits
-  iVarLamPi = \jdg. jdg (\ctx\trm\typ \tail.
+  -- rules 2+3+4+5+6
+  rules = \jdg1\jdg2. jdg1 (\ctx\typ\trm. jdg2 (\ctx2\typ2\trm2. eqc ctx ctx2 (
     let
-      b = isSort typ;
-      tail2 = ctx (\tp\ctx1. cons (judge ctx1 (pilam b tp trm) (b id (pilam T tp) typ))) tail
-    in b (cons (judge (cons trm ctx) (var S0) (lift trm))) id tail2);
-  
-  fold = \f\z. let go = \l. l (\h\t\z.f h (go t)) z in go;	-- 69 bits
+      isSort = \t\f. typ2 -- DECON
+        (\mb\ta\tb. f)
+        (\b       . t)
+        (\w       . f);
+      weaken = isSort (cons (judge (cons trm2 ctx2) (lift trm) (lift typ))) id;
+      iLamPi = ctx2 (\tp\ctx21. cons (judge ctx21 (pilam isSort tp trm2) (isSort id (pilam T tp) typ2)));
+      iVar   = \tail. isSort (cons (judge (cons trm2 ctx2) (var S0) (lift trm2)) tail) tail;
+      iApp   = typ -- DECON
+        (\mb\ta\tb. mb (\b. eqt ta typ2 (cons (judge ctx2 (apply trm trm2) (subst S0 trm2 Spred tb))) id) id)
+        (\b      . id)
+        (\w      . id)
+    in \tail. weaken (iApp (iLamPi (iVar tail)))
+  ) id));
 
-  -- expand list of judgements	2205 bits
-  expand = \l. fold (\j1. fold (\j2. comp (weakenApp j1 j2)) (iVarLamPi j1) l) (axiom nil) l;
+  -- derive			2219 bits
+  derive = \n. let
+    fold = \f\z. let go = \l. l (\h\t\z.f h (go t)) z in go
+  in fold (\jdg. jdg (\ctx\typ\trm. Cpow (fold (\_. Csucc) C1 (ser trm nil)))) C1
+  (n (
+    \l. fold (\j1. fold (\j2. comp (rules j1 j2)) id l) (cons (judge nil (boxstar F) (boxstar T)) nil) l
+  ) nil);
 
-  -- succ list length		73 bits
-  length = fold (\_. Csucc) C1;
-
-  -- term size		390 bits
-  size = \t. length (ser t nil);
-
-  -- exponential tower judgement list size	459 bits
-  jlsize = fold (\jdg. jdg (\ctx\trm\typ. Cpow (size trm))) C1;
-
-  -- judgement list size			485 bits
-  lsize = fold (\jdg. jdg (\ctx\trm\typ \sz. Cadd sz (size trm))) C0;
-
-  -- derive			2330 bits
-  derive = \n. jlsize (n expand nil);
-
-  golf = \x. let 3 = \f\x.f (f (f x)) in 3 3 x 3		-- adds 45 bits when applied
-
-in derive -- (Cmul C2 C3 expand nil)
-
--- C0 expand nil -- \\1
---                  nil
--- C1 expand nil -- \1 (\1 (\\1) (\\\\2 (\\1)) (\\\\2 (\\2))) (\\1)
---                  cons (Judge nil star box) nil
--- C2 expand nil -- \1 (\1 (\1 (\\\\2 (\\1)) (\\1)) (\\\\2 (\\1)) (\\\\2 (\\2))) (\1 (\1 (\1 (\\\\2 (\\1)) (\\1)) (\\\\1 (\\1)) (\\\\2 (\\1))) (\1 (\1 (\\1) (\\\\2 (\\1)) (\\\\2 (\\2))) (\\1)))
---                  cons (Judge (cons star nil) star box)
---                 (cons (Judge (cons star nil) (var S0) star)
---                 (cons (Judge nil star box)
---                  nil))
--- C3 expand nil -- \1 (\1 (\1 (\\\\2 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\2 (\\1)) (\\\\2 (\\2))) (\1 (\1 (\1 (\\\\1 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\2 (\\1)) (\\\\2 (\\2))) (\1 (\1 (\1 (\\\\2 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\1 (\\1)) (\\\\2 (\\1))) (\1 (\1 (\\1) (\\\\4 (\\2) (\\\\2 (\\1)) (\\\\2 (\\1))) (\\\\2 (\\2))) (\1 (\1 (\1 (\\\\2 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\1 (\\2 (\\1))) (\\\\2 (\\1))) (\1 (\1 (\1 (\\\\1 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\1 (\\2 (\\1))) (\\\\2 (\\1))) (\1 (\1 (\1 (\\\\1 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\1 (\\1)) (\\\\1 (\\2 (\\1)))) (\1 (\1 (\\1) (\\\\4 (\\2) (\\\\2 (\\1)) (\\\\1 (\\1))) (\\\\2 (\\1))) (\1 (\1 (\1 (\\\\2 (\\1)) (\\1)) (\\\\2 (\\1)) (\\\\2 (\\2))) (\1 (\1 (\1 (\\\\2 (\\1)) (\\1)) (\\\\1 (\\1)) (\\\\2 (\\1))) (\1 (\1 (\\1) (\\\\2 (\\1)) (\\\\2 (\\2))) (\\1)))))))))))
---                  cons (\1 (\1 (\\\\2 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\2 (\\1)) (\\\\2 (\\2)))
---                 (cons (\1 (\1 (\\\\1 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\2 (\\1)) (\\\\2 (\\2)))
---                 (cons (\1 (\1 (\\\\2 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\1 (\\1)) (\\\\2 (\\1)))
---                 (cons (\1 (\\1) (\\\\4 (\\2) (\\\\2 (\\1)) (\\\\2 (\\1))) (\\\\2 (\\2)))
---                 (cons (\1 (\1 (\\\\2 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\1 (\\2 (\\1))) (\\\\2 (\\1)))
---                 (cons (\1 (\1 (\\\\1 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\1 (\\2 (\\1))) (\\\\2 (\\1)))
---                 (cons (\1 (\1 (\\\\1 (\\1)) (\1 (\\\\2 (\\1)) (\\1))) (\\\\1 (\\1)) (\\\\1 (\\2 (\\1))))
---                 (cons (\1 (\\1) (\\\\4 (\\2) (\\\\2 (\\1)) (\\\\1 (\\1))) (\\\\2 (\\1)))
---                 (cons (\1 (\1 (\\\\2 (\\1)) (\\1)) (\\\\2 (\\1)) (\\\\2 (\\2)))
---                 (cons (\1 (\1 (\\\\2 (\\1)) (\\1)) (\\\\1 (\\1)) (\\\\2 (\\1)))
---                 (cons (\1 (\\1) (\\\\2 (\\1)) (\\\\2 (\\2)))
---                 nil)))))))))))
+  in derive);
+  3 = \f\x. f (f (f x))
+in 3 3 derive 3
