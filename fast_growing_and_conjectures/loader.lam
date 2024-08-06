@@ -25,7 +25,7 @@ let derive = (let
   nil = F;
   cons = \x\y\z.z x y;
 
-  judge = \ctx\trm\typ\z.z ctx typ trm;
+  judge = \ctx\typ\trm\z.z ctx typ trm;
 
   -- list equality		146 bits
   eql = \eq. let go = \l\m. l (\t\l1\_. m (\t2\m1\m. eq t t2 (go l1 m1) F) m) (m (\b\m1\_. l) T) in go;
@@ -36,7 +36,7 @@ let derive = (let
   var     = \v     \pla\bs\vr. vr v;
 
   -- serialize			263 bits
-  ser = \t\l. let cT = cons T; cF = cons F in t -- DECON
+  ser = \t\l. let cT = cons T; cF = cons F in t
     (\mb. \ta\tb. cT (mb (\b. comp cT (cons b)) cF (ser ta (ser tb l))))
     (\b        . cF (cT (cons b l)))
     (let go=\v . cF (cF (v go (cT l))) in go)
@@ -56,14 +56,14 @@ let derive = (let
 
   -- substitute term e for variable v in term t, applying d to outer variables
   subst = \v\e\d. let		-- 555 bits
-    apply = \f\a.let kfa = \_. app f a in f -- DECON
+    apply = \f\a.let kfa = \_. app f a in f
       (\mb\ta. mb (\b. b kfa (subst S0 a Spred)) kfa)
       (     kfa)
       (     kfa)
     ;
     lift = slift subst;
     sved = subst v e d
-  in \t.t -- DECON
+  in \t.t
     (\mb\ta\tb. mb (\b. pilam b (sved ta) (subst (Ssucc v) (lift e) d tb)) (apply (sved ta) (sved tb)))
     (\b      . t)
     (\w      . let cmp = \v\u. v (\v1. u (cmp v1) t) (u (\u1. var (d w)) e) in cmp v w)
@@ -75,28 +75,31 @@ let derive = (let
   -- rules 2+3+4+5+6
   rules = \jdg1\jdg2. jdg1 (\ctx\typ\trm. jdg2 (\ctx2\typ2\trm2. eqc ctx ctx2 (
     let
-      isSort = \t\f. typ2 -- DECON
+      isSort = \t\f. typ2
         (\mb\ta\tb. f)
         (\b       . t)
         (\w       . f);
-      weaken = isSort (cons (judge (cons trm2 ctx2) (lift trm) (lift typ))) id;
-      iLamPi = ctx2 (\tp\ctx21. cons (judge ctx21 (pilam isSort tp trm2) (isSort id (pilam T tp) typ2)));
-      iVar   = \tail. isSort (cons (judge (cons trm2 ctx2) (var S0) (lift trm2)) tail) tail;
-      iApp   = typ -- DECON
-        (\mb\ta\tb. mb (\b. eqt ta typ2 (cons (judge ctx2 (apply trm trm2) (subst S0 trm2 Spred tb))) id) id)
+      weaken = isSort (cons (judge (cons trm2 ctx2) (lift typ) (lift trm))) id;
+      iLamPi = ctx2 (\tp\ctx21. cons (judge ctx21 (isSort id (pilam T tp) typ2) (pilam isSort tp trm2)));
+      iVar   = \tail. isSort (cons (judge (cons trm2 ctx2) (lift trm2) (var S0)) tail) tail;
+      iApp   = typ
+        (\mb\ta\tb. mb (\b. eqt ta typ2 (cons (judge ctx2 (subst S0 trm2 Spred tb) (apply trm trm2))) id) id)
         (\b      . id)
         (\w      . id)
     in \tail. weaken (iApp (iLamPi (iVar tail)))
   ) id));
 
-  -- derive			2219 bits
-  derive = \n. let
-    fold = \f\z. let go = \l. l (\h\t\z.f h (go t)) z in go
-  in fold (\jdg. jdg (\ctx\typ\trm. Cpow (fold (\_. Csucc) C1 (ser trm nil)))) C1
-  (n (
-    \l. fold (\j1. fold (\j2. comp (rules j1 j2)) id l) (cons (judge nil (boxstar F) (boxstar T)) nil) l
-  ) nil);
+  -- derive
+  in \n. let
+    fold = \f\z. let go = \l. l (\h\t\z.f h (go t)) z in go;
+    expand = \l. fold (\j1. fold (\j2. comp (rules j1 j2)) id l) (cons (judge nil (boxstar T) (boxstar F)) nil) l;
+    sizetower = fold (\jdg. jdg (\ctx\typ\trm. Cpow (fold (\_. Csucc) C1 (ser trm nil)))) C1
+  in sizetower (n expand nil));
 
-  in derive);
   3 = \f\x. f (f (f x))
 in 3 3 derive 3
+
+-- 3 expand nil =
+-- \1 (\1 (\1 (\\\2 (\\1)) (\1 (\\\2 (\\1)) (\\1))) (\\\2 (\\2)) (\\\2 (\\1))) (\1 (\1 (\\1) (\\\2 (\\2)) (\\\3 (\\2 (\\2)) (\\\2 (\\1)) (\\\2 (\\1)))) (\1 (\1 (\1 (\\\2 (\\1)) (\1 (\\\2 (\\1)) (\\1))) (\\\2 (\\1)) (\\\1 (\\1))) (\1 (\1 (\1 (\\\1 (\\1)) (\1 (\\\2 (\\1)) (\\1))) (\\\2 (\\2)) (\\\2 (\\1))) (\1 (\1 (\\1) (\\\2 (\\1)) (\\\3 (\\2 (\\2)) (\\\2 (\\1)) (\\\1 (\\1)))) (\1 (\1 (\1 (\\\1 (\\1)) (\1 (\\\2 (\\1)) (\\1))) (\\\1 (\\2 (\\1))) (\\\1 (\\1))) (\1 (\1 (\1 (\\\2 (\\1)) (\1 (\\\2 (\\1)) (\\1))) (\\\2 (\\1)) (\\\1 (\\2 (\\1)))) (\1 (\1 (\\1) (\\\2 (\\2)) (\\\3 (\\2 (\\2)) (\\\2 (\\1)) (\\\2 (\\1)))) (\1 (\1 (\1 (\\\2 (\\1)) (\1 (\\\2 (\\1)) (\\1))) (\\\2 (\\1)) (\\\1 (\\1))) (\1 (\1 (\1 (\\\1 (\\1)) (\1 (\\\2 (\\1)) (\\1))) (\\\2 (\\1)) (\\\1 (\\2 (\\1)))) (\1 (\1 (\\1) (\\\2 (\\1)) (\\\3 (\\2 (\\2)) (\\\2 (\\1)) (\\\1 (\\1)))) (\1 (\1 (\1 (\\\1 (\\1)) (\1 (\\\2 (\\1)) (\\1))) (\\\1 (\\2 (\\1))) (\\\1 (\\1))) (\1 (\1 (\1 (\\\2 (\\1)) (\\1)) (\\\2 (\\2)) (\\\2 (\\1))) (\1 (\1 (\1 (\\\2 (\\1)) (\\1)) (\\\2 (\\1)) (\\\1 (\\1))) (\1 (\1 (\\1) (\\\2 (\\2)) (\\\2 (\\1))) (\\1)))))))))))))))
+-- corresponding to the list of judgement [ "*, * |- * : □", " |- Π*.* : □", "*, * |- 0 : *", "*, 0 |- * : □", " |- Π*.0 : *", "*, 0 |- 0 : 1", "*, * |- 1 : *", " |- Π*.* : □", "*, * |- 0 : *", "*, 0 |- 1 : *", " |- Π*.0 : *", "*, 0 |- 0 : 1", "* |- * : □", "* |- 0 : *", " |- * : □"]
+-- with term sizes+1 [4,10,4,4,10,4,6,10,4,6,10,4,4,4,4]
