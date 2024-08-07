@@ -1,8 +1,8 @@
-let
+let BMS = let
   0 = \f\x. x;
   1 = \f. f;
-  pred = \n\f\x. n (\g\h.h (g f))(\u.x)(\u.u);
   notZero = \n\a\b. n (\u.a) b;
+  pred = \n\f\x. n (\g\h.h (g f))(\u.x)(\u.u);
   gt = \x\y. notZero (y pred x); -- greater than
   succ = \n\f\x. f (n f x);
 
@@ -16,13 +16,13 @@ let
 
   matrix0 = \n\k. gt k n 0 n;    -- single column of n n's
 
-  BMS = \rows. let
+  -- bms
+  in \rows. let
     bms = \matrix\mod. notZero (matrix 0) (succ (bms (expand mod matrix) (pred (notZero mod mod rows)))) mod
   in bms (matrix0 rows) (pred rows);
 
   2 = \f\x. f (f x)
-in
-  2 2 BMS 2                      -- 524 bits; 65.5 bytes
+in 2 2 BMS 2                      -- 516 bits; 64.5 bytes
 
 --						G | B0 | C
 
