@@ -18,11 +18,19 @@ let BMS = let
 
   -- bms
   in \rows. let
-    bms = \matrix\mod. notZero (matrix 0) (succ (bms (expand mod matrix) (pred (notZero mod mod rows)))) mod
-  in bms (matrix0 rows) (pred rows);
+    -- mod is in [0..rows-1]
+    -- bms = \matrix\mod. matrix 0 (\_.succ (bms (expand mod matrix) (pred (mod (\_.mod) rows)))) mod
+    -- cannot replace succ here since a 0 mod will wipe out the count
+
+    -- bms1 mat (mod+1) == bms mod
+    bms1 = \matrix\mod1. matrix 0 (\_. mod1 (let mod = pred mod1 in bms1 (expand mod matrix) (mod (\_.mod) rows))) mod1
+    -- replacing succ by mod1 is ok, since a mod1=1 is more than compensated by exponentiation for other values
+
+  -- in bms (matrix0 rows) (pred rows);
+  in bms1 (matrix0 rows) rows;
 
   2 = \f\x. f (f x)
-in 2 2 BMS 2                      -- 516 bits; 64.5 bytes
+in 2 2 BMS 2                      -- 488 bits; 61 bytes
 
 --						G | B0 | C
 
