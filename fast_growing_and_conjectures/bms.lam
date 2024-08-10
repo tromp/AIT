@@ -19,18 +19,12 @@ let BMS = let
   -- bms
   in \rows. let
     -- mod is in [0..rows-1]
-    -- bms = \matrix\mod. matrix 0 (\_.succ (bms (expand mod matrix) (pred (mod (\_.mod) rows)))) mod
-    -- cannot replace succ here since a 0 mod will wipe out the count
-
-    -- bms1 mat (mod+1) == bms mod
-    bms1 = \matrix\mod1. matrix 0 (\_. mod1 (let mod = pred mod1 in bms1 (expand mod matrix) (mod (\_.mod) rows))) mod1
-    -- replacing succ by mod1 is ok, since a mod1=1 is more than compensated by exponentiation for other values
-
-  -- in bms (matrix0 rows) (pred rows);
-  in bms1 (matrix0 rows) rows;
+    bms = \matrix\mod. matrix 0 (bms (expand mod matrix) (pred (mod (\_.mod) rows))) rows
+    -- this returns rows^recurse^arraylength where recursion ends when arraylength = 0
+  in bms (matrix0 rows) (pred rows);
 
   2 = \f\x. f (f x)
-in 2 2 BMS 2                      -- 488 bits; 61 bytes
+in 2 2 BMS 2                      -- 474 bits; 59.25 bytes
 
 --						G | B0 | C
 
