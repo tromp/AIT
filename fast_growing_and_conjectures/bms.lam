@@ -1,20 +1,19 @@
 let BMS = let
   0 = \f\x. x;
   1 = \f. f;
-  notZero = \n\a\b. n (\u.a) b;
-  pred = \n\f\x. n (\g\h.h (g f))(\u.x)(\u.u);
-  gt = \x\y. notZero (y pred x); -- greater than
+  notZero = \n\a. n (\_.a);
   succ = \n\f\x. f (n f x);
+  pred = \n\f\x. n (\g\h.h (g f))(\u.x)(\u.u);
 
   expand = \mod\m\i. let m1 = m 1 in
-    gt i m1
-      (m (m1 pred (succ i)))    --  copy array element i+1 - m1
+    m1 pred i                       -- rewrite from gt i m1
+      (\_. m (m1 pred (succ i)))    --  copy array element i+1 - m1
       (let msis = m (succ i) succ;  in msis (
         notZero i
-          (gt (msis i) (m1 succ mod) m1 0)
+          ((m1 succ mod) pred (msis i) (\_.m1) 0)     -- rewrite from gt (msis i) (m1 succ mod)
           (pred (m i))));        -- new array length = old length - 1 + m1
 
-  matrix0 = \n\k. gt k n 0 n;    -- single column of n n's
+  matrix0 = \n\k. n pred k (\_.0) n;    -- single column of n n's  -- rewrite from gt k n
 
   -- bms
   in \rows. let
