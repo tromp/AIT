@@ -1,73 +1,36 @@
 let BMS = let
   0 = \f\x. x;
   1 = \f. f;
-  notZero = \n\a. n (\_.a);
   succ = \n\f\x. f (n f x);
   pred = \n\f\x. n (\g\h.h (g f))(\u.x)(\u.u);
 
   expand = \mod\m\i. let m1 = m 1 in
     m1 pred i                       -- rewrite from gt i m1
-      (\_. m (m1 pred (succ i)))    --  copy array element i+1 - m1
-      (let msis = m (succ i) succ;  in msis (
-        notZero i
-          ((m1 succ mod) pred (msis i) (\_.m1) 0)     -- rewrite from gt (msis i) (m1 succ mod)
-          (pred (m i))));        -- new array length = old length - 1 + m1
+      (\_. m (m1 pred (succ i)))    -- copy array element i+1 - m1
+      (let msis = m (succ i) succ
+       in msis (m1 succ mod pred (msis i) (\_.m1) 0)     -- msis (gt (msis i) (m1 succ mod) m1 0)
+      );
 
-  matrix0 = \n\k. n pred k (\_.0) n;    -- single column of n n's  -- rewrite from gt k n
+  matrix0 = \n\k. n n pred k (\_.0) n;    -- single column of n n's  -- rewrite from gt k n
 
   -- bms
   in \rows. let
     -- mod is in [0..rows-1]
-    bms = \matrix\mod. matrix 0 (bms (expand mod matrix) (pred (mod (\_.mod) rows))) rows
-    -- this returns rows^recurse^arraylength where recursion ends when arraylength = 0
-  in bms (matrix0 rows) rows;
+    bms = \matrix\mod. matrix 1 (bms (expand mod matrix) (pred (mod (\_.mod) rows))) rows
+    -- this returns rows^recurse^arrayhead where recursion ends when arrayhead = 0
+  in bms (matrix0 rows) (pred rows);
 
   2 = \f\x. f (f x)
-in 2 2 BMS 2                      -- 440 bits; 55 bytes
+in 2 2 BMS 2                      -- 415 bits; < 52 bytes; also smaller than BO program!
 
---						G | B0 | C
-
--- 2 2             = (0,0)(1,1)			| 0 | 1
---  2                (0,0)(2,2)			| 0 | 1
-
--- 2 0 2           = (0,0)(1,0)(2)		0 | 1 | 2
---  3                (0,0)(2,0)(2)		0 | 0 |
-
--- 0 4 0 2         = (0,0)(1,0)(1,0)		| 0 1 | 1
---  4                (0,0)(2,0)(4,0)		| 0 0 | 0
-
--- 4 0 2           = (0,0)(1,0)(1)		| 0 1 | 1
---  3                (0,0)(2,0)(4)		| 0 0 |
-
--- 0 2 0 0 0 2     = (0,0)(1,0)(0,0)(1,0)	0 1 | 0 | 1
---  6                (0,0)(2,0)(0,0)(2,0)	0 0 | 0 | 0
-
--- 2 0 0 0 2       = (0,0)(1,0)(0,0)(1)		0 1 | 0 | 1
---  5                (0,0)(2,0)(0,0)(2)		0 0 | 0 |
-
--- 0 0 0 0 0 2     = (0,0)(1,0)(0,0)(0,0)	0 1 0 | 0
---  6                (0,0)(2,0)(0,0)(0,0)	0 0 0 | 0
-
--- 0 0 0 0 2       = (0,0)(1,0)(0,0)(0)		0 1 0 | 0
---  5                (0,0)(2,0)(0,0)(0)		0 0 0 |
-
--- 0 0 0 2         = (0,0)(1,0)(0,0)		0 1 | 0
---  4                (0,0)(2,0)(0,0)		0 0 | 0
-
--- 0 0 2           = (0,0)(1,0)(0)		0 1 | 0
---  3                (0,0)(2,0)(0)		0 0 |
-
--- 0 2             = (0,0)(1,0)			0 | 1
---  2                (0,0)(2,0)			0 | 0
-
--- 2               = (0,0)(1)			| 0 | 1
---  1                (0,0)(2)			| 0 |
-
--- 0 0             = (0,0)(0,0)			| 0
---  2                (0,0)(0,0)			| 0
-
--- 0               = (0,0)(0)			| 0
---  1                (0,0)(0)			|
-
--- HALT            = (0,0)			|
---  0                (0,0)			|
+-- [2,2,  2,2] of length 4
+-- [2,  4,2,  2,2] of length 5
+-- [6,4,  4,2,  2,2] of length 6
+-- [4,  4,2,  2,2,  0,4, 4,2, 2,2] of length 11
+-- [8,2,  6,6,  4,2,  2,2, 0,4, 4,2, 2,2] of length 14
+-- [2,  6,6,  4,2,  2,2, 0,2, 6,6, 4,2, 2,2, 0,4, 4,2, 2,2] of length 21
+-- [8,8,  6,6,  4,2,  2,2, 0,2, 6,6, 4,2, 2,2, 0,4, 4,2, 2,2] of length 22
+-- [ skip 9 of lengths 29, 36, 41, 46, 49, 50, 53, 56, 57 ]
+-- [0,4,  0,2,  0,8,  2,2, 0,4, 2,2, 0,2, .. ]
+-- BMS 2 = 2^(2^(2^(2^(2^(2^(2^(2^(2^(2^(2^(2^(2^(2^(2^(2^(2)^57)^56)^53)^50)^49)^46)^41)^36)^29)^22)^21)^14)^11)^6)^5)^4
+--       > 2^^20 
