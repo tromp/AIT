@@ -20,10 +20,10 @@ let BMS = let
     -- mod is in [0..rows-1]
     bms = \matrix\mod. matrix 0 (bms (expand mod matrix) (pred (mod (\_.mod) rows))) rows
     -- this returns rows^recurse^arraylength where recursion ends when arraylength = 0
-  in bms (matrix0 rows) (pred rows);
+  in bms (matrix0 rows) rows;
 
   2 = \f\x. f (f x)
-in 2 2 BMS 2                      -- 446 bits; 55.75 bytes
+in 2 2 BMS 2                      -- 440 bits; 55 bytes
 
 --						G | B0 | C
 
