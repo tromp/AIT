@@ -91,10 +91,10 @@ let derive = (let
 
   -- derive
   in \n. let
-    fold = \f\z. let go = \l. l (\h\t\z.f h (go t)) z in go;
-    expand = \l. fold (\j1. fold (\j2. comp (rules j1 j2)) id l) (cons (judge nil (boxstar T) (boxstar F)) nil) l;
-    sizetower = fold (\jdg. jdg (\ctx\typ\trm. Cpow (fold (\_. Csucc) C1 (ser trm nil)))) C1
-  in sizetower (n expand nil));
+    ffold = \f. let go = \l.l (\h\t\z.f h (go t z)) in go; -- fold with 2nd/3rd arguments flipped
+    expand = \l. ffold (\j1. ffold (\j2. comp (rules j1 j2)) l id) l (cons (judge nil (boxstar T) (boxstar F)) nil);
+    sizetower = ffold (\jdg. jdg (\ctx\typ\trm. Cpow (ffold (\_. Csucc) (ser trm nil) C1)))
+  in sizetower (n expand nil) n);
 
   3 = \f\x. f (f (f x))
 in 3 3 derive 3
