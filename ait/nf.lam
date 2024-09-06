@@ -1,0 +1,62 @@
+-- nf outputs the normal form of the input blc term
+let
+  id    = \x.x;
+  true  = \t\f.t;
+  false = \t\f.f;
+  nil   = false;
+  cons  = \x\y\z. z x y;
+  cons0 = cons true;
+  cons1 = cons false;
+  compose = \f\g\x. f (g x);
+  cons00 = compose cons0 cons0;
+  cons01 = compose cons0 cons1;
+  cons10 = compose cons1 cons0;
+  tail = \l. l false;
+  succ = \n\f\x.f (n f x);
+  zero = false;
+  one = id;
+
+  -- data T = L (T -> T)  -- Lam
+  --        | A T T       -- App
+  --        | V Int       -- de Bruijn level variable 
+  caseT = \t\l\a\v. t l a v;
+  L = \f.     \l\a\v. l f;
+  A = \t1\t2. \l\a\v. a t1 t2;
+  V = \d.     \l\a\v. v d;
+
+  -- parse binary lambda calculus using HOAS, capturing program.
+  -- uni :: (([t] -> t) -> [Bool] -> r)
+  --        -- continuation taking program, remainder of input
+  --     -> [Bool]              -- input
+  --     -> r
+  uni = \cont\xs.
+    xs (\b0\ys\uni\cont.ys (\b1. b0
+       (uni (\t1.(b1 (cont (\ctx. L (\v.t1 (\p.p v ctx))))
+                      (uni (\t2.cont (\ctx. A (t1 ctx) (t2 ctx)))))))
+       (b1 (cont (\ctx. ctx b1))
+                 (\d.uni (\v.cont (\ctx. v (ctx b1))) ys))))
+       uni cont;
+
+  eval = \t. caseT t
+    -- Lambda
+    (\f. L (\x. eval (f x)))
+    -- Application
+    (\t1\t2. let t1' = eval t1; A1 = A t1' in caseT t1'
+      (\f. f)           -- L
+      (\t1\t2. A1)      -- A
+      (\d.     A1)      -- V
+    (eval t2))
+    -- Variable
+    (\v. V v);
+
+  ser = \lvl\t. caseT t
+    -- Lambda: apply to a free variable to further reduce whnf
+    (\f.     compose cons00 (ser (succ lvl) (f (V lvl))))
+    -- Application
+    (\t1\t2. compose cons01 (compose (ser lvl t1) (ser lvl t2)))
+    -- Variable
+    (\v.     compose (v tail) (compose (lvl cons1) cons0));
+
+  omega = omega;
+  nf = uni (\t. ser one (eval (t omega)))
+in nf
