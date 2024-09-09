@@ -20,7 +20,8 @@ let derive = (let
   T = \x\y. x;
   F = \x\y. y;
   not = \b\t\f. b f t;
-  eqb = \b1\b2.b1 b2 (not b2); -- boolean equality	30 bits
+  eqb  = \b1\b2.b1 b2 (not  b2); -- boolean equality	30 bits
+  eqb2 = \b1\b2.b1 b2 (b2 b1 T); -- boolean equality	29 bits -- found by Marvin Borner
   -- list ops
   nil = F;
   cons = \x\y\z.z x y;

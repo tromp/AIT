@@ -47,6 +47,10 @@ map (size2.DBVar) [0..17] = [2, 3, 5, 5, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 9, 9,13,1
 > size2 :: DB -> Int
 > size2 = length . encode2
 
+Size in bits with Mateusz context sensitive encoding for closed lambda terms
+which skips the inital 0 bit on top level LAM/APP 
+and the final 1 bit on variable binding outermost lambda
+
 > encode0 :: DB -> String
 > encode0 z = prebin 0 z "" where
 >   prebin :: Int -> DB -> String -> String

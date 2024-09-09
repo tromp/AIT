@@ -407,3 +407,17 @@ int main(int argc, char **argv) {
     steps, ms, ms ? steps/ms/1000 : 666, nGC, hp);
   return 0;
 }
+
+/*
+Sadly there's a bug in here somewhere:
+
+$ cat primes1k.blc | ./uni -bgxxxxx nf 
+...
+steps 94126565 heap 33551808 stack 2579
+memsize 33554432 GC 33551680 -> 9288742
+0001011000001100001011000001100001011000001100001011000001000010110000011000010110000010000101100000110000101100000110000010Segmentation fault: 11
+
+The crash happens right after completing the correct output?!
+It runs fine under the gdb debugger:-(
+valgrind fails to run on my 2013 iMac which is stuck on macOS Catalina 10.15.7
+*/

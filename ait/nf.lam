@@ -24,30 +24,16 @@ let
   A = \t1\t2. \l\a\v. a t1 t2;
   V = \d.     \l\a\v. v d;
 
-  -- parse binary lambda calculus using HOAS, capturing program.
-  -- uni :: (([t] -> t) -> [Bool] -> r)
-  --        -- continuation taking program, remainder of input
-  --     -> [Bool]              -- input
-  --     -> r
-  uni = \cont\xs.
-    xs (\b0\ys\uni\cont.ys (\b1. b0
-       (uni (\t1.(b1 (cont (\ctx. L (\v.t1 (\p.p v ctx))))
-                      (uni (\t2.cont (\ctx. A (t1 ctx) (t2 ctx)))))))
+  parseval = \cont\xs.
+    xs (\b0\ys\parseval\cont.ys (\b1. b0
+       (parseval (\t1.(b1 (cont (\ctx. L (\v.t1 (\p.p v ctx))))
+         (parseval (\t2.cont (\ctx. let
+           tc1 = t1 ctx; tc2 = t2 ctx; A12 = A tc1 tc2
+         in tc1 (\f. f tc2) (\_\_. A12) (\_. A12)
+         ))))))
        (b1 (cont (\ctx. ctx b1))
-                 (\d.uni (\v.cont (\ctx. v (ctx b1))) ys))))
-       uni cont;
-
-  eval = \t. caseT t
-    -- Lambda
-    (\f. L (\x. eval (f x)))
-    -- Application
-    (\t1\t2. let t1' = eval t1; A1 = A t1' in caseT t1'
-      (\f. f)           -- L
-      (\t1\t2. A1)      -- A
-      (\d.     A1)      -- V
-    (eval t2))
-    -- Variable
-    (\v. V v);
+                 (\d.parseval (\v.cont (\ctx. v (ctx b1))) ys))))
+       parseval cont;
 
   ser = \lvl\t. caseT t
     -- Lambda: apply to a free variable to further reduce whnf
@@ -58,5 +44,5 @@ let
     (\v.     compose (v tail) (compose (lvl cons1) cons0));
 
   omega = omega;
-  nf = uni (\t. ser one (eval (t omega)))
+  nf = parseval (\t. ser one (t omega))
 in nf
