@@ -10,7 +10,6 @@ let
   compose = \f\g\x. f (g x);
   cons00 = compose cons0 cons0;
   cons01 = compose cons0 cons1;
-  cons10 = compose cons1 cons0;
   tail = \l. l false;
   succ = \n\f\x.f (n f x);
   zero = false;
@@ -27,22 +26,19 @@ let
   parseval = \cont\xs.
     xs (\b0\ys\parseval\cont.ys (\b1. b0
        (parseval (\t1.(b1 (cont (\ctx. L (\v.t1 (\p.p v ctx))))
-         (parseval (\t2.cont (\ctx. let
-           tc1 = t1 ctx; tc2 = t2 ctx; A12 = A tc1 tc2
-         in tc1 (\f. f tc2) (\_\_. A12) (\_. A12)
-         ))))))
+         (parseval (\t2.cont (\ctx. let tc1 = t1 ctx; A1 = A tc1
+           in tc1 (\f. f) (\_\_. A1) (\_. A1) (t2 ctx)))))))
        (b1 (cont (\ctx. ctx b1))
-                 (\d.parseval (\v.cont (\ctx. v (ctx b1))) ys))))
+           (\d.parseval (\v.cont (\ctx. v (ctx b1))) ys))))
        parseval cont;
 
-  ser = \lvl\t. caseT t
+  ser = \t\lvl. caseT t
     -- Lambda: apply to a free variable to further reduce whnf
-    (\f.     compose cons00 (ser (succ lvl) (f (V lvl))))
+    (\f.     compose cons00 (ser (f (V lvl)) (succ lvl)))
     -- Application
-    (\t1\t2. compose cons01 (compose (ser lvl t1) (ser lvl t2)))
+    (\t1\t2. compose cons01 (compose (ser t1 lvl) (ser t2 lvl)))
     -- Variable
     (\v.     compose (v tail) (compose (lvl cons1) cons0));
 
-  omega = omega;
-  nf = parseval (\t. ser one (t omega))
+  nf = parseval (\t. ser (t t) zero)
 in nf
