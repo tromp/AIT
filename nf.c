@@ -20,7 +20,7 @@ typedef uint32_t u32;
 u32 memsize, // current size of both mem and gcmem heaps in units of u32
     *mem,    // main memory heap holding LC and CL terms and on which graph reduction happens
     *gcmem,  // 2nd heap where GC stores all accessible terms before swapping back with main
-    *spTop,  // top of stack which is at top of memory (mem + memsize-1)
+    *spTop,  // top of stack which is at top of memory (mem + memsize-2)
     *etaTop, // top of currrent boehm node subject to eta expansion
     nvar,    // number of eta expansions in boehm path down to current node
     *sp,     // stack pointer; stack grows down from top holding spine of CL applications
@@ -194,7 +194,7 @@ u32 *reheap(u32* m, u32 size) {
   m = realloc(m, (size_t)size * sizeof(u32));
   if (!m)
     die("realloc failed");
-  memset(m, 0, NCOMB); // allow mem[x]=='C' test without !isComb(x)
+  memset(m, 0, NCOMB * sizeof(u32)); // allow mem[x]=='C' test without !isComb(x)
   return m;
 }
 
@@ -216,7 +216,7 @@ void gc() {
   }
   if (qDblMem)
     gcmem = reheap(gcmem, memsize *= 2);
-  sp = gcmem + memsize-1;
+  sp = gcmem + memsize - 2;
   u32 di = hp = NCOMB;
   for (*sp = evac(*spTop); di < hp; di++) {
     u32 x = gcmem[di] = evac(gcmem[di]);
@@ -273,7 +273,7 @@ static inline void lazy(u32 delta, u32 f, u32 a) {
 }
 
 void run(u32 x) {
-  *(sp = spTop = mem + memsize - 1) = x;
+  *(sp = spTop = mem + memsize - 2) = x;
   for (char outbits = 0; ; steps++) {
     if (dbgSTP && !(steps & STEPMASK))
       stats();
