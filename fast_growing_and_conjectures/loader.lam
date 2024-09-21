@@ -1,4 +1,4 @@
-let derive = (let
+let  derive = (let
   id = \x.x;
   -- function composition
   comp = \f\g\x. f (g x);
@@ -7,18 +7,13 @@ let derive = (let
   C1 = id;
   Csucc = \n\f\x. f (n f x);
   C2 = Csucc C1;
-  Cadd = \m\n\f\x. m f (n f x);
-  Cmul = comp;
   Cpow = \m\n. n m;
   -- Scott numerals
   Ssucc = \n\s\z. s n;
-  Spred = \n. n (\n1. n1) n;
   S0    = \s\z. z;
-  S1    = Ssucc S0;
   -- Booleans
   T = \x\y. x;
   F = \x\y. y;
-  not = \b\t\f. b f t;
   eqb = \b1\b2.b1 b2 (b2 b1 T); -- boolean equality	29 bits -- found by Marvin Borner
   -- list ops
   nil = F;
@@ -35,58 +30,61 @@ let derive = (let
   eql = \eq. let go = \l\m. l (\t\l1\_. m (\t2\m1\m. eq t t2 (go l1 m1) F) m) (m (\b\m1\_. l) T) in go;
 
   -- term constructors
-  pilam   = \bp\ta\tb \pla\bs\vr. pla (Ssucc bp) ta tb;
+  pilam   = \bp\ta\fb \pla\bs\vr. pla (Ssucc bp) ta fb;
   app     = \ta\tb    \pla\bs\vr. pla S0 ta tb;
   sort    = \bx       \pla\bs\vr. bs bx;
   var     = \v        \pla\bs\vr. vr v;
+  case = \t \pla\bs\vr. t pla bs vr;
 
-  -- environment of free variables [C1 consF, C2 consF, .. ]
+  -- environment of free variables [C1 consF, C2 consF, .. ]			89 bits
   freevars = let
-    go = \pre. let preF = \tl. cons F (pre tl) in cons (var preF) (go preF)
+    go = \pre. let preF = \tl. pre (cons F tl) in cons (var preF) (go preF)
   in go id;
 
   -- close an open term
   close = \ot. ot freevars;
 
-  -- serialize closed term t before list tl at abstraction depth d		??? bits
-  sers = \d\t\tl. let cT = cons T; cF = cons F in t
+  -- serialize closed term t before list tl at abstraction depth d		367 bits
+  sers = \d\t\tl. let cT = cons T; cF = cons F in case t
     (\mb\ta\tb. cT (sers d ta (mb (\bp. cT (cons bp (sers (Csucc d) (tb (var (d tail))) tl)))
                                   (cF (sers d tb tl)))))
     (\bx.       cF (cT (cons bx tl)))
     (\v.        v (d cF (cF (cT tl))));
 
-  -- serialize an open term
+  -- serialize an open term, e.g.
+  -- ser (\env. λ*.0) = ser (\env. pilam F (sort F)    id     ) = "0 101 0 1 110"
+  -- ser (\env. λ*.1) = ser (\env. pilam F (sort F) (head env)) = "0 101 0 1 1110"
   ser = \ot. sers C0 (close ot) nil;
 
-  -- open term equality		??? bits
+  -- open term equality		664 bits
   eqt = \ot1\ot2. eql eqb (ser ot1) (ser ot2);
 
-  -- context equality		??? bits
+  -- context equality		701 bits
   eqc = eql eqt;
 
   -- lift an open term
   lift = \ot\env. ot (tail env);
 
-  -- rules 2+3+4+5+6		-- ??? bits
-  rules = \jdg1\jdg2. jdg1 (\ctx\typ\trm. jdg2 (\ctx2\typ2\trm2. eqc ctx ctx2 (
+  -- rules 2+3+4+5+6		-- 1567 bits
+  rules = \jdg0\jdg. jdg0 (\ctx0\typ0\trm0. jdg (\ctx\typ\trm. eqc ctx0 ctx (
     let
-      isSort = close typ2
-        (\mb\ta\tb. F)
-        (\bx.       T)
-        (\v.        F);
-      weaken = isSort (cons (judge (cons trm2 ctx2) (lift typ) (lift trm))) id;
-      iLamPi = ctx2 (\tp\ctx21. cons ( let
+      isSort = case (close typ)
+        (\_\_\_. F)
+        (\_.     T)
+        (\_.     F);
+      weaken = isSort (cons (judge (cons trm ctx) (lift typ0) (lift trm0))) id;
+      iLamPi = ctx (\tp\ctx1. cons ( let
            abstract = \bp\ta\fb. \env. (pilam bp (ta env) (\x. fb (cons x env)))
-         in judge ctx21 (isSort id (abstract T tp) typ2) (abstract isSort tp trm2)));
-      iVar   = \tl. isSort (cons (judge (cons trm2 ctx2) (lift trm2) head) tl) tl;
-      iApp   = close typ
-        (\mb\ta. mb (\bp. eqt (\_.ta) typ2 (\tb. cons (let
+         in judge ctx1 (isSort id (abstract T tp) typ) (abstract isSort tp trm)));
+      iVar   = \tl. isSort (cons (judge (cons trm ctx) (lift trm) head) tl) tl;
+      iApp   = case (close typ0)
+        (\mb\ta. mb (\bp. eqt (\_.ta) typ (\tb. cons (let
           apply = \ot1\ot2. \env. let t1 = ot1 env in t1
-              (\mb\ta\tb. mb (\bp. tb))
-              (\bx.       id)
-              (\v.        id)
+              (\mb\_\tb. mb (\bp. tb))
+              (\_.       id)
+              (\_.       id)
             (app t1) (ot2 env)
-         in judge ctx2 (apply typ trm2) (apply trm trm2)))))
+         in judge ctx (apply typ0 trm) (apply trm0 trm)))))
         (\bx.       id)
         (\v.        id)
     in \tl. weaken (iApp (iLamPi (iVar tl)))
@@ -96,9 +94,9 @@ let derive = (let
     ffold = \f. let go = \l.l (\h\t\z.f h (go t z)) in go; -- fold with 2nd/3rd arguments flipped
     axiom = judge nil (\_. sort T) (\_. sort F);
     expand = \l. ffold (\j1. ffold (\j2. comp (rules j1 j2)) l id) l (cons axiom nil);
-    sizetower = ffold (\jdg. jdg (\ctx\typ\trm. Cpow (ffold (\_. Csucc) (ser trm) C1)))
-    -- length = \l. ffold (\_. Csucc) l C0;
+    length  = \l\f. ffold (\_. f) l;
+    sizetower = ffold (\jdg. jdg (\_\_\trm. Cpow (length (ser trm))))
   in sizetower (n expand nil) n);
 
   3 = \f\x. f (f (f x))
-in 3 3 derive 3
+in 3 3 derive 3						-- 1894 bits / 236.75 bytes
