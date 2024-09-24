@@ -8,9 +8,9 @@ let  derive = (let
   Csucc = \n\f\x. f (n f x);
   C2 = Csucc C1;
   Cpow = \m\n. n m;
-  -- Scott numerals
-  Ssucc = \n\s\z. s n;
-  S0    = \s\z. z;
+  -- Maybe monad
+  Just = \n\s\z. s n;
+  Nothing    = \s\z. z;
   -- Booleans
   T = \x\y. x;
   F = \x\y. y;
@@ -30,8 +30,8 @@ let  derive = (let
   eql = \eq. let go = \l\m. l (\t\l1\_. m (\t2\m1\F. eq t t2 (go l1 m1) F) F) (m (\b\m1\_. l) T) in go;
 
   -- term constructors
-  pilam   = \bp\ta\fb \pla\bs\vr. pla (Ssucc bp) ta fb;
-  app     = \ta\tb    \pla\bs\vr. pla S0 ta tb;
+  pilam   = \bp\ta\fb \pla\bs\vr. pla (Just bp) ta fb;
+  app     = \ta\tb    \pla\bs\vr. pla Nothing ta tb;
   sort    = \bx       \pla\bs\vr. bs bx;
   var     = \v        \pla\bs\vr. vr v;
   case = \t \pla\bs\vr. t pla bs vr;
@@ -56,16 +56,16 @@ let  derive = (let
   -- ser (\env. λ*.1) = ser (\env. pilam F (sort F) (head env)) = "0 101 0 1 1110"
   ser = \ot. sers C0 (close ot) nil;
 
-  -- open term equality		663 bits
+  -- open term equality		647 bits
   eqt = \ot1\ot2. eql eqb (ser ot1) (ser ot2);
 
-  -- context equality		700 bits
+  -- context equality		685 bits
   eqc = eql eqt;
 
   -- lift an open term
   lift = \ot\env. ot (tail env);
 
-  -- rules 2+3+4+5+6		-- 1561 bits
+  -- rules 2+3+4+5+6		-- 1546 bits
   rules = \jdg0\jdg. jdg0 (\ctx0\typ0\trm0. jdg (\ctx. eqc ctx0 ctx (\typ\trm.
     let
       isSort = \t. case (close typ)
@@ -95,8 +95,10 @@ let  derive = (let
     axiom = judge nil (\_. sort T) (\_. sort F);
     expand = \l. ffold (\j1. ffold (\j2. comp (rules j1 j2)) l id) l (cons axiom nil);
     length  = \l\f. ffold (\_. f) l;
-    sizetower = ffold (\jdg. jdg (\_\_\trm. Cpow (length (ser trm))))
+    sizetower = ffold (\jdg. jdg (\_\_\trm. length (ser trm)))
   in sizetower (n expand nil) n);
 
-  3 = \f\x. f (f (f x))
-in 3 3 derive 3						-- 1874 bits / 234.25 bytes
+  2 = \f\x. f (f x)
+in 2 2 2 derive 2						-- 1864 bits / 233 bytes
+
+-- derive 2 = sizetower [* |- * : □,* |- 0 : *, |- * : □] 2 = ((2^3)^3)^3 = 2^27
