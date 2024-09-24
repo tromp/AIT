@@ -56,22 +56,22 @@ let  derive = (let
   -- ser (\env. λ*.1) = ser (\env. pilam F (sort F) (head env)) = "0 101 0 1 1110"
   ser = \ot. sers C0 (close ot) nil;
 
-  -- open term equality		664 bits
+  -- open term equality		663 bits
   eqt = \ot1\ot2. eql eqb (ser ot1) (ser ot2);
 
-  -- context equality		701 bits
+  -- context equality		700 bits
   eqc = eql eqt;
 
   -- lift an open term
   lift = \ot\env. ot (tail env);
 
-  -- rules 2+3+4+5+6		-- 1567 bits
-  rules = \jdg0\jdg. jdg0 (\ctx0\typ0\trm0. jdg (\ctx\typ\trm. eqc ctx0 ctx (
+  -- rules 2+3+4+5+6		-- 1561 bits
+  rules = \jdg0\jdg. jdg0 (\ctx0\typ0\trm0. jdg (\ctx. eqc ctx0 ctx (\typ\trm.
     let
-      isSort = case (close typ)
-        (\_\_\_. F)
-        (\_.     T)
-        (\_.     F);
+      isSort = \t. case (close typ)
+        (\_\_\_. \f.f)
+        (\_.     \f.t)
+        (\_.     \f.f);
       weaken = isSort (cons (judge (cons trm ctx) (lift typ0) (lift trm0))) id;
       iLamPi = ctx (\tp\ctx1. cons ( let
            abstract = \bp\ta\fb. \env. (pilam bp (ta env) (\x. fb (cons x env)))
@@ -88,7 +88,7 @@ let  derive = (let
         (\bx.       id)
         (\v.        id)
     in \tl. weaken (iApp (iLamPi (iVar tl)))
-  ) id));
+  ) (\typ\trm. id)));
 
   in \n. let
     ffold = \f. let go = \l.l (\h\t\z.f h (go t z)) in go; -- fold with 2nd/3rd arguments flipped
@@ -99,4 +99,4 @@ let  derive = (let
   in sizetower (n expand nil) n);
 
   3 = \f\x. f (f (f x))
-in 3 3 derive 3						-- 1894 bits / 236.75 bytes
+in 3 3 derive 3						-- 1889 bits / 236.125 bytes
