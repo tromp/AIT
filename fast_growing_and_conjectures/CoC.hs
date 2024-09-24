@@ -130,7 +130,7 @@ gen = [] : axiom : map geni [2..] where
              j2 <- gen !! (n-i-1)
              iApp j1 j2 ++ weaken j1 j2
 
-main = putStrLn "Look Ma, no subst " >> mapM_ (\(i,l) -> do
+altmain = putStrLn "Look Ma, no subst " >> mapM_ (\(i,l) -> do
          putStr "EXPAND "
          print i
          mapM_ print l
@@ -139,6 +139,11 @@ main = putStrLn "Look Ma, no subst " >> mapM_ (\(i,l) -> do
          putStr "sumsize "
          print . sum . map (\(Judge trm _ _) -> 1 + size (close trm)) $ l
        ) (zip [0..6] gen0)
+
+derive :: Integer -> Integer
+derive n = foldr (\(Judge trm _ _) b -> b ^ size (close trm)) n (gen0!!fromIntegral n)
+
+main = putStrLn $ "derive 2 = " ++ show (derive 2)
 
 {--
 Rules
