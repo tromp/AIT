@@ -26,8 +26,8 @@ let  derive = (let
 
   judge = \ctx\typ\trm\z.z ctx typ trm;
 
-  -- list equality		146 bits
-  eql = \eq. let go = \l\m. l (\t\l1\_. m (\t2\m1\m. eq t t2 (go l1 m1) F) m) (m (\b\m1\_. l) T) in go;
+  -- list equality		131 bits
+  eql = \eq. let go = \l\m. l (\t\l1\_. m (\t2\m1\F. eq t t2 (go l1 m1) F) F) (m (\b\m1\_. l) T) in go;
 
   -- term constructors
   pilam   = \bp\ta\fb \pla\bs\vr. pla (Ssucc bp) ta fb;
@@ -99,4 +99,4 @@ let  derive = (let
   in sizetower (n expand nil) n);
 
   3 = \f\x. f (f (f x))
-in 3 3 derive 3						-- 1889 bits / 236.125 bytes
+in 3 3 derive 3						-- 1874 bits / 234.25 bytes
