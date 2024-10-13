@@ -4,7 +4,7 @@ let BMS = let
   succ = \n\f\x. f (n f x);
   pred = \n\f\x. n (\g\h.h (g f))(\u.x)(\u.u);
 
-  expand = \mod\m\i. let m1 = m 1 in
+  expand = \mod\m. let m1 = m 1 in \i.
     m1 pred i                       -- rewrite from gt i m1
       (\_. m (m1 pred (succ i)))    -- copy array element i+1 - m1
       (let msis = m (succ i) succ
@@ -21,7 +21,7 @@ let BMS = let
   in bms (matrix0 rows) (pred rows);
 
   2 = \f\x. f (f x)
-in 2 2 BMS 2                      -- 415 bits; < 52 bytes; also smaller than BO program!
+in 2 2 BMS 2                      -- 414 bits; < 52 bytes
 
 -- [2,2,  2,2] of length 4
 -- [2,  4,2,  2,2] of length 5

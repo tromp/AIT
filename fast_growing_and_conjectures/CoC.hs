@@ -3,7 +3,7 @@ import Control.Monad
 import Debug.Trace
 
 -- HOAS CoC terms with de-Bruijn level for show
-data Closed = Box | Star | Var Int | Lam Closed (Closed -> Closed) | Pi Closed (Closed -> Closed)| App Closed Closed
+data Closed = Box | Star | Var Integer | Lam Closed (Closed -> Closed) | Pi Closed (Closed -> Closed)| App Closed Closed
 
 -- show terms by passing de-Bruijn levels into pi and lambda functions
 instance Show Closed where
@@ -16,7 +16,7 @@ instance Show Closed where
     showi n (Var i) = show (n-1-i)
 
 -- number of bits in binary encoding
-size :: Closed -> Int
+size :: Closed -> Integer
 size = sz 0 where
   sz n (Lam ta tb) = 3 + sz n ta + sz (n+1) (tb (Var n))
   sz n (Pi ta tb) = 3 + sz n ta + sz (n+1) (tb (Var n))
@@ -140,10 +140,10 @@ altmain = putStrLn "Look Ma, no subst " >> mapM_ (\(i,l) -> do
          print . sum . map (\(Judge trm _ _) -> 1 + size (close trm)) $ l
        ) (zip [0..6] gen0)
 
-derive :: Integer -> Integer
-derive n = foldr (\(Judge trm _ _) b -> b ^ size (close trm)) n (gen0!!fromIntegral n)
+derive :: Integer -> String
+derive n = show n ++ "^" ++ show (foldr (\(Judge trm _ _) b -> b * size (close trm)) 1 (gen0!!fromIntegral n))
 
-main = putStrLn $ "derive 2 = " ++ show (derive 2)
+main = mapM_ (\n -> putStrLn $ "derive " ++ show n ++ " = " ++ derive n) [0..]
 
 {--
 Rules
