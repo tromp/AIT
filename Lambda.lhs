@@ -295,8 +295,8 @@ Oleg Kiselyov's compositional bracket abstraction
 as explained on https://crypto.stanford.edu/~blynn/lambda/kiselyov.html
 
 > toCLOK :: DB -> CL
-> toCLOK db = cl where
->   (0,cl) = convert db
+> toCLOK db = if lvl==0 then cl else error "Kiselyov abstraction failed" where
+>   (lvl,cl) = convert db
 >   convert :: DB -> (Int, CL)
 >   convert = \case
 >     DBVar 0 -> (1, CombI)

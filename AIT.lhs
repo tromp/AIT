@@ -39,7 +39,6 @@ map (size2.DBVar) [0..17] = [2, 3, 5, 5, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 9, 9,13,1
 >   prebin (DBVar 0) s = '1':'0':s
 >   prebin (DBVar i) s | i>0 = ('1':) . prebin (DBVar (length (showi "") - 1)) . tail . showi $ s where
 >     showi = showBin i
->     showBin = showIntAtBase 2 intToDigit 
 >   prebin (DBVar   _) _ = error "Negative de-Bruijn index"
 >   prebin (DBLam   e) s = '0':'0':(prebin e s)
 >   prebin (DBApp x y) s = '0':'1':(prebin x (prebin y s))
