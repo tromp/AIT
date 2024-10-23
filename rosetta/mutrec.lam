@@ -1,0 +1,24 @@
+let
+  -- Scott numerals
+  S0 = \s\z. z;
+  Ssucc = \n\s\z. s n;
+  Spred = \n. n id n;
+  S1 = Ssucc S0;
+  S2 = Ssucc S1;
+  S3 = Ssucc S2;
+  Ssub = \x\y. y (x Ssub (\y1. x)) x;
+
+  -- standard fix-point Y-combinator
+  Y = \f. (\x. x x) (\x. f (x x)); -- 25 bits
+
+  F_ = \f\m\n. n (\n1. Ssub n (m (f n1))) S1;
+  M_ = \f\m\n. n (\n1. Ssub n (f (m n1))) S0;
+
+  -- mutual recursion using recursive tuples
+  -- https://codegolf.stackexchange.com/questions/266083/write-a-variadic-fixed-point-combinator/275513?noredirect=1#comment593235_275513
+  
+  FM = \z. z (FM F_) (FM M_);
+  F = FM (\f\m. f);
+  M = FM (\f\m. m);
+
+in M S3 -- Ygen
