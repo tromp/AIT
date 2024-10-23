@@ -2,7 +2,6 @@ let
   -- Scott numerals
   S0 = \s\z. z;
   Ssucc = \n\s\z. s n;
-  Spred = \n. n id n;
   S1 = Ssucc S0;
   S2 = Ssucc S1;
   S3 = Ssucc S2;
