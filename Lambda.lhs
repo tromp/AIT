@@ -396,10 +396,9 @@ Since S (K M) (S (K N) L) x = M (N (L x)) = (S (K M) N) (L x) = S (K (S (K M) N)
 
 BCWI+K terms: We reuse the CL type and represent combinators by their respective SK translation.
 
-> pattern CombSK, CombSS, CombKK, CombSSK :: CL
+> pattern CombSK, CombSS, CombSSK :: CL
 > pattern CombSK = CApp CombS CombK
 > pattern CombSS = CApp CombS CombS
-> pattern CombKK = CApp CombK CombK
 > pattern CombSSK = CApp CombSS CombK
 
 > type BCW = CL
