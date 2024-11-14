@@ -309,7 +309,7 @@ as explained on https://crypto.stanford.edu/~blynn/lambda/kiselyov.html
 >       t2@(n2, _) = convert e2
 >   (0 , d1) # (0 , d2) = CApp d1 d2
 >   (0 , d1) # (n , d2) = (0, CApp CombS (CApp CombK d1)) # (n - 1, d2)   -- B d1 where Bxyz=x(yz)
->   (n , d1) # (0 , d2) = (0, CApp CombSS (CApp CombKK d2)) # (n - 1, d1) -- R d2 where Rxyz=yzx
+>   (n , d1) # (0 , d2) = (0, CApp CombSS (CApp CombK (CApp CombK d2))) # (n - 1, d1) -- R d2 where Rxyz=yzx
 >   (n1, d1) # (n2, d2) = (n1 - 1, (0, CombS) # (n1 - 1, d1)) # (n2 - 1, d2)
 
 Implement improved bracket abstraction:
