@@ -20,4 +20,16 @@ let
   F = FM (\f\m. f);
   M = FM (\f\m. m);
 
-in M S3 -- Ygen
+  map = \f. (let go = \l.l(\h\t\_\z.z (f h) (go t))l in go);
+  Ylist = map (\z.z Ylist); -- 95 bits
+
+  T = \t\f. t;
+  F = \t\f. f;
+  cons = \x\y\z. z x y;
+  nil = F;
+  LF_ = \lfm\n. n (\n1. Ssub n (lfm F T (lfm T n1))) S1;
+  LM_ = \lfm\n. n (\n1. Ssub n (lfm T (lfm F T n1))) S0;
+  LFM = Ylist (cons LF_ (cons LM_ nil));
+  LM = LFM F T
+
+in Ylist

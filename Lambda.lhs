@@ -355,6 +355,14 @@ Implement improved bracket abstraction:
 >   occabstract (CApp m (CApp n l)) | isConst m && isConst n
 >       = occabstract (CApp (CApp (CApp CombS (abstract m)) n) l)
 
+Since S (K M) (S (K N) L) x = M (N (L x)) = (S (K M) N) (L x) = S (K (S (K M) N)) L x:
+[x] (S (K M) (S (K N) L)) ≡ [x] (S (K (S (K M) N))) L
+
+>   occabstract (CApp (CApp CombS (CApp CombK m)) (CApp (CApp CombS (CApp CombK n)) l))
+>       = occabstract (CApp (CApp CombS (CApp CombK (CApp (CApp CombS (CApp CombK m)) n)))l)
+
+≡ [x] (S (K (S (K M) N))) L (M, N combinators)
+
 [x] ((M N) L) ≡ [x] (S M ([x] L) N) (M, L combinators)
 
 >   occabstract (CApp (CApp m n) l) | isConst m && isConst l

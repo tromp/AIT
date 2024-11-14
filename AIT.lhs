@@ -147,12 +147,15 @@ Number of time variable occurs in term
 
 Optimize an expression; repeatedly contract redexes that reduce in size
 
-> optimize :: DB -> DB
-> optimize x = let ox = opt x in if ox == x then x else optimize ox where
+failed to optimize (λ 1 (λ 2) (λ λ 2)) (λ λ λ 3 1 (2 1)) to \\\3 (2 1)
+
+> optimize :: Int -> DB -> DB
+> optimize 0 x = x
+> optimize n x = let ox = opt x in if ox == x then x else optimize n ox where
 >   opt (DBLam (DBApp fun (DBVar 0))) | not (occurs 0 fun) = subst 0 undefined fun -- \y. x y
 >   opt (DBLam body) = DBLam (opt body)
 >   opt t@(DBApp (DBLam body) arg) | size s < size t = opt s where
->     s = subst 0 arg body
+>     s = optimize (n-1) $ subst 0 arg body
 >   opt (DBApp fun arg) = DBApp (opt fun) (opt arg)
 >   opt e = e
 
@@ -191,7 +194,7 @@ Safe reductions (guaranteed to reach normal form)
 Of interest to Busy Beaver
 
 > expands :: DB -> Bool
-> expands x = x == optimize x && case reduct x of
+> expands x = x == optimize 1 x && case reduct x of
 >               Just t@(DBApp (DBLam body) arg) -> size (subst 0 arg body) > size t
 >               _ -> False
 
@@ -290,30 +293,30 @@ Bitstring functions -----------------------------------------------------
 >   "runf"    -> nl .    show . nf . toDB . machine $  bitstoLC lcFalse input
 >   "runO"    -> nl .   bshow . nf . toDB . machine $  bitstoLC (error "Omega") input
 >   "run8"    -> nl .   bshow . nf . toDB . machine $ bytestoLC lcFalse input
->   "print"   -> nl .                     show             $ prog
->   "nf"      -> nl .                     show . nf . toDB $ prog
->   "hnf"     -> nl .                    show . hnf . toDB $ prog
->   "nf_size" -> nl .              show . size . nf . toDB $ prog
->   "comb_nf" -> nl .        show . strongCL . toCL . toDB $ prog
->   "comb"    -> nl .        show . toCL . optimize . toDB $ prog
->   "combOK"  -> nl .      show . toCLOK . optimize . toDB $ prog
->   "bcw"     -> nl .    showBCW . toBCW . optimize . toDB $ prog
->   "bcl"     ->           encode . toCL . optimize . toDB $ prog
->   "diagram" -> elems   . diagram False . optimize . toDB $ prog
->   "Diagram" -> elems   . diagram  True . optimize . toDB $ prog
->   "boxchar" -> boxChar False . diagram False . optimize . toDB $ prog
->   "Boxchar" -> boxChar True . diagram  True . optimize . toDB $ prog
->   "pbm"     -> toPBM   . diagram False . optimize . toDB $ prog
->   "Pbm"     -> toPBM   . diagram  True . optimize . toDB $ prog
->   "tex"     -> nl .         tex . show . optimize . toDB $ prog
->   "nfhtml"  -> nl .              html . show . nf . toDB $ prog
->   "html"    -> nl .        html . show . optimize . toDB $ prog
->   "printlc" -> nl .               show . optimize . toDB $ prog
->   "blc"     ->                  encode . optimize . toDB $ prog
->   "blc2"    ->                 encode2 . optimize . toDB $ prog
->   "size"    -> nl .       show . size  . optimize . toDB $ prog
->   "size2"   -> nl .       show . size2 . optimize . toDB $ prog
->   "size0"   -> nl .       show . size0 . optimize . toDB $ prog
+>   "print"   -> nl .                       show             $ prog
+>   "nf"      -> nl .                       show . nf . toDB $ prog
+>   "hnf"     -> nl .                      show . hnf . toDB $ prog
+>   "nf_size" -> nl .                show . size . nf . toDB $ prog
+>   "comb_nf" -> nl .          show . strongCL . toCL . toDB $ prog
+>   "comb"    -> nl .        show . toCL . optimize 3 . toDB $ prog
+>   "combOK"  -> nl .      show . toCLOK . optimize 3 . toDB $ prog
+>   "bcw"     -> nl .    showBCW . toBCW . optimize 3 . toDB $ prog
+>   "bcl"     ->           encode . toCL . optimize 3 . toDB $ prog
+>   "diagram" -> elems   . diagram False . optimize 3 . toDB $ prog
+>   "Diagram" -> elems   . diagram  True . optimize 3 . toDB $ prog
+>   "boxchar" -> boxChar False . diagram False . optimize 3 . toDB $ prog
+>   "Boxchar" -> boxChar True  . diagram  True . optimize 3 . toDB $ prog
+>   "pbm"     -> toPBM   . diagram False . optimize 3 . toDB $ prog
+>   "Pbm"     -> toPBM   . diagram  True . optimize 3 . toDB $ prog
+>   "tex"     -> nl .         tex . show . optimize 3 . toDB $ prog
+>   "nfhtml"  -> nl .                html . show . nf . toDB $ prog
+>   "html"    -> nl .        html . show . optimize 3 . toDB $ prog
+>   "printlc" -> nl .               show . optimize 3 . toDB $ prog
+>   "blc"     ->                  encode . optimize 3 . toDB $ prog
+>   "blc2"    ->                 encode2 . optimize 3 . toDB $ prog
+>   "size"    -> nl .       show . size  . optimize 3 . toDB $ prog
+>   "size2"   -> nl .       show . size2 . optimize 3 . toDB $ prog
+>   "size0"   -> nl .       show . size0 . optimize 3 . toDB $ prog
 >   "help"    -> unlines usage
 >   a         -> "Action " ++ a ++ " not recognized.\n"
 

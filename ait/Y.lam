@@ -19,23 +19,33 @@ let
     (\x0\x1.f1 (x0 x0 x1) (x1 x0 x1))
   );
 
-  -- shorter general form using recursive tuples
-  -- https://codegolf.stackexchange.com/questions/266083/write-a-variadic-fixed-point-combinator/275513?noredirect=1#comment593235_275513
-  
+-- https://okmij.org/ftp/Computation/fixed-point-combinators.html#Poly-variadic
+--    (letrec
+--       ((f1 e1)
+--        (f2 e2)
+--        ...
+--        (fn en)
+--       )
+--     e)
+--is schematically represented via the explicit polyvariate fixpoint (denoted as Y* below) as
+--    (let ((fs (Y* (lambda (f1 f2 ... fn) e1) ... (lambda (f1 f2 ... fn) en))))
+--      (apply (lambda (f1 f2 ... fn) e) fs))
+
+-- https://codegolf.stackexchange.com/questions/266083/write-a-variadic-fixed-point-combinator/275513?noredirect=1#comment593235_275513
+-- in tuple form:
+--    let fs = \z. z (fs (\f1\f2...\fn. e1) ... (fs (\f1\f2...\fn. en))   -- using plain Y
+--    in fs (\f1\f2...\fn. e)
+
   Y2 = \f0\f1. let rec = \z. z (rec f0) (rec f1) in rec; -- 53 bits
   Y20' = \f0\f1. Y2 f0 f1 (\r0\r1. r0); -- 62 bits
   Y21' = \f0\f1. Y2 f0 f1 (\r0\r1. r1);
 
-  -- general list form
-  -- Ylist [f0,f1] = [
-  --   let ffj = \xs@[x0,x1] -> fj [xk xs | k<-[0..n-1]] in
-  --   ffj
-  --  [ffi | i<-[0..n-1]]
-  -- | j<-[0..n-1]]
+-- in list form:
+--    let fs = map <fs> [ (\[f1,f2...,fn]. e1) , ... , (\[f1,f2...,fn]. en) ]
+--                 = [ (\[f1,f2...,fn]. e1) fs , ... , (\[f1,f2...,fn]. en) fs ]
+--    in e fs
 
   map = \f. (let go = \l.l(\h\t\_\z.z (f h) (go t))l in go);
+  Ylist = map (\z.z Ylist); -- 95 bits
 
-  iffy = \fi\xs. fi (map (\xi. xi xs) xs);
-  Ygen = \fs. map (\fi. iffy fi (map iffy fs)) fs -- 151 bits
-
-in Y2 -- Ygen
+in Y2
