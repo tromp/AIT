@@ -1,0 +1,130 @@
+-- a number at ordinal PTO(Z_w)+PTO(Z_2) in FGH by combining Loader's with BMS
+let
+  derive = let
+    id = \x.x;
+    -- function composition
+    comp = \f\g\x. f (g x);
+    -- Church numerals
+    C0 = \f\x.x;
+    C1 = id;
+    Csucc = \n\f\x. f (n f x);
+    C2 = Csucc C1;
+    Cpow = \m\n. n m;
+    -- Maybe monad
+    Just = \x\j\n. j x;
+    Nothing    = \j\n. n;
+    -- Booleans
+    T = \x\y. x;
+    F = \x\y. y;
+    eqb = \b1\b2.b1 b2 (b2 b1 T); -- boolean equality	29 bits -- found by Marvin Borner
+    -- list ops
+    nil = F;
+    cons = \x\y\z.z x y;
+    head = \l.l T;
+    tail = \l.l F;
+    -- Drop numerals
+    D0    = id;
+    Dsucc = \drop\list. drop list F;
+  
+    judge = \ctx\typ\trm\z.z ctx typ trm;
+  
+    -- list equality		131 bits
+    eql = \eq. let go = \l\m. l (\t\l1\_. m (\t2\m1\F. eq t t2 (go l1 m1) F) F) (m (\b\m1\_. l) T) in go;
+  
+    -- term constructors
+    pilam   = \bp\ta\fb \pla\bs\vr. pla (Just bp) ta fb;
+    app     = \ta\tb    \pla\bs\vr. pla Nothing ta tb;
+    sort    = \bx       \pla\bs\vr. bs bx;
+    var     = \v        \pla\bs\vr. vr v;
+    case = \t \pla\bs\vr. t pla bs vr;
+  
+    -- environment of free variables [C1 consF, C2 consF, .. ]			89 bits
+    freevars = let
+      go = \pre. let preF = \tl. pre (cons F tl) in cons (var preF) (go preF)
+    in go id;
+  
+    -- close an open term
+    close = \ot. ot freevars;
+  
+    -- serialize closed term t before list tl at abstraction depth d		367 bits
+    sers = \d\t\tl. let cT = cons T; cF = cons F in case t
+      (\mb\ta\tb. cT (sers d ta (mb (\bp. cT (cons bp (sers (Csucc d) (tb (var (d tail))) tl)))
+                                    (cF (sers d tb tl)))))
+      (\bx.       cF (cT (cons bx tl)))
+      (\v.        v (d cF (cF (cT tl))));
+  
+    -- serialize an open term, e.g.
+    -- ser (\env. λ*.0) = ser (\env. pilam F (sort F)    id     ) = "0 101 0 1 110"
+    -- ser (\env. λ*.1) = ser (\env. pilam F (sort F) (head env)) = "0 101 0 1 1110"
+    ser = \ot. sers C0 (close ot) nil;
+  
+    -- open term equality		647 bits
+    eqt = \ot1\ot2. eql eqb (ser ot1) (ser ot2);
+  
+    -- context equality		685 bits
+    eqc = eql eqt;
+  
+    -- lift an open term
+    lift = \ot\env. ot (tail env);
+  
+    -- rules 2+3+4+5+6		-- 1546 bits
+    rules = \jdg0\jdg. jdg0 (\ctx0\typ0\trm0. jdg (\ctx. eqc ctx0 ctx (\typ\trm.
+      let
+        isSort = \t. case (close typ)
+          (\_\_\_. \f.f)
+          (\_.     \f.t)
+          (\_.     \f.f);
+        weaken = isSort (cons (judge (cons trm ctx) (lift typ0) (lift trm0))) id;
+        iLamPi = ctx (\tp\ctx1. cons ( let
+             abstract = \bp\ta\fb. \env. (pilam bp (ta env) (\x. fb (cons x env)))
+           in judge ctx1 (isSort id (abstract T tp) typ) (abstract isSort tp trm)));
+        iVar   = \tl. isSort (cons (judge (cons trm ctx) (lift trm) head) tl) tl;
+        iApp   = case (close typ0)
+          (\mb\ta. mb (\bp. eqt (\_.ta) typ (\tb. cons (let
+            apply = \ot1\ot2. \env. let t1 = ot1 env in t1
+                (\mb\_\tb. mb (\bp. tb))
+                (\_.       id)
+                (\_.       id)
+              (app t1) (ot2 env)
+           in judge ctx (apply typ0 trm) (apply trm0 trm)))))
+          (\bx.       id)
+          (\v.        id)
+      in \tl. weaken (iApp (iLamPi (iVar tl)))
+    ) (\typ\trm. id)));
+  
+  in \n. let
+    ffold = \f. let go = \l.l (\h\t\z.f h (go t z)) in go; -- fold with 2nd/3rd arguments flipped
+    axiom = judge nil (\_. sort T) (\_. sort F);
+    expand = \l. ffold (\j1. ffold (\j2. comp (rules j1 j2)) l id) l (cons axiom nil);
+    length  = \l\f. ffold (\_. f) l;
+    sizepower = ffold (\jdg. jdg (\_\_\trm. length (ser trm)))
+  in sizepower (n expand nil) n ;
+
+  BMS = let
+    0 = \f\x. x;
+    1 = \f. f;
+    2 = \f\x. f (f x);
+    succ = \n\f\x. f (n f x);
+    pred = \n\f\x. n (\g\h.h (g f))(\u.x)(\u.u);
+  
+    expand = \mod\m. let
+      m1 = \i. m (succ i);
+      a = m 1;
+      adda = \m\i. let ima = a pred i in
+      ima                     -- rewrite from gt i a
+        (\_. m ima)    -- copy array element i+1 - a
+        (let miplus = m i succ
+         in miplus (a succ mod pred (miplus i) (\_.a) 0)     -- miplus (gt (miplus i) (a succ mod) a 0)
+        )
+     in derive a adda m1;
+  
+    matrix0 = \n\k. n n pred k (\_.0) n;    -- single column of n n's  -- rewrite from gt k n
+  -- bms
+  in \rows. let
+    -- mod is in [0..rows-1]
+    bms = \matrix\mod. matrix 1 (bms (expand mod matrix) (pred (mod (\_.mod) rows))) rows
+    -- this returns rows^recurse^arrayhead where recursion ends when arrayhead = 0
+  in bms (matrix0 rows) (pred rows);
+
+  2 = \f\x. f (f x)
+in 2 2 BMS 2                                -- 2240 bits is exactly 280 bytes
