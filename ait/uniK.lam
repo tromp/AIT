@@ -10,27 +10,46 @@ let
   R = \x\y\z.y z x;
   S = \x\y\z.x z (y z);
 
-  -- compose cont tm m tn n = cont (\...\ tm ...0 (tn ...0)) (max m n)
-  cmps = \cont\tm\m\tn\n.m (\bm.n (\bn\n1. bm bm bn (cmps (\t\m1.cmps (\t\l.cont t (cons T l)) t m1 tn n1)
-                                                          (bm (bn S C) (bn B I)) nil tm)
-                                                    (\m1. cmps (\t\l. cont t (cons F l)) tm m1 tn n1))
-                                  (bm (    cmps (\t\_.cont t m) (R tn) n tm)
-                                      (\m1. cmps (\t\_.cont t m) tm m1 tn n)))
-                           (n (\b.cmps (\t\_.cont t n) (b B I tm) m tn)
-                              (cont (tm tn) n));
-  -- Kiselyov LC interpreter
-  -- intK cont bits = cont closedup unlambdas unparsed_bits
+  -- compose cont tm m tn n = cont (max m n) (\...\ tm ...0 (tn ...0))
+-- (True:g1, d1) # (True:g2, d2) = (g1, ([], Com "S") # (g1, d1)) # (g2, d2)
+-- (True:g1, d1) # (False:g2, d2) = (g1, ([], Com "C") # (g1, d1)) # (g2, d2)
+-- (False:g1, d1) # (True:g2, d2) = (g1, ([], Com "B") # (g1, d1)) # (g2, d2)
+  cmps = \cont\tm\m\tn\n.m (\bm\m1.n (\bn. bm bm bn (cmps (\m1\t.cmps (\l.cont (cons T l)) t m1 tn)
+                                                          (\x\y\z.bm (x z) x (bn (y z) y)) nil tm m1)
+-- (False:g1, d1) # (False:g2, d2) = (g1, d1) # (g2, d2)
+                                                    (cmps (\l. cont (cons F l)) tm m1 tn))
+-- (True:g1, d1) # ([], d2) = ([], Com "R" :@ d2) # (g1, d1)
+                                  (bm (     cmps (\_.cont m) (R tn) n tm m1)
+-- (False:g1, d1) # ([], d2) = (g1, d1) # ([], d2)
+                                      (cmps (\_.cont m) tm m1 tn n)))
+-- ([], d1) # (True:g2, d2) = ([], Com "B" :@ d1) # (g2, d2)
+-- ([], d1) # (False:g2, d2) = ([], d1)           # (g2, d2)
+                           (n (\b.cmps (\_.cont n) (b B I tm) m tn)
+-- ([], d1) # ([], d2) = d1 :@ d2
+                              (cont n (tm tn)));
+  -- Kiselyov LC interpreter with Lazy Weakening
+  -- https://theory.stanford.edu/~blynn/lambda/kiselyov.html
+  -- intK cont bits = cont unlambdas closedup unparsed_bits
   intK = \cont\list.list (\bit0\list1.list1 (\bit1.bit0
-    (intK (\tm\m.bit1 (m (\b.b (cont tm)
+    (intK (\m\tm.bit1 (m (\b.b (\m1. cont m1 tm)
                                (cmps cont K nil tm))
-                         (cont (K tm) m))
-                      (intK (cmps cont tm m))))
-    (bit1 (cont I (cons T nil))
-         (\list2.intK (\t\n.cont t (cons F n)) list1))));
+                         (cont m (K tm)))
+                      (intK (\n\tn. cmps cont tm m tn n))))
+    (bit1 (cont (cons bit1 nil) I)
+          (\list2.intK (\n.cont (cons bit1 n)) list1))));
   
   -- loop
   omega = omega;
 
   -- binary LC universal machine for closed programs
-  uni = intK (\t\n. n omega t)
+  uni = intK (\n. n omega)
 in uni
+
+-- ([], d1) # (True:[], I) = d1
+  -- ([], d1) # (True:g2, d2) = ([], B d1) # ([], I) = B d1 I
+-- (True:[], Com "I") # ([], d2) = Com "T" :@ d2
+  -- (True:g1, d1) # ([], d2) = R d2 I = T d2
+-- (True:[], Com "I") # (False:g2, d2) = ([], Com "T") # (g2, d2)
+  -- (True:g1, d1) # (False:g2, d2) = (g1, ([], C) # ([], I)) # (g2, d2) = C I # (g2, d2)
+-- (False:g1, d1) # (True:[], Com "I") = d1
+  -- (False:g1, d1) # (True:g2, d2) = (g1, ([], B) # (g1, d1)) # ([], I)

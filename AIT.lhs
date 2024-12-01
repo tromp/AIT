@@ -93,7 +93,22 @@ Size in bits of an expression, assuming no free variables
 >     prebin (CVar _) _ = error "can't encode variables"
 >     prebin CombK s = '0':'0':s
 >     prebin CombS s = '0':'1':s
+>     prebin CombI s = "11010000" ++ s         -- S K K
+>     prebin CombB _ = error "can't encode B"
+>     prebin CombC _ = error "can't encode C"
+>     prebin CombR _ = error "can't encode R"
 >     prebin (CApp x y) s = '1':(prebin x (prebin y s))
+
+> encodeOK :: CL -> String
+> encodeOK z = prebin z "" where
+>   prebin (CVar _) _ = error "can't encode variables"
+>   prebin CombI s = "0010" ++ s
+>   prebin CombK s = "0000110" ++ s
+>   prebin CombB s = "0000000111100111010" ++ s
+>   prebin CombC s = "0000000101111010110" ++ s
+>   prebin CombS s = "00000001011110100111010" ++ s
+>   prebin CombR s = "0000000101110101110" ++ s
+>   prebin (CApp x y) s = '0':'1':(prebin x (prebin y s))
 
 Interpret an expression as a list of binary strings.
 
@@ -308,7 +323,8 @@ Bitstring functions -----------------------------------------------------
 >   "comb_nf" -> nl .   show . strongCL . toCL . toDB $ prog
 >   "comb"    -> nl .        show . toCL . opt . toDB $ prog
 >   "combOK"  -> nl .      show . toCLOK . opt . toDB $ prog
->   "bcw"     -> nl .    showBCW . toBCW . opt . toDB $ prog
+>   "blcOK"   ->       encodeOK . toCLOK . opt . toDB $ prog
+>   "bcw"     -> nl .       show . toBCW . opt . toDB $ prog
 >   "bcl"     ->           encode . toCL . opt . toDB $ prog
 >   "diagram" -> elems   . diagram False . opt . toDB $ prog
 >   "Diagram" -> elems   . diagram  True . opt . toDB $ prog

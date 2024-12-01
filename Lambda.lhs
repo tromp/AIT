@@ -4,7 +4,7 @@ It also exports a simple type of identifiers that parse and
 print in a nice way.
 
 > {-# LANGUAGE PatternSynonyms, LambdaCase #-}
-> module Lambda(LC(..), DB(..), CL(..),  Id(..), lam, isnf, nf, hnf, evalLC, toLC, toCL, toCLOK, strongCL, toDB, showBCW, toBCW) where
+> module Lambda(LC(..), DB(..), CL(..),  Id(..), lam, isnf, nf, hnf, evalLC, toLC, toCL, toCLOK, strongCL, toDB, toBCW) where
 > import Prelude hiding ((<>))
 > import Data.List(union, (\\), elemIndex)
 > import Data.Char(isAlphaNum)
@@ -262,9 +262,9 @@ a new variable at each $\lambda$.
 >         to n (HApp f a) = App (to n f) (to n a)
 
 
-The CL type of combinatory expressions has constructors for index variables, primitive combinators S and K, and application.
+The CL type of combinatory expressions has constructors for index variables, primitive combinators S,K,I,B,C, and R, and application.
 
-> data CL = CVar Int | CombS | CombK | CApp CL CL deriving (Eq)
+> data CL = CVar Int | CombS | CombK | CombI | CombB | CombC | CombR | CApp CL CL deriving (Eq)
 
 > instance Show CL where
 >     show = renderStyle style . ppCL 0
@@ -273,12 +273,16 @@ The CL type of combinatory expressions has constructors for index variables, pri
 > ppCL _ (CVar v) = text $ show v
 > ppCL _ CombS = text "S"
 > ppCL _ CombK = text "K"
+> ppCL _ CombI = text "I"
+> ppCL _ CombB = text "B"
+> ppCL _ CombC = text "C"
+> ppCL _ CombR = text "R"
 > ppCL p (CApp f a) = pparens (p>1) $ ppCL 1 f <+> ppCL 2 a
 
 Decrease variable depth
 
 > drip :: CL -> CL
-> drip i@(CApp CombSK _) = i -- ignore SK argument
+> drip i@(CApp (CApp CombS CombK) _) = i -- ignore SK argument
 > drip (CVar 0) = error "Can't drip CVar 0"
 > drip (CVar i) = CVar (i-1)
 > drip (CApp x y) = CApp (drip x) (drip y)
@@ -295,22 +299,37 @@ Oleg Kiselyov's compositional bracket abstraction
 as explained on https://crypto.stanford.edu/~blynn/lambda/kiselyov.html
 
 > toCLOK :: DB -> CL
-> toCLOK db = if lvl==0 then cl else error "Kiselyov abstraction failed" where
+> toCLOK db = if lvl==[] then cl else error "Kiselyov abstraction failed" where
 >   (lvl,cl) = convert db
->   convert :: DB -> (Int, CL)
+>   convert :: DB -> ([Bool], CL)
 >   convert = \case
->     DBVar 0 -> (1, CombI)
->     DBVar e -> (n + 1, (0, CombK) # t) where t@(n, _) = convert $ DBVar (e-1)
+>     DBVar 0 -> (True:[], CombI)
+>     DBVar e -> (False:n, t) where (n, t) = convert $ DBVar (e-1)
 >     DBLam e -> case convert e of
->       (0, d) -> (0, abstract d)                                         -- K d
->       (n, d) -> (n - 1, d)
->     DBApp e1 e2 -> (max n1 n2, t1 # t2) where
+>       ([], d) -> ([], abstract d)                                         -- K d
+>       (False:n, d) -> (n, ([], CombK) # (n, d))
+>       ( True:n, d) -> (n, d)
+>     DBApp e1 e2 -> (zipOr n1 n2, t1 # t2) where
 >       t1@(n1, _) = convert e1
 >       t2@(n2, _) = convert e2
->   (0 , d1) # (0 , d2) = CApp d1 d2
->   (0 , d1) # (n , d2) = (0, CApp CombS (CApp CombK d1)) # (n - 1, d2)   -- B d1 where Bxyz=x(yz)
->   (n , d1) # (0 , d2) = (0, CApp CombSS (CApp CombK (CApp CombK d2))) # (n - 1, d1) -- R d2 where Rxyz=yzx
->   (n1, d1) # (n2, d2) = (n1 - 1, (0, CombS) # (n1 - 1, d1)) # (n2 - 1, d2)
+>   ([], d1) # ([],   d2) = CApp d1 d2
+>   ([], d1) # (True:[], CombI) = d1
+>   ([], d1) # (True:n2, d2) = ([], CApp CombB d1) # (n2, d2)
+>   ([], d1) # (False:n2, d2) = ([], d1) # (n2, d2)
+>   ( True:[], CombI) # ([], d2) = CApp (CApp CombC CombI) d2
+>   ( True:[], CombI) # (False:n2, d2) = ([], CApp CombC CombI) # (n2, d2)
+>   ( True:n1, d1) # ([], d2) = ([], CApp CombR d2) # (n1, d1)
+>   (False:n1, d1) # ([], d2) = (n1, d1) # ([], d2)
+>   (False:_, d1) # (True:[], CombI) = d1
+>   (b1:n1, d1) # (b2:n2, d2) = (n1, comb12 b1 b2 (n1, d1)) # (n2, d2) where
+>      comb12 :: Bool -> Bool -> ([Bool], CL) -> CL
+>      comb12  True  True = (([], CombS) #)
+>      comb12 False  True = (([], CombB) #)
+>      comb12  True False = (([], CombC) #)
+>      comb12 False False = snd
+>   zipOr [] ys = ys
+>   zipOr xs [] = xs
+>   zipOr (x:xs) (y:ys) = (x||y) : zipOr xs ys
 
 Implement improved bracket abstraction:
 
@@ -323,14 +342,14 @@ Implement improved bracket abstraction:
 
 [x] (S K M) ≡ S K (for all M)
 
-> abstract (CApp sk@CombSK _) = sk
+> abstract (CApp sk@(CApp CombS CombK) _) = sk
 > abstract e = if freeIn (==0) e
 >              then occabstract e
 
 [x] M ≡ K M (x not in M)
 
 >              else CApp CombK (drip e) where
->   freeIn _ (CApp CombSK _) = False
+>   freeIn _ (CApp (CApp CombS CombK) _) = False
 >   freeIn fv (CApp x y) = freeIn fv x || freeIn fv y
 >   freeIn fv (CVar i) = fv i
 >   freeIn _ _ = False
@@ -348,7 +367,7 @@ Implement improved bracket abstraction:
 [x] (L M L) ≡ [x] (S S K L M) (x in L)
 
 >   occabstract (CApp (CApp l m) l') | l == l' -- && freeIn (==0) e1
->       = occabstract (CApp (CApp CombSSK l) m)
+>       = occabstract (CApp (CApp (CApp (CApp CombS CombS) CombK) l) m)
 
 [x] (M (N L)) ≡ [x] (S ([x] M) N L) (M, N combinators)
 
@@ -394,36 +413,8 @@ Since S (K M) (S (K N) L) x = M (N (L x)) = (S (K M) N) (L x) = S (K (S (K M) N)
 >   strong (CApp x y) = CApp (strong x) (strong y)
 >   strong x = x
 
-BCWI+K terms: We reuse the CL type and represent combinators by their respective SK translation.
-
-> pattern CombSK, CombSS, CombSSK :: CL
-> pattern CombSK = CApp CombS CombK
-> pattern CombSS = CApp CombS CombS
-> pattern CombSSK = CApp CombSS CombK
-
-> type BCW = CL
-
-> pattern CombI, CombB, CombC, CombW :: BCW
-> pattern CombI = CApp CombSK CombK
-> pattern CombB = CApp (CApp CombS (CApp CombK CombS)) CombK
-> pattern CombC = CApp (CApp CombS (CApp CombK (CApp (CApp CombS (CApp CombK (CApp (CApp CombS CombS) (CApp CombK CombK)))) CombK))) CombS
-> pattern CombW = CApp (CApp CombS CombS) CombSK
-
-> showBCW :: BCW -> String
-> showBCW = renderStyle style . ppBCW 0
->
-> ppBCW :: Int -> BCW -> Doc
-> ppBCW _ (CVar v) = text $ show v
-> ppBCW _ CombI = text "I"
-> ppBCW _ CombB = text "B"
-> ppBCW _ CombC = text "C"
-> ppBCW _ CombW = text "W"
-> ppBCW _ CombS = text "S"
-> ppBCW _ CombK = text "K"
-> ppBCW p (CApp f a) = pparens (p>1) $ ppBCW 1 f <+> ppBCW 2 a
-
-> abstractBCW :: BCW -> BCW
-> abstractBCW e = if freeIn (==0) e
+> abstractCL :: CL -> CL
+> abstractCL e = if freeIn (==0) e
 >              then occabstract e
 >              else CApp CombK (drip e) where
 >   freeIn fv (CApp x y) = freeIn fv x || freeIn fv y
@@ -432,20 +423,15 @@ BCWI+K terms: We reuse the CL type and represent combinators by their respective
 >   occabstract (CVar 0) = CombI
 >   occabstract (CApp e1 (CVar 0))
 >       | not (freeIn (==0) e1) = drip e1
->       | otherwise = CApp CombW (abstractBCW e1)
 >   occabstract (CApp e1 e2)
 >       = case (freeIn (==0) e1, freeIn (==0) e2) of
->           (False, True ) -> combB (drip e1) (abstractBCW e2)
->           (True,  False) -> combC (abstractBCW e1) (drip e2)
->           (True,  True ) -> combS (abstractBCW e1) (abstractBCW e2)
+>           (False, True ) -> CApp (CApp CombB (drip e1)) (abstractCL e2)
+>           (True,  False) -> CApp (CApp CombC (abstractCL e1)) (drip e2)
+>           (True,  True ) -> CApp (CApp CombS (abstractCL e1)) (abstractCL e2)
 >           (False, False) -> error $ "Impossible free variable in occabstract"
 >   occabstract _ = error $ "Impossible occabstract argument"
->   combS a b = CApp CombW (CApp (CApp CombB (CApp CombC a)) b)
->   -- combS a b = CApp (CApp CombS a) b
->   combB a b = CApp (CApp CombB a) b
->   combC a b = CApp (CApp CombC a) b
 
-> toBCW :: DB -> BCW
+> toBCW :: DB -> CL
 > toBCW (DBVar i) = CVar i
 > toBCW (DBApp x y) = CApp (toBCW x) (toBCW y)
-> toBCW (DBLam e) = abstractBCW (toBCW e)
+> toBCW (DBLam e) = abstractCL (toBCW e)
