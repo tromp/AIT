@@ -4,19 +4,21 @@ let
   S = \x\y\z.x z(y z);
   K = \x\y.x;
   I = \x.x;
-  B = \x\y\z.x (y z);
-  T = \x\y.y x;
-  V  = \x\y\z.z x y;
-  CL = \f\cont\list.list(\bit.bit(\list.list(\bit.cont (bit K S)))(f(\x.f(\y.cont(x y)))));
-  -- COMB = \cont.(\bit.cont (bit K S));
-  -- BTCOMB = B T COMB;
-  -- FB2 = \f\cont.f(B f(B cont));
+  B = \x\y\z.x (y z);                  -- 11   S (K S) K
+  T = \x\y.y x;                        -- 20   S (K (S I)) K
+  V  = \x\y\z.z x y;                   -- 56
+  CL = \f\cont\list.list(\bit.bit(\list.list(\bit.cont (bit K S)))(f(\x.f(\y.cont(x y))))); -- 236 bits
+  COMB = \cont.(\bit.cont (bit K S));  -- 44
+  BTCOMB = B T COMB;                   -- 71
+  FB2 = \f\cont.f(B f(B cont));        -- 71
   -- CL  = \f\cont T (V (BTCOMB cont) (FB2 f cont));
-  -- V' = \x\y\z.z y x;
-  -- CL' = \f\cont T (V' (FB2 f cont) (BTCOMB cont));
+  V' = \x\y\z.z y x;                   -- 50
+  CL' = \f\cont T (V' (FB2 f cont) (BTCOMB cont));
+  --    \f  S () BTCOMB
+  -- S(K(S(K(S(K(S(K T)))(S(S(K(S(K(S(K S)(S(K(S S S(K(S I))))K)))K))(S(K(S S(K(S(S S(K(K S)))(K K)))))  K)))))(S(K K))))(S S S(S(S K))(S S K(S(K S)K))); -- equivalent to CL only 194 bits
   mtve = S(K(S(K(S(K(S(K(S(K(S I))K))))(S(S(K(S(K(S(K S)(S(K(S S S(K(S I))))K)))K))(S(K(S S(K(S(S S(K(K S)))(K K)))))  K)))))(S(K K))))(S S S(S(S K))(S S K(S(K S)K))); -- equivalent to CL only 194 bits
   Y0 = \x\y.x y x;
   Y1 = \y\x.y (x y x);
-  SKY = Y0 Y1
+  SKY = Y0 Y1 -- 35 bits
   -- for cross-interpreting replace bit K S above by bit bit S and use Y instead of SKY
-in SKY CL
+in SKY CL     -- 272 bits but could be 230 bits using mtve literally
