@@ -165,6 +165,10 @@ Number of time variable occurs in term
 > single x = [(x, size x)]
 
 Optimize an expression; repeatedly contract redexes that reduce in size
+Return list of candidates paired with their size; the head is the shortest
+and remaining ones are larger by less than the function's first argument,
+i.e. the slack.
+The second argument n is the number of non-decreasing in size beta reductions considered.
 
 > optimize :: Int -> Int -> DB -> [(DB, Int)]
 > optimize slack = opt where

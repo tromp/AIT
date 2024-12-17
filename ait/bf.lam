@@ -1,3 +1,6 @@
+-- 830 bit brainfuck interpreter with
+-- 8-bit cells and unbounded tape in both directions
+-- input appears after a ']' uniquely delimiting the BF program
 let
   id = \x.x;
   true = \x\y.x;

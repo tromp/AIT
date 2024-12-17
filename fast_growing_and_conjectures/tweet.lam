@@ -127,4 +127,4 @@ let
   in bms (matrix0 rows) (pred rows);
 
   2 = \f\x. f (f x)
-in 2 2 BMS 2                                -- 2240 bits is exactly 280 bytes
+in 2 2 BMS 2                                -- 2230 bits, under 279 bytes

@@ -65,7 +65,7 @@ let  derive = (let
   -- lift an open term
   lift = \ot\env. ot (tail env);
 
-  -- rules 2+3+4+5+6		-- 1546 bits
+  -- rules 2+3+4+5+6		-- 1540 bits
   rules = \jdg0\jdg. jdg0 (\ctx0\typ0\trm0. jdg (\ctx. eqc ctx0 ctx (\typ\trm.
     let
       isSort = \t. case (close typ)
@@ -96,9 +96,9 @@ let  derive = (let
     expand = \l. ffold (\j1. ffold (\j2. comp (rules j1 j2)) l id) l (cons axiom nil);
     length  = \l\f. ffold (\_. f) l;
     sizepower = ffold (\jdg. jdg (\_\_\trm. length (ser trm)))
-  in sizepower (n expand nil) n);                                       -- 1820 bits
+  in sizepower (n expand nil) n);                                       -- 1814 bits
 
   2 = \f\x. f (f x)
-in 2 2 2 derive 2						-- 1856 bits / 232 bytes
+in 2 2 2 derive 2						-- 1850 bits / 231.25 bytes
 
 -- derive 2 = sizetower [* |- * : □,* |- 0 : *, |- * : □] 2 = ((2^3)^3)^3 = 2^27

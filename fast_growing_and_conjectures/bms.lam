@@ -21,7 +21,7 @@ let BMS = let
   in bms (matrix0 rows) (pred rows);
 
   2 = \f\x. f (f x)
-in 2 2 BMS 2                      -- 408 bits is 51 bytes
+in 2 2 BMS 2                      -- 404 bits, 50.5 bytes
 
 -- [2,2,  2,2] of length 4
 -- [2,  4,2,  2,2] of length 5
