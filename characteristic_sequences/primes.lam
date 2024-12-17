@@ -1,11 +1,6 @@
 -- outputs characteristic sequence of primes
 \io.let
    -- Bits
-   B0 = \x\y.x;                   -- bit 0
-   B1 = \x\y.y;                   -- bit 1
-   cons = \x\y\z.z x y;
-   cons0 = \y\z.z B0 y;
-   Y = \f. (\x. x x) (\x. f (x x));
 
    -- Sieving numerals Sn = Ssucc^n S0
    -- (x:xs) (Ssucc Sn cont) = Ssucc Sn cont x xs = x : xs (Sn cont)
@@ -14,10 +9,16 @@
    -- (11111111111111111111:T) (Y S1) = (10101010101010101010:T')
    -- (11111111111111111111:T) (Y S2) = (11011011011011011011:T')
 
-   S0    = \cont\x\xs. cons0  (xs cont);
+   cons = \x\y\z.z x y;
    Ssucc = \Sn\c\x\xs. cons x (xs (Sn c));
 
+   B1 = \x\y.y;                   -- bit 1
+   Y = \f. (\x. x x) (\x. f (x x));
    sieve = \Sn. cons B1 (let Ssn = Ssucc Sn in (sieve Ssn) (Y Ssn));
+
+   B0 = \x\y.x;                   -- bit 0
+   cons0 = \y\z.z B0 y;
+   S0    = \cont\x\xs. cons0  (xs cont);
    primes = cons0 (cons0 (sieve S0));
 
    -- church numerals

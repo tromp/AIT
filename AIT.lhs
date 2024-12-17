@@ -1,7 +1,8 @@
 > module AIT(Encodeable(..),reduce,optimize,strict,subst,occurs,noccurs,contracts,expands,reduct,uni,usage) where
 > import Lambda
-> import Data.List(unfoldr,foldl')
+> import Data.List(unfoldr,foldl',group,sortBy)
 > import Data.Char(chr,ord,intToDigit)
+> import Data.Function
 > import qualified Data.DList as DL
 > import Data.Array.Unboxed
 > import Control.Applicative
@@ -145,25 +146,37 @@ Number of time variable occurs in term
 > noccurs n (DBApp fun arg) = noccurs n fun + noccurs n arg
 > noccurs n (DBVar i) = if i == n then 1 else 0
 
+> single :: DB -> [(DB, Int)]
+> single x = [(x, size x)]
+
 Optimize an expression; repeatedly contract redexes that reduce in size
 
-failed to optimize (λ 1 (λ 2) (λ λ 2)) (λ λ λ 3 1 (2 1)) to \\\3 (2 1)
+> optimize :: Int -> Int -> DB -> [(DB, Int)]
+> optimize slack = opt where
+>   opt :: Int -> DB -> [(DB, Int)]
+>   opt _ v@(DBVar i) = [(v, (2+i))]
 
-> optimize :: Int -> DB -> DB
-> optimize _ v@(DBVar _) = v
-> optimize _ (DBLam (DBApp fun (DBVar 0))) | not (occurs 0 fun) = subst 0 undefined fun -- \y. x y
-> optimize n (DBLam body) = DBLam (optimize n body)
-> optimize n (DBApp fun arg) = let
->     fun' = optimize n fun
->     arg' = optimize n arg
->     t = DBApp fun' arg'
->   in case fun' of
->     DBLam body -> let
->       t' = subst 0 arg' body
->       n' = if size t' < size t then n else n-1
->       t'' = optimize n' t'
->       in if n' >= 0 && size t'' < size t then t'' else t
->     _ -> DBApp fun' arg'
+eta rule : optimize \x. f x, where x is not free in f, as f
+
+>   opt _ (DBLam (DBApp fun (DBVar 0))) | not (occurs 0 fun) = single $ subst 0 undefined fun
+>   opt n (DBLam body) = [(DBLam b, 2+s) | (b,s) <- opt n body]
+>   opt n (DBApp fun arg) = let
+>       funs = opt n fun
+>       args = opt n arg
+>       prune = pr . sortBy (compare `on` snd)
+>       pr [] = error "Nothing to prune"
+>       pr (hd@(_,ts):tl) = map head . group $ hd: takeWhile ((< ts+slack) . snd) tl
+>     in prune $ do
+>       (fun', fs) <- funs
+>       (arg', as) <- args
+>       let (t, ts) = (DBApp fun' arg', 2+fs+as)
+>       case fun' of
+>         DBLam body -> [(t,ts) | occurs 0 body]
+>           ++ [ot | let t' = subst 0 arg' body,
+>                    let n' = if size t' < ts then n else n-1,
+>                    n' >= 0,
+>                    ot <- opt n' t']
+>         _ -> [(t,ts)]
 
 Simpleminded strictness analyzer
 
@@ -200,7 +213,7 @@ Safe reductions (guaranteed to reach normal form)
 Of interest to Busy Beaver
 
 > expands :: DB -> Bool
-> expands x = x == optimize 1 x && case reduct x of
+> expands x = x == fst (head (optimize 0 1 x)) && case reduct x of
 >               Just t@(DBApp (DBLam body) arg) -> size (subst 0 arg body) > size t
 >               _ -> False
 
@@ -294,7 +307,7 @@ Bitstring functions -----------------------------------------------------
 >   tex = concatMap (\c -> if c=='\\' then "\\lambda " else [c])
 >   html = concatMap (\c -> if c=='\\' then "\0955 " else [c])
 >   nl = (++ "\n")
->   opt = optimize 3
+>   opt = fst . head . optimize 3 1 -- bms 404 with 3 1 but 408 with 3 2 ?!
 >   boxdiag b = boxChar b . diagram b
 >  in case op of
 >   "run"     -> nl .   bshow . nf . toDB . machine $  bitstoLC lcFalse input
@@ -302,6 +315,7 @@ Bitstring functions -----------------------------------------------------
 >   "runO"    -> nl .   bshow . nf . toDB . machine $  bitstoLC (error "Omega") input
 >   "run8"    -> nl .   bshow . nf . toDB . machine $ bytestoLC lcFalse input
 >   "print"   -> nl .                show             $ prog
+>   "db"      -> nl .                show      . toDB $ prog
 >   "nf"      -> nl .                show . nf . toDB $ prog
 >   "hnf"     -> nl .               show . hnf . toDB $ prog
 >   "nf_size" -> nl .         show . size . nf . toDB $ prog
