@@ -43,4 +43,4 @@ let
 --                 which by induction equals f^{n/m} x
 -- NOTE that (F m f)^n serves as a good enough approximation of Y (F m f)
 
-in div0 4 4  --  (2 2 2) 3
+in div --  (2 2 2) 3
