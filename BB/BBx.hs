@@ -62,23 +62,28 @@ occur i Bot       = 0
 -- try to find normal form; Nothing means no normal form
 -- (logs cases where it bails out; should really be in IO...)
 nf :: L -> Maybe L
-nf a0 = go S.empty a0 where
-    go :: S.Set L -> L -> Maybe L
-    go s (Abs a) = Abs <$> go s a
-    go s (App a b) = do
-        a <- go s a
+nf a0 = go False S.empty a0 where
+    -- if `hnf` is true, reduce to head normal form;
+    -- otherwise, reduce to normal form.
+    go :: Bool -> S.Set L -> L -> Maybe L
+    go hnf s (Abs a) | not hnf = Abs <$> go hnf s a
+    go hnf s (App a b) = do
+        -- note: reset loop detection for reduction to hnf
+        a <- go True (if hnf then s else S.empty) a
         b <- return (simp b)
-        let r = botFree 0 (App a b)
+        let r@(App ra _) = botFree 0 (App a b)
         case a of
-            _   | isB (App a b) -> Nothing
+            _   | isB (App a b)   -> Nothing
+                | ra `S.member` s -> Nothing
             Abs a
                 | r `S.member` s -> Nothing
                 | S.size s > 10  -> trace ("-- TODO: " ++ pr a0) Nothing
-                | otherwise      -> go (r `S.insert` s) (subst 0 a b)
+                | otherwise      -> go hnf (r `S.insert` s) (subst 0 a b)
             _ -> do
-                b <- go s b
+                a <- if hnf then pure a else go hnf (r `S.insert` s) a
+                b <- if hnf then pure b else go hnf (r `S.insert` s) b
                 return (App a b)
-    go s t = Just t
+    go hnf s t = Just t
 
     -- replace free variables (of a redex) by bottom
     botFree i (Var j)   = if j >= i then Bot else Var j
