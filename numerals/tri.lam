@@ -1,0 +1,18 @@
+-- https://en.wikipedia.org/wiki/Triangular_number
+let
+  id = \x.x;
+  0 = \f\x.x;
+  1 = id;
+  2 = \f\x.f(f x);
+  3 = \f\x.f(f(f x));
+  succ = \n\f\x.n f (f x);
+  tri = \n\f\x.let T=\c\n.n f (c (succ n)) in n T (\n.x) 1;
+in tri
+
+-- tri 3 = \f\x. T (T (T (\n.x))) 1
+--       = \f\x. 1 f (T (T (\n.x)) 2)
+--       = \f\x. 1 f (2 f ((T (\n.x) 3))
+--       = \f\x. 1 f (2 f (3 f ((\n.x) 4)))
+--       = \f\x. 1 f (2 f (3 f x))
+--       = \f\x. 6 f x
+--       = 6
