@@ -7,7 +7,6 @@ Author: Bertram Felgenhauer / John Tromp
 > import Data.Char
 > import Data.Bits
 > import Control.Applicative
-> import Control.Exception.Assert
  
 terms with de Bruijn indices (internal: starting at 0)
 note: Bot marks useless subterms that do not contribute to the normal form
@@ -118,70 +117,77 @@ size 37 (\1 1) (\1 (1 (\\2 (3 1)))) and (\1 1) (\1 (1 (\\3 (2 1)))) and (\1 1) (
 > normalForm a0 =  nf0 a0 where
 
 >   nf0 (Abs a) = Abs <$> nf0 a
->   nf0 a = nf 0 [] a
+>   nf0 a = nf False 0 [] a
 
-normal form with given minimum index of what can be considered free variable f
+reduce to (head if hnf) normal form with given minimum index of what can be considered free variable f
 and list of previous redexes s that led to current term and whose reoccurance would indicate a loop
 
->   nf f s (Abs a) = Abs <$> nf (f+1) s a
->   nf f s r@(App a b) = do
->     a <- nf f s a
->     b <- if strict a then nf f s b else Just (simplify b)
->     let r = botFree 0 (App a b)
->     if noNF f (App a b) then Nothing else case a of
+>   nf :: Bool -> Int -> [L] -> L -> Maybe L
+>   nf hnf f s (Abs a) | not hnf = Abs <$> nf hnf (f+1) s a
+>   nf hnf f s r@(App a b) = do
+>     a <- nf True f (if hnf then s else []) a
+>     b <- Just (simplify b)
+>     let r@(App ra _) = botFree 0 (App a b)
+>     if noNF f (App a b) || ra `elem` s then Nothing else case a of
 >         Abs a
 >             | r `elem` s   -> Nothing
 >             | length s > 14 -> todo a0
->             | otherwise    -> nf f (r:s) (subst 0 a b)
+>             | otherwise    -> nf hnf f (r:s) (subst 0 a b)
 >         _ -> do
->             nf f s b >>= Just . App a
->   nf _ _ t = Just t
+>             a' <- if hnf then Just a else nf hnf f (r:s) a
+>             b' <- if hnf then Just b else nf hnf f (r:s) b
+>             Just $ App a' b'
+>   nf _ _ _ t = Just t
 
->   noNF :: Int -> L -> Bool
->   noNF f a = let is = bit f in isB is a || isB3 is a where
+> noNF :: Int -> L -> Bool
+> noNF f a = let is = bit f in isB is a || isB3 is a  || isB23 is a where -- bit f acts as sentinel
 
 various terms W that allow W W -> H[W W] for strict head context H,
 leading to infinite head reductions
 
->   isW :: Int -> L -> Bool
->   isW is (Var i) = istest is i
->   isW is (Abs a) = isB (2*is+1) a
->   isW _ Bot = True
->   isW _ _ = False
+> isW :: Int -> L -> Bool
+> isW is (Var i) = istest is i
+> isW is (Abs a) = isB (2*is+1) a
+> isW _ _ = False
 
->   isB :: Int -> L -> Bool
->   isB is (App a@(App _ _) b) = isB is a || (isF is a && isB is b)
->   isB is (App a@(Var _) b) | isF is a = isB is b
->   isB is (App a b) = isW is a && (isW is b || isB is b)
->   isB is (Abs a) = isB (2*is) a
->   isB _ Bot = True
->   isB _ a = False
+> isB :: Int -> L -> Bool
+> isB is (App a b) | isF is a = isB is b
+> isB is (App a@(App _ _) b) = isB is a
+> isB is (App a b) = isW is a && (isW is b || isB is b)
+> isB is (Abs a) = isB (2*is) a
+> isB _ a = False
 
->   istest :: Int -> Int -> Bool
->   istest is i = is `testBit` i && is >= bit (i+1)
+> istest :: Int -> Int -> Bool
+> istest is i = is `testBit` i && is >= bit (i+1)
 
->   isF :: Int -> L -> Bool
->   isF is (Var i) = bit (i+1) > is
->   isF is (App a _) = isF is a
->   isF _ _ = False
+> isF :: Int -> L -> Bool
+> isF is (Var i) = bit (i+1) > is
+> isF is (App a _) = isF is a
+> isF _ _ = False
 
 various terms W that allow W _ W -> H[W _ W] for strict head context H,
 leading to infinite head reductions
 
->   isW3 :: Int -> L -> Bool
->   isW3 is (Var i) = istest is i
->   isW3 is (Abs a) = isB3 (2*is+1) a
->   isW3 _ Bot = True
->   isW3 _ _ = False
+> isW3a :: Int -> L -> Bool
+> isW3a is (Var i) = istest is i
+> isW3a is (Abs a) = isB3 (2*is+1) a
+> isW3a _ _ = False
 
->   isB3 :: Int -> L -> Bool
->   isB3 is (App a@(App (App _ _)  _) b) = isB3 is a || (isF is a && isB3 is b)
->   isB3 is (App (App a _) b) = (isW3 is a && (isW3 is b || isB3 is b)) || (isF is a && isB3 is b)
->   isB3 is (App a (Abs b)) = (isW3 is a && (isW3 (2*is) b || isB3 (2*is) b)) || (isF is a && isB3 (2*is) b)
->   isB3 is (App a@(Var _) b) = isF is a && isB3 is b
->   isB3 is (Abs a) = isB3 (2*is) a
->   isB3 _  Bot = True
->   isB3 _  _ = False
+> isB23 :: Int -> L -> Bool
+> isB23 is (App a b) = isW3a is a && (isW3b is b || isB3 is b)
+> isB23 _  _ = False
+
+> isW3b :: Int -> L -> Bool
+> isW3b is (Var i) = istest is i
+> isW3b is (Abs (Abs a)) = isB3 (4*is+1) a
+> isW3b _ _ = False
+
+> isB3 :: Int -> L -> Bool
+> isB3 is (App a b) | isF is a = isB3 is b
+> isB3 is (App a@(App (App _ _)  _) b) = isB3 is a
+> isB3 is (App (App a _) b) = isW3b is a && (isW3b is b || isB3 is b)
+> isB3 is (Abs a) = isB3 (2*is) a
+> isB3 _  _ = False
 
 simplification
 
@@ -224,8 +230,7 @@ simplification
 >     triple = Abs (App (App (Var 0) (Var 0)) (Var 0))
 >     bar = Abs (App (Var 0) (Abs (App (Var 2) (App (Var 1) (Var 0)))))
 >     foo = Abs (App double bar)		-- \z. (\x. x x) (\x. x (\y. z (x y)))
->     f n = maximum $
->         (n,0,P Bot) : [(n,size t,P a) | a <- gen 0 n, Just t <- [normalForm a]]
+>     f n = maximum $ (n,0,P Bot) : [(n,size t,P a) | a <- gen 0 n, Just t <- [normalForm a]]
 
 printing
 
