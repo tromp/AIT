@@ -6,8 +6,8 @@ let
   ap = \x\y\a\n. a x y;     -- application of x to y
   -- apply node to 3 arguments x (reduced), y, and z
   triage = \f0\f1\f2\z. z (\z1. z1
-    (\y\_\x. f2 x y)        -- △xy
-    f1                      -- △x
+    (\_\x\y. f2 x y)        -- △xy
+    (\y. f1 y)              -- △x
     ) f0;                   -- △
   step = \x\y\z. x (\x1\x'. x1
     (\_\w. triage w x' y z) -- △(△wx)yz = z w x
