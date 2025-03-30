@@ -10,9 +10,9 @@ let
     (ap (ap y z) (ap x' z)) -- △(△x) yz = y z (x z)
     ) y;                    -- △ △   yz = y
   -- evaluate an arbitrary tree
-  eval = \t. t  (\t1\z.
-        eval t1 (\t2\y.
+  eval = \t. t  (\t1.       -- delay \z
+        eval t1 (\t2.       -- delay \y
              t2 (\t3\x.     -- t3 must be △
-             (step (eval x) y z)
-                ) t) t) t
+             (step (eval x))
+                ) (\y\z.t)) (\z.t)) t
 in eval
