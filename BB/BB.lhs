@@ -72,7 +72,9 @@ replace free variables (of a redex) by bottom
 trouble terms
 
 > todo :: L -> Maybe L
-> todo a = trace ("-- TODO: " ++ pr a) Nothing
+> todo a = let max = 10000 in case trynf max a of
+>   Nothing -> trace ("-- TODO: " ++ pr a) Nothing
+>   Just (n, a') -> trace ("-- DONE in " ++ show (max-n) ++ " steps" ++ pr a) (Just a')
 
 guaranteed normal form
 
@@ -82,6 +84,21 @@ guaranteed normal form
 >   a -> App a (gnf b)
 > gnf (Abs a) = Abs (gnf a)
 > gnf a = a
+
+step and substitution-size limited normal form
+
+> trynf :: Int -> L -> Maybe (Int, L)
+> trynf n _ | n < 0 = Nothing
+> trynf n (App a b) = case trynf n a of
+>   Nothing -> Nothing
+>   Just (n1, Abs a) -> if size b > 1000 then Nothing else trynf (n1-1) (subst 0 a b)
+>   Just (n1, a) -> do
+>     (n1, b') <- trynf n1 b
+>     return (n1, App a b')
+> trynf n (Abs a) = do
+>   (n1, a') <- trynf n a
+>   return (n1, Abs a')
+> trynf n a = Just (n, a)
 
 try to find normal form; Nothing means no normal form
 (logs cases where it bails out; should really be in IO...)
@@ -114,7 +131,12 @@ size 37 (\1 1) (\1 (1 (\\2 (3 1)))) and (\1 1) (\1 (1 (\\3 (2 1)))) and (\1 1) (
 > normalForm a@(Abs (App (Abs (App (App (Var 0) (Var 0)) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (App (Var i) (Var j)))))))) | i+j==1 = todo a
 
 > -- normalForm a0 =  trace ("nf0 " ++ pr a0) nf0 a0 where
-> normalForm a0 =  nf0 a0 where
+> normalForm a0 =  check $ nf0 a0 where
+
+>   check Nothing = case trynf 10000 a0 of
+>     Nothing -> Nothing
+>     Just (n,nf)  -> trace "BIG OOPS!" (Just nf)
+>   check nf = nf
 
 >   nf0 (Abs a) = Abs <$> nf0 a
 >   nf0 a = nf False 0 [] a
@@ -224,7 +246,7 @@ simplification
 > main = do
 >     hSetBuffering stdout LineBuffering
 >     -- print $ normalForm foo			-- test case for omega detector
->     mapM_ print [f n | n <- [0..37]]
+>     mapM_ print [f n | n <- [0..36]]
 >   where
 >     double = Abs (App (Var 0) (Var 0))
 >     triple = Abs (App (App (Var 0) (Var 0)) (Var 0))
