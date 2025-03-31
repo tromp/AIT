@@ -452,6 +452,18 @@ and so on.
 -- for 34
 
 -- TODO: (\1 1) (\1 (1 (\1 (\1)) 1))
+let A x = x (x <id> x)
+Then A <id>
+  = <id> (<id> <<id>> <id>)
+  = <id> <<id>> <id> id
+  = <<id>> id <id> id
+  = <id> <id> id
+  = <id> id id
+  = id id id = id
+T = A A
+  = A (A <id> A)
+  = A A = ...
+
 -- TODO: (\1 1) (\\1 (2 2 (1 1)))
 
 -- TODO: (\1 1) (\\2 (\2 (3 1)))

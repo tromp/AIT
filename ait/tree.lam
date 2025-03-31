@@ -6,7 +6,7 @@ let
   ap = \x\y\a\n. a x y;     -- application of x to y
   -- apply node to 3 arguments x (reduced), y, and z
   step = \x\y\z. x (\x1\x'. x1
-    (\x2\w. z w x')         -- △(△wx)yz = z w x
+    (\x2\w. ap (ap z w) x') -- △(△wx)yz = z w x
     (ap (ap y z) (ap x' z)) -- △(△x) yz = y z (x z)
     ) y;                    -- △ △   yz = y
   -- evaluate an arbitrary tree
