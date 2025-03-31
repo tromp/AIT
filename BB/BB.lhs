@@ -7,6 +7,9 @@ Author: Bertram Felgenhauer / John Tromp
 > import Data.Char
 > import Data.Bits
 > import Control.Applicative
+> import Data.Char(isAlphaNum)
+> import Text.PrettyPrint.HughesPJ(Doc, renderStyle, style, text, (<>), (<+>), parens)
+> import Text.ParserCombinators.ReadP
  
 terms with de Bruijn indices (internal: starting at 0)
 note: Bot marks useless subterms that do not contribute to the normal form
@@ -15,11 +18,11 @@ note: Bot marks useless subterms that do not contribute to the normal form
 >     deriving (Eq, Ord)
 
 > instance Read L where
->     readsPrec _ s
->         | '(':s <- s, [(n,s)] <- reads s, ')':s <- s = [(Var (n-1),s)]
->         | c:s <- s, isDigit c = [(Var (digitToInt c-1),s)]
->         | '^':s <- s, [(t,s)] <- reads s = [(Abs t,s)]
->         | '`':s <- s, [(t,s)] <- reads s, [(u,s)] <- reads s = [(App t u,s)]
+>   readsPrec _ s
+>     | '(':s <- s, [(n,s)] <- reads s, ')':s <- s = [(Var (n-1),s)]
+>     | c:s <- s, isDigit c = [(Var (digitToInt c-1),s)]
+>     | '^':s <- s, [(t,s)] <- reads s = [(Abs t,s)]
+>     | '`':s <- s, [(t,s)] <- reads s, [(u,s)] <- reads s = [(App t u,s)]
 
 generate terms of size n with all variables < v
 
@@ -91,7 +94,7 @@ step and substitution-size limited normal form
 > trynf n _ | n < 0 = Nothing
 > trynf n (App a b) = case trynf n a of
 >   Nothing -> Nothing
->   Just (n1, Abs a) -> if size b > 1000 then Nothing else trynf (n1-1) (subst 0 a b)
+>   Just (n1, Abs a) -> if size b > 65535 then Nothing else trynf (n1-1) (subst 0 a b)
 >   Just (n1, a) -> do
 >     (n1, b') <- trynf n1 b
 >     return (n1, App a b')
@@ -100,38 +103,11 @@ step and substitution-size limited normal form
 >   return (n1, Abs a')
 > trynf n a = Just (n, a)
 
-try to find normal form; Nothing means no normal form
-(logs cases where it bails out; should really be in IO...)
+try to find normal form; Nothing means either no normal form or a TODO alert
 
-> normalForm :: L -> Maybe L
-
-size 34 (\1 1 1 1) C2 and (\1 (1 1) 1) C2 
-
-> normalForm a@(App (Abs (App (App (App (Var 0) (Var 0)) (Var 0)) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (Var 0)))))) = Just (gnf a)
-> normalForm a@(App (Abs (App (App (Var 0) (App (Var 0) (Var 0))) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (Var 0)))))) = Just (gnf a)
-
-size 35 (\1 1 1) C3 and (\1 (1 1) 1) (\\2 2 (1 2))
-
-> normalForm a@(App (Abs (App (App (Var 0) (Var 0)) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (App (Var i) (Var j))))))) | i+j==1 = todo a
-
-size 36 (\1 1) (\1 (1 (\\2 (2 1)))) and \(\1 1 1 1) C2 and \(\1 (1 1) 1) C2 
-
-> normalForm a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 0) (App (Var 0) (Abs (Abs (App (Var 1) (App (Var 1) (Var 0))))))))) = todo a
-> normalForm a@(Abs (App (Abs (App (App (App (Var 0) (Var 0)) (Var 0)) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (Var 0))))))) = Just (gnf a)
-> normalForm a@(Abs (App (Abs (App (App (Var 0) (App (Var 0) (Var 0))) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (Var 0))))))) = Just (gnf a)
-
-size 37 (\1 1) (\1 (1 (\\2 (3 1)))) and (\1 1) (\1 (1 (\\3 (2 1)))) and (\1 1) (\1 (\2 (1 (2 (\2))))) and (\1 1) (\1 (\2 (2 (\2) 1))) and (\1 1) (\1 (\\3 (2 1)) 1) and \(\1 1) (\2 (1 (\2 (2 1)))) and \ size 35 ones and what is going on
-
-> normalForm a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 0) (App (Var 0) (Abs (Abs (App (Var 1) (App (Var 2) (Var 0))))))))) = todo a
-> normalForm a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 0) (App (Var 0) (Abs (Abs (App (Var 2) (App (Var 1) (Var 0))))))))) = todo a
-> normalForm a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 0) (Abs (App (Var 1) (App (Var 0) (App (Var 1) (Abs (Var 1))))))))) = todo a
-> normalForm a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 0) (Abs (App (Var 1) (App (App (Var 1) (Abs (Var 1))) (Var 0))))))) = todo a
-> normalForm a@(App (Abs (App (Var 0) (Var 0))) (Abs (App (App (Var 0) (Abs (Abs (App (Var 2) (App (Var 1) (Var 0)))))) (Var 0)))) = todo a
-> normalForm a@(Abs (App (Abs (App (Var 0) (Var 0))) (Abs (App (Var 1) (App (Var 0) (Abs (App (Var 1) (App (Var 1) (Var 0))))))))) = todo a
-> normalForm a@(Abs (App (Abs (App (App (Var 0) (Var 0)) (Var 0))) (Abs (Abs (App (Var 1) (App (Var 1) (App (Var i) (Var j)))))))) | i+j==1 = todo a
-
+> normalForm :: Int -> L -> Maybe L
 > -- normalForm a0 =  trace ("nf0 " ++ pr a0) nf0 a0 where
-> normalForm a0 =  check $ nf0 a0 where
+> normalForm lim a0 =  check $ nf0 a0 where
 
 >   check Nothing = case trynf 10000 a0 of
 >     Nothing -> Nothing
@@ -146,18 +122,19 @@ and list of previous redexes s that led to current term and whose reoccurance wo
 
 >   nf :: Bool -> Int -> [L] -> L -> Maybe L
 >   nf hnf f s (Abs a) | not hnf = Abs <$> nf hnf (f+1) s a
->   nf hnf f s r@(App a b) = do
+>   nf hnf f s (App a b) = do
 >     a <- nf True f (if hnf then s else []) a
 >     b <- Just (simplify b)
 >     let r@(App ra _) = botFree 0 (App a b)
+>     let nf' = nf hnf f (r:s)
 >     if noNF f (App a b) || ra `elem` s then Nothing else case a of
 >         Abs a
 >             | r `elem` s   -> Nothing
->             | length s > 14 -> todo a0
->             | otherwise    -> nf hnf f (r:s) (subst 0 a b)
+>             | length s > lim -> todo a0
+>             | otherwise    -> nf' (subst 0 a b)
 >         _ -> do
->             a' <- if hnf then Just a else nf hnf f (r:s) a
->             b' <- if hnf then Just b else nf hnf f (r:s) b
+>             a' <- if hnf then Just a else nf' a
+>             b' <- if hnf then Just b else nf' b
 >             Just $ App a' b'
 >   nf _ _ _ t = Just t
 
@@ -245,14 +222,14 @@ simplification
 > main :: IO ()
 > main = do
 >     hSetBuffering stdout LineBuffering
->     -- print $ normalForm foo			-- test case for omega detector
->     mapM_ print [f n | n <- [0..36]]
+>     -- print $ normalForm 14 foo			-- test case for omega detector
+>     mapM_ print [f n | n <- [0..37]]
 >   where
 >     double = Abs (App (Var 0) (Var 0))
 >     triple = Abs (App (App (Var 0) (Var 0)) (Var 0))
 >     bar = Abs (App (Var 0) (Abs (App (Var 2) (App (Var 1) (Var 0)))))
 >     foo = Abs (App double bar)		-- \z. (\x. x x) (\x. x (\y. z (x y)))
->     f n = maximum $ (n,0,P Bot) : [(n,size t,P a) | a <- gen 0 n, Just t <- [normalForm a]]
+>     f n = maximum $ (n,0,P Bot) : [(n,size t,P a) | a <- gen 0 n, Just t <- [normalForm 14 a]]
 
 printing
 
@@ -266,6 +243,33 @@ alternative printing
 
 > newtype P = P L
 >     deriving (Eq, Ord)
+
+A ReadP parser for DeBruijn term
+
+> instance Read P where
+>   readsPrec _ = map (\(l,s)->(P l,s)) . readP_to_S pL
+
+> pL, pLAtom, pLVar, pLLam, pLApp :: ReadP L
+> pL = pLLam +++ pLApp
+
+> pLVar = do
+>     skipSpaces
+>     v <- readS_to_P (readsPrec 9)
+>     return $ Var (v-1)
+
+> schar :: Char -> ReadP ()
+> schar c = do skipSpaces; _ <- char c; return ()
+
+> pLLam = do
+>     schar '\\'
+>     e <- pL
+>     return $ Abs e
+
+> pLApp = do
+>     es <- many1 pLAtom
+>     return $ foldl1 App es
+
+> pLAtom = pLVar +++ (do schar '('; e <- pL; schar ')'; return e)
 
 > instance Show P where
 >     showsPrec _ (P a) = prs a
