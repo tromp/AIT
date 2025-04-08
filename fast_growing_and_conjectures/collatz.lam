@@ -1,0 +1,18 @@
+-- compute Collatz iteration function \n -> if odd n then (3*n+1)`div`2 else n`div`2
+let
+  0 = \f\x.x;
+  succ = \n\f\x.f (n f x);
+  false = 0;
+
+  swapsucc = \c\a\b. c b (succ a);    -- 39 bits λλλ31(λλ2(421))
+  collatz = \n. n swapsucc false n 0; -- 65 bits λ1(λλλ31(λλ2(421)))(λλ1)1(λλ1)
+
+                      C0 = collatz 0; -- 0
+  1 = succ 0;         C1 = collatz 1; --   2
+  2 = succ 1;         C2 = collatz 2; -- 1
+  3 = succ 2;         C3 = collatz 3; --   5
+  4 = succ 3;         C4 = collatz 4; -- 2
+  5 = succ 4;         C5 = collatz 5; --   8
+  6 = succ 5;         C6 = collatz 6; -- 3
+  7 = succ 6;         C7 = collatz 7  --   11
+in collatz

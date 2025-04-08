@@ -65,54 +65,10 @@ replace free variables (of a redex) by bottom
 > botFree i (Abs a)   = Abs (botFree (i+1) a)
 > botFree _ Bot       = Bot
 
-> strict :: L -> Bool
-> strict (Abs a) = str 0 a where
->   str i (Abs a) = str (i+1) a
->   str i (Var j) = i == j
->   str i (App a _) = str i a
-> strict _ = False
-
-trouble terms
-
-> todo :: L -> Maybe L
-> todo a = let max = 10000 in case trynf max a of
->   Nothing -> trace ("-- TODO: " ++ pr a) Nothing
->   Just (n, a') -> trace ("-- DONE in " ++ show (max-n) ++ " steps" ++ pr a) (Just a')
-
-guaranteed normal form
-
-> gnf :: L -> L
-> gnf (App a b) = case gnf a of
->   Abs a -> gnf (subst 0 a b)
->   a -> App a (gnf b)
-> gnf (Abs a) = Abs (gnf a)
-> gnf a = a
-
-step and substitution-size limited normal form
-
-> trynf :: Int -> L -> Maybe (Int, L)
-> trynf n _ | n < 0 = Nothing
-> trynf n (App a b) = case trynf n a of
->   Nothing -> Nothing
->   Just (n1, Abs a) -> if size b > 65535 then Nothing else trynf (n1-1) (subst 0 a b)
->   Just (n1, a) -> do
->     (n1, b') <- trynf n1 b
->     return (n1, App a b')
-> trynf n (Abs a) = do
->   (n1, a') <- trynf n a
->   return (n1, Abs a')
-> trynf n a = Just (n, a)
-
 try to find normal form; Nothing means either no normal form or a TODO alert
 
 > normalForm :: Int -> L -> Maybe L
-> -- normalForm a0 =  trace ("nf0 " ++ pr a0) nf0 a0 where
-> normalForm lim a0 =  check $ nf0 a0 where
-
->   check Nothing = case trynf 10000 a0 of
->     Nothing -> Nothing
->     Just (n,nf)  -> trace "BIG OOPS!" (Just nf)
->   check nf = nf
+> normalForm lim a0 = {-- trace ("nf0 " ++ pr a0) $ --} nf0 a0 where
 
 >   nf0 (Abs a) = Abs <$> nf0 a
 >   nf0 a = nf False 0 [] a
@@ -123,14 +79,14 @@ and list of previous redexes s that led to current term and whose reoccurance wo
 >   nf :: Bool -> Int -> [L] -> L -> Maybe L
 >   nf hnf f s (Abs a) | not hnf = Abs <$> nf hnf (f+1) s a
 >   nf hnf f s (App a b) = do
->     a <- nf True f (if hnf then s else []) a
+>     a <- nf True f (if hnf then s else []) a -- empty redex history when switching from nf to hnf
 >     b <- Just (simplify b)
 >     let r@(App ra _) = botFree 0 (App a b)
 >     let nf' = nf hnf f (r:s)
 >     if noNF f (App a b) || ra `elem` s then Nothing else case a of
 >         Abs a
 >             | r `elem` s   -> Nothing
->             | length s > lim -> todo a0
+>             | length s > lim -> trace ("-- TODO: " ++ pr a0) Nothing
 >             | otherwise    -> nf' (subst 0 a b)
 >         _ -> do
 >             a' <- if hnf then Just a else nf' a
@@ -222,14 +178,8 @@ simplification
 > main :: IO ()
 > main = do
 >     hSetBuffering stdout LineBuffering
->     -- print $ normalForm 14 foo			-- test case for omega detector
->     mapM_ print [f n | n <- [0..37]]
->   where
->     double = Abs (App (Var 0) (Var 0))
->     triple = Abs (App (App (Var 0) (Var 0)) (Var 0))
->     bar = Abs (App (Var 0) (Abs (App (Var 2) (App (Var 1) (Var 0)))))
->     foo = Abs (App double bar)		-- \z. (\x. x x) (\x. x (\y. z (x y)))
->     f n = maximum $ (n,0,P Bot) : [(n,size t,P a) | a <- gen 0 n, Just t <- [normalForm 14 a]]
+>     mapM_ print [f n | n <- [0..36]] where
+>     f n = maximum $ (n,0,P Bot) : [(n,size t,P a) | a <- gen 0 n, Just t <- [normalForm 20 a]]
 
 printing
 
