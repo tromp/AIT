@@ -1,0 +1,76 @@
+-- Lambda term that normalizes iff an Erdős conjecture is false.
+-- Specifically Problem 1 from "Erdős, P. (1979). Some Unconventional Problems in Number Theory. Mathematics Magazine, 52(2), 67–70. https://doi.org/10.1080/0025570x.1979.11976756"
+--
+-- Conjecture:
+--    For all k > 8: 2^k is not the sum of distinct powers of 3
+--    Equivalently, 2^k written in base 3 must have at least one digit 2.
+
+let
+  -- Bool
+  T = \x.\y.x;
+  F = \x.\y.y;
+
+  Y = \f.((\g.g g)(\x.f (x x)));
+
+  -- Nat (Church Numerals)
+  S = \n\f\x.f (n f x);
+  0 = \f\x.x;
+  1 = S 0;
+  2 = S 1;
+
+  -- TerNat (Ternary Naturals)
+  -- Optimization: Argument order saved 3 bits "hoiz" -> "zoih"
+  -- This seems to mostly have to do with making tH 3 bits cheaper.
+  tH =   \z\o\i\h. h;    -- tH   = 0
+  tO = \n\z\o\i\h. o n;  -- tO n = 3n
+  tI = \n\z\o\i\h. i n;  -- tI n = 3n+1
+  tZ = \n\z\o\i\h. z n;  -- tZ n = 3n+2
+
+  -- Ternary Successor
+  -- tS: TerNat -> TerNat
+  -- 131 bits
+  tSk = \k\n. n 
+    (\m. tO (k m))  -- S (tZ m) = tO (S m)  : 3n+2 -> 3(n+1)
+    (\m. tI m)      -- S (tO m) = tI m      : 3n   -> 3n+1
+    (\m. tZ m)      -- S (tI m) = tZ m      : 3n+1 -> 3n+2
+    (tI tH);        -- S tH     = tI tH     : 0    -> 1
+  tS = Y tSk;
+
+  -- Convert Church numeral to ternary
+  -- church2tern : Nat -> TerNat
+  church2tern = \n. n tS tH;
+
+  -- (has_2 t) iff t has a 2 in it's base 3
+  -- has_2 : TerNat -> Bool
+  -- 55 bits
+  has_2k = \k\t. t (\m. T) (\m. k m) (\m. k m) F;
+  has_2 = Y has_2k;
+  -- (2n_has_2 n) iff 2^n has a 2 in base 3
+  2n_has_2 = \n. has_2 (church2tern (n 2));
+
+  -- Return smallest m >= n such that 2^n has no 2 in base 3
+  -- erdos: Nat -> Nat
+  -- 266 bits
+  erdosk = \k\n.
+    (2n_has_2 n)
+      -- 2^n has a 2, continue
+      (k (S n))
+      -- 2^n has no 2, Halt
+      n;
+  erdos = Y erdosk;
+
+-- 289 bits
+in erdos (2 2 2)
+
+-- erdos (2 2 2)
+-- (λ (λ 2 (λ λ 4 (λ λ 1 (λ λ λ 2) 2 2 (λ λ 1)) (1 3 (4 (λ λ 1 (λ λ λ λ λ 3 (7 5)) (λ λ λ λ λ 2 5) (λ λ λ λ λ 4 5) (λ λ λ λ 2 (λ λ λ λ 1)))) (λ λ λ λ 1)) (2 (λ λ 2 (3 2 1))) 1) (1 1 1)) (λ λ 2 (2 1))) (λ (λ 1 1) (λ 2 (1 1)))
+-- (\y\two.
+--   y \f\n.
+--     y has_2k (n two (y tSk) tH)
+--     (f (S n))
+--     n)
+--   (two two two)) Y 2
+
+-- erdos 0  -->  0  : 2^0 = 1 = t1
+-- erdos 1  -->  2  : 2^2 = 4 = t11
+-- erdos 3  -->  8  : 2^8 = 256 = t100111
