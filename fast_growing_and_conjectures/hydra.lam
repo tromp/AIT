@@ -1,0 +1,52 @@
+--  This term has a normal form iff a biased pseudo-random walk ends.
+--  This term "probviously" diverges, but it requires solving a Collatz-like problem to prove it.
+--    https://wiki.bbchallenge.org/wiki/Probvious
+--  This is closely related the Hydra and Antihydra Turing Machine "Cryptids".
+--    https://www.sligocki.com/2024/05/10/bb-2-5-is-hard.html
+--    https://www.sligocki.com/2024/07/06/bb-6-2-is-hard.html
+--    https://wiki.bbchallenge.org/wiki/Cryptids
+let
+  T = \x.\y.x;
+  F = \x.\y.y;
+
+  -- 129 bits
+  f = \n\j\i. 
+    i
+      (f (\z. n z i i i))         -- f (\a. a T^x) ? T  -->  f (\a. a T^x+3)
+      (j
+        (n (f (\a.a)) j)          -- f (\a. a T^x) T F  -->  f (\a. a) T^x+1
+        (n (f (\a.a)) i i i i));  -- f (\a. a T^x) F F  -->  f (\a. a) T^x F^4
+                                  -- f (\a. a T^x) ? (\a\b\c.c) --> \c.c
+                                  -- f (\a. a T^x) (\a\b\c.c) --> \i. i (f (\a. a T^x+3)) (\c.c)
+
+  -- 179 bits
+  hydra = f (\a.a) T T F F (\a\b\c.c);
+in hydra
+
+--  Explicitly: Start from (2, 2) and repeatedly apply the rules
+--    (2n,   m) --> (3n,   m+2)  if m >= 2
+--    (2n+1, m) --> (3n+1, m-1)  if m >= 1
+--  until no rule applies.
+--
+--  The first component of this pair iterates the Collatz-like Hydra function:
+--    H(n) = n + floor(n/2)
+--      2k   -> 3k
+--      2k+1 -> 3k+1
+--    https://wiki.bbchallenge.org/wiki/Hydra_function
+--
+--  This iteration produces a sequence of pseudo-random "bits" (even or odd numbers).
+--  The second component of the pair performs a biased pseudo-random walk using these bits.
+--
+--  This has been simulated out to 1 million iterations to config:
+--    (~10^176091, 497_701)
+--  at which point the biased pseudo-random walk has a miniscule chance of ever returning to m < 2
+--  (assuming )
+
+-- Let (x,y,z) := Y f (\a. a T^x) T^y F^z (\abc. c)
+--  (x,y+2,z) -> (x+3,y,z)
+--  (x,1,z+1) -> (0,x+1,z)
+--  (x,0,z+2) -> (0,x,z+4)
+--  (x,1,0) -> Halt
+--  (x,0,1) -> Halt
+--  (x,0,0) -> Halt
+-- Let (n,m) := (0,n,m)
