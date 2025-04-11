@@ -1,0 +1,23 @@
+-- BBλ(40) candidate found by mxdys and improved by racheline
+let
+  2 = \f\x. f (f x);
+  F = \n. n 2 n     -- n^2^n for Church numeral n
+in F F F
+
+-- F F F
+-- = F 2 F F
+-- = 16 F F
+-- = F 64K F
+-- has nf_size 3^64K^2^64K^2 * 13 - 9
+
+-- for n>0, we have
+--   F (n F)
+-- = n F 2 (n F)
+-- = m (n F) = mn F, where mn >= m >= 2^^(2n+1)
+-- 0 F F =     F =  1 F
+-- 1 F F = F 2 F = 16 F (has normal form size 1441774)
+-- if n F F = m F, then n+1 F F = F (n F F) = F (m F) = k F for some k >= 2^^(2m+1)
+
+-- F F F =
+-- 16 F F =
+-- k F where k > 2^^2^^2^^2^^2^^2^^2^^2^^2^^2^^2^^2^^2^^2^^2^^33 > 2^^^17
