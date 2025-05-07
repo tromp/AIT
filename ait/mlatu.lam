@@ -1,0 +1,50 @@
+-- These definitions translate mlatu-6 programs into corresponding lambda terms
+-- which allows proving program equality by beta or beta/eta equivalence in appropriate list context
+
+let
+  id    = \x. x;
+  false = \_. id;
+  cons  = \x\y\z. z x y;
+  o     = \x\y\z. x (y z); -- compose
+
+  tup   = \x\y. y x;		-- 1-tuple
+  empty = cons id;
+
+  dup   = tup (\x. let cx = cons x in o cx cx);		-- +       (A) -> (A) (A)
+  zap   = tup false;					-- -       (A) ->
+  unqot = tup id;					-- <       (A) -> A
+  quote = tup (\x. cons (cons x));			-- >       (A) -> ((A))
+  cat   = tup (\x. tup (\y. cons (o x y)));		-- ,   (A) (B) -> (A B)
+  swap  = tup (\x. tup (\y. o (cons y) (cons x)));	-- ~   (A) (B) -> (B) (A)
+
+  -- +- ==
+  dupzap = o zap dup;		-- \h\t. dupzap (cons h t) =beta= \h\t. cons h t
+  -- >< ==
+  quoteunqot = o unqot quote;	-- \h\t. quoteunqot (cons h t) =beta= \h\t. cons h t
+  -- ~~ ==
+  swapswap = o swap swap;	-- \a\b\t. swapswap (cons a (cons b t)) =beta= \a\b\t. (cons a (cons b t))
+  -- (), ==
+  emptycat = o cat empty;	-- \h\t. emptycat (cons h t) =beta/eta= \h\t. cons h t
+  -- +~ == +
+  dupswap = o swap dup;		-- \h\t. dupswap (cons h t) =beta= \h\t. (cons h t)
+  -- >- == -
+  quotezap = o zap quote;	-- \h\t. quotezap (cons h t) =beta= \h\t. zap (cons h t)
+  -- -- == ,-
+  zapzap = o zap zap;		-- \a\b\t. zapzap (cons a (cons b t)) =beta= 
+  catzap = o zap cat;		-- \a\b\t. catzap (cons a (cons b t))
+  -- ~-- == --
+  swapzapzap = o zapzap swap;	-- \a\b\t. swapzapzap (cons a (cons b t)) =beta= a\b\t. t
+  -- ~,- == ,-
+  swapcatzap = o catzap swap;	-- \a\b\t. swapcatzap (cons a (cons b t)) =beta= a\b\t. t
+  -- +>~ == >+<
+  dupquoteswap = o swap (o quote dup);		-- \h\t. dupquoteswap (cons h t) =beta=
+  quotesupunqot = o unqot (o dup quote);	-- \h\t. quotesupunqot (cons h t)
+  -- +>~> == >+<> == >+
+  dupquoteswapquote = \x. quote (swap (quote (dup x)));		-- \h\t. dupquoteswapquote (cons h t) =beta=
+  quotedupunqotquote = \x. quote (unqot (dup (quote x)));	-- \h\t. quotedupunqotquote (cons h t) =beta=
+  quotedup = o dup quote;					-- \h\t. quotedup (cons h t)
+  -- >,<< == ,<
+  quotecatunqotunqot = \x. unqot (unqot (cat (quote x)));	-- \a\b\t. quotecatunqotunqot (cons a (cons b t)) = beta=
+  catunqot = o unqot cat;					-- \a\b\t. catunqot (cons a (cons b t))
+
+in \a\b\t. catunqot (cons a (cons b t))

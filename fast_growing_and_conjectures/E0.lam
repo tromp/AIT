@@ -1,6 +1,7 @@
 -- E has growth rate epsilon_0 at 79 bits
 -- design inspired from https://codegolf.stackexchange.com/questions/44560/combinator-quines/235867#235867 by Code Golf user https://codegolf.stackexchange.com/users/98257/2014melo03
 -- optimized down from 106 bits by Bertram Felgenhauer
+-- closely related to https://googology.miraheze.org/wiki/M(n)_map
 let
   D = \d\s\x.d(\n.s n x);
   id = \x.x;

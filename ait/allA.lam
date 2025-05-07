@@ -1,3 +1,4 @@
+-- https://cstheory.stackexchange.com/questions/32309/concatenative-binary-lambda-calculus-combinatory-logic
 let
   -- binary CL tree with basis {A}
   id = \x.x;
