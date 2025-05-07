@@ -1,5 +1,6 @@
 -- These definitions translate mlatu-6 programs into corresponding lambda terms
 -- which allows proving program equality by beta or beta/eta equivalence in appropriate list context
+-- Also see https://esolangs.org/wiki/Mlatu-6
 
 let
   id    = \x. x;
