@@ -52,4 +52,8 @@ let
   quotecatunqotunqot = \x. unqot (unqot (cat (quote x)));	-- \a\b\t. quotecatunqotunqot (cons a (cons b t)) = beta=
   catunqot = o unqot cat;					-- \a\b\t. catunqot (cons a (cons b t))
 
-in \a\b\t. catunqot (cons a (cons b t))
+  -- size 9 busy beaver candidate (+,+)+<<<
+  dupcatdup = \x. dup (cat (dup x));
+  busybeaver = \x. unqot unqot (unqot (unqot (dup (cons dupcatdup x))));
+
+in busybeaver
