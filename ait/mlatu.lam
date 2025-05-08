@@ -1,5 +1,9 @@
 -- These definitions translate mlatu-6 programs into corresponding lambda terms
 -- which allows proving program equality by beta or beta/eta equivalence in appropriate list context
+-- Concatenation of programs becomes composition of functions,
+-- with the empty concatenation being the identity function.
+-- The stack is represented as a list built from the pairing function cons.
+-- It is implicitly infinite; there's no nil and we never test for it.
 -- Also see https://esolangs.org/wiki/Mlatu-6
 
 let
