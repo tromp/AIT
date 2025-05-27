@@ -1,4 +1,4 @@
--- These definitions translate mlatu-6 programs into corresponding lambda terms
+-- These definitions translate mlatu-6 programs into corresponding combinators (closed lambda terms)
 -- which provides a semantics for mlatu-6
 -- and allows proving program equality by beta or beta/eta equivalence.
 -- Conceptually, each mlatu primitve corresponds to a function which takes
@@ -10,19 +10,23 @@
 -- Also see https://esolangs.org/wiki/Mlatu-6
 -- This follows https://esolangs.org/wiki/Underload#Converting_Underload_to_lambda_calculus
 -- but with the rule for cat fixed to [*F] cont = \x\y. [F] cont (\c. y (x c))
+-- 3 of the 6 primitives that mlatu combines with composition (combinator B) are
+-- combinators C, K, and W. While {B,C,K,W} is complete basis for combinatory logic,
+-- this doesn't mean that mlatu is complete with only dup, zap and swap, since mlatu can only
+-- combine programs with composition, not with application.
 
 let
-  id    = \x. x;
-  o     = \x\y\c. x (y c);	-- compose
-  tup   = \x\y. y x;		-- 1-tuple
+  id    = \x. x;		-- identity						combinator I
+  o     = \x\y\c. x (y c);	-- compose						combinator B
+  tup1  = \x\y. y x;		-- 1-tuple						combinator T = CI
   empty = tup id;
 
-  dup   = \c\x. c x x;					-- +       (A) -> (A) (A)
-  zap   = \c\x. c;					-- -       (A) ->
-  unqot = \c\x. x c;					-- <       (A) -> A
-  quote = \c\x. c (tup x);				-- >       (A) -> ((A))
+  dup   = \c\x. c x x;					-- +       (A) -> (A) (A)	combinator W
+  zap   = \c\x. c;					-- -       (A) ->		combinator K
+  unqot = tup1;						-- <       (A) -> A		combinator T
+  quote = \c\x. c (tup1 x);				-- >       (A) -> ((A))
   cat   = \c\x\y. c (\c. y (x c));			-- ,   (A) (B) -> (A B)
-  swap  = \c\x\y. c y x;				-- ~   (A) (B) -> (B) (A)
+  swap  = \c\x\y. c y x;				-- ~   (A) (B) -> (B) (A)	combinator C
 
   -- +- ==
   dupzap = o dup zap;		-- dupzap =beta= \x\y. x y =eta= id
@@ -54,6 +58,6 @@ let
 
   -- size 9 busy beaver candidate (+,+)+<<<
   dupcatdup = o dup (o cat dup);
-  busybeaver = o (tup dupcatdup) (o dup (o unqot (o unqot unqot)));
+  busybeaver = o (tup1 dupcatdup) (o dup (o unqot (o unqot unqot)));
 
 in busybeaver
