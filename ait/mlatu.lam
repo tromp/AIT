@@ -1,6 +1,10 @@
 -- These definitions translate mlatu-6 programs into corresponding lambda terms
 -- which provides a semantics for mlatu-6
--- and allows proving program equality by beta or beta/eta equivalence
+-- and allows proving program equality by beta or beta/eta equivalence.
+-- Conceptually, each mlatu primitve corresponds to a function which takes
+-- a continuation as first argument, and then as many more arguments as stack elements
+-- used by the primitive. The function returns the continuation applied to terms
+-- corresponding to the new stack elements that replace the old ones.
 -- Concatenation of programs becomes composition of functions,
 -- with the empty concatenation being the identity function.
 -- Also see https://esolangs.org/wiki/Mlatu-6
@@ -9,7 +13,6 @@
 
 let
   id    = \x. x;
-  false = \_. id;
   o     = \x\y\c. x (y c);	-- compose
   tup   = \x\y. y x;		-- 1-tuple
   empty = tup id;
