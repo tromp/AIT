@@ -11,9 +11,11 @@
 -- This follows https://esolangs.org/wiki/Underload#Converting_Underload_to_lambda_calculus
 -- but with the rule for cat fixed to [*F] cont = \x\y. [F] cont (\c. y (x c))
 -- 3 of the 6 primitives that mlatu combines with composition (combinator B) are
--- combinators C, K, and W. While {B,C,K,W} is complete basis for combinatory logic,
+-- combinators C, K, and W. While {B,C,K,W} is a complete basis for combinatory logic,
 -- this doesn't mean that mlatu is complete with only dup, zap and swap, since mlatu can only
 -- combine programs with composition, not with application.
+-- In particular, this translation always preserves the continuation argument,
+-- so it cannot produce all possible combinators.
 
 let
   id    = \x. x;		-- identity						combinator I
@@ -60,4 +62,4 @@ let
   dupcatdup = o dup (o cat dup);
   busybeaver = o (tup1 dupcatdup) (o dup (o unqot (o unqot unqot)));
 
-in busybeaver
+in o dup (o unqot zap) -- busybeaver
