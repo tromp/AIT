@@ -37,7 +37,7 @@ let
   -- ~~ ==
   swapswap = o swap swap;	-- swapswap =beta= \x\y\z. x y z =eta= id
   -- (), ==
-  emptycat = o empty cat;	-- emptycat =beta/eta= \x\y.x (\z.y z) =eta= id
+  emptycat = o empty cat;	-- emptycat =beta= \x\y.x (\z.y z) =eta= id
   -- +~ == +
   dupswap = o dup swap;		-- dupswap =beta= dup
   -- >- == -
@@ -58,8 +58,8 @@ let
   quotecatunqotunqot = o quote (o cat (o unqot unqot));
   catunqot = o cat unqot;	-- quotecatunqotunqot =beta= catunqot
 
-  -- size 9 busy beaver candidate (+,+)+<<<
+  -- size 8 busy beaver candidate (+,+)+<<
   dupcatdup = o dup (o cat dup);
-  busybeaver = o (tup1 dupcatdup) (o dup (o unqot (o unqot unqot)));
+  busybeaver = o (tup1 dupcatdup) (o dup (o unqot unqot));
 
-in o dup (o unqot zap) -- busybeaver
+in busybeaver
