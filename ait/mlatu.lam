@@ -21,7 +21,7 @@ let
   id    = \x. x;		-- identity						combinator I
   o     = \x\y\c. x (y c);	-- compose						combinator B
   tup1  = \x\y. y x;		-- 1-tuple						combinator T = CI
-  empty = tup id;
+  empty = tup1 id;
 
   dup   = \c\x. c x x;					-- +       (A) -> (A) (A)	combinator W
   zap   = \c\x. c;					-- -       (A) ->		combinator K
@@ -57,6 +57,19 @@ let
   -- >,<< == ,<
   quotecatunqotunqot = o quote (o cat (o unqot unqot));
   catunqot = o cat unqot;	-- quotecatunqotunqot =beta= catunqot
+
+  --     [B] [A] k == A
+  K = \c\x\y. x c;
+  -- [C] [B] [A] s == [[C] B] [C] A
+  S = \c\x\y\z. let tz = tup1 z in x c tz (tup1 (y tz));
+
+  -- I = [K] [K] S
+  -- [A] I = [A] [K] [K] S = [[A] K] [A] K = A
+  I = let tK = tup1 K in o tK (o tK S);
+
+  app = \c\a\b. c (\c. a c b);
+  -- I = (S K) K
+  tI = let tK = tup1 K in o tK (o tK (o (tup1 S) (o app app)));
 
   -- size 8 busy beaver candidate (+,+)+<<
   dupcatdup = o dup (o cat dup);
