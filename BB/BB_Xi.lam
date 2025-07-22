@@ -2,6 +2,7 @@
 -- A 1-closed term is a term in de Bruijn notation that is closed with 1 additional lambda in front. Any variable bound to that lambda is a free variable "f" in the term.
 -- In normal order reduction, an oracle reduction step reduces f t to True (λλ2) if t is well-founded and has a beta/oracle normal form, or to False (λλ1) otherwise.
 -- A term is well-founded if its (leftmost, outermost) oracle calls can only nest finitely deep.
+-- Thanks to @bee for coming up with concise term enumeration
 
 \nf. let
   S = \x\y\z.x z(y z);
