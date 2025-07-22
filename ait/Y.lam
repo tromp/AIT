@@ -48,4 +48,4 @@ let
   map = \f. (let go = \l.l(\h\t\_\z.z (f h) (go t))l in go);
   Ylist = map (\z.z Ylist); -- 95 bits
 
-in Y2
+in Y

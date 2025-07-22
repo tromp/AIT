@@ -1,0 +1,21 @@
+-- Busy Beaver BBλ_Ξ for lambda calculus with a recursive normal form size oracle: the maximum beta/oracle normal form size of any 1-closed lambda term of size n, or 0 if no 1-closed term of size n exists.
+-- A 1-closed term is a term in de Bruijn notation that is closed with 1 additional lambda in front. Any variable bound to that lambda is a free variable "f" in the term.
+-- In normal order reduction, an oracle reduction step reduces f t to True (λλ2) if t is well-founded and has a beta/oracle normal form, or to False (λλ1) otherwise.
+-- A term is well-founded if its (leftmost, outermost) oracle calls can only nest finitely deep.
+
+\nf. let
+  S = \x\y\z.x z(y z);
+  K = \x\y.x;
+  C0 = \f\x. x;
+  C1 = \f\x. f x;
+  C2 = \f\x. f (f x);
+  C3 = \f\x. f (f (f x));
+  map = \f\xs\c. xs (\x.c (f x));
+  cat = \xs\ys\c\n. xs c (ys c n);
+  nil = \c\n. n;
+  bind = \xs\f. xs (\x. cat (f x)) nil;
+  SK0 = \c\n. c S (c K n);
+  SKsucc = \xs. bind xs (\x. map x xs);
+  SKbb = \x. let mu = \n.nf (x n) n (mu (n n)); q = mu C2 in nf q q C2;
+  bb = \n. n SKsucc SK0 SKbb C2
+in bb
