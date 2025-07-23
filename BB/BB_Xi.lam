@@ -5,7 +5,12 @@
 -- n SKsucc SK0 is a Church list of all 3^2^n balanced SKf terms of rank n (idea courtesy of @bee)
 -- bb n, of size 168 + K(n), maps SKnf over that, replacing all elements without normal form with f,
 -- resulting in a normal form whose size exceeds that of all rank n SKf terms.
--- Thus, BBλ_Ξ(n) easily exceeds any BBλ_α(n) for n somewhat larger than K(α).
+-- Thus, BBλ_Ξ(n) easily exceeds BBλ(n).
+-- By changing SKf term enumeration to symbolic closed lambda term enumeration,
+-- doing symbolic reduction to normal form, and computing maximum normal form size,
+-- BBλ(n) can be computed exactly as a Church numeral.
+-- We can similarly compute BBλ_α(n) exactly for any recursive α,
+-- and see that BBλ_Ξ outgrows all BBλ_α(n) for recursive α.
 
 \nf. let
   S = \x\y\z.x z(y z);
