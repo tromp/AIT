@@ -3,7 +3,7 @@
 -- In normal order reduction, an oracle reduction step reduces f t to True (λλ2) if t is well-founded and has a beta/oracle normal form, or to False (λλ1) otherwise.
 -- A term is well-founded if its (leftmost, outermost) oracle calls can only nest finitely deep.
 -- n SKsucc SK0 is a Church list of all 3^2^n balanced SKf terms of rank n (idea courtesy of @bee)
--- bb n, of size 168 + K(n), maps SKbb over that, replacing all elements without normal form with f,
+-- bb n, of size 168 + K(n), maps SKnf over that, replacing all elements without normal form with f,
 -- resulting in a normal form whose size exceeds that of all rank n SKf terms.
 -- Thus, BBλ_Ξ(n) easily exceeds any BBλ_α(n) for n somewhat larger than K(α).
 
@@ -20,6 +20,6 @@
   bind = \xs\f. xs (\x. cat (f x)) nil;
   SK0 = \c\n. c S (c K (c nf n));
   SKsucc = \xs. bind xs (\x. map x xs);
-  SKbb = \x. nf x x nf;
-  bb = \n. map SKbb (n SKsucc SK0)
+  SKnf = \x. nf x x nf;
+  bb = \n. map SKnf (n SKsucc SK0)
 in bb
