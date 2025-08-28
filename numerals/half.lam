@@ -1,17 +1,15 @@
 let
+  id = \x.x;
   0 = \f\x.x;
-  3 = \f\x.f (f (f x));
   succ = \n\f\x.f (n f x);
-  next = \g\m\n.g n (succ m);
-  true = \x\y.x;
-  half = \n.n next true 0 0
-in half -- (3 3)
-
--- half 5 =
--- next^5 true 0 0 =
--- next^4 true 0 1 =
--- next^3 true 1 1 =
--- next^2 true 1 2 =
--- next^1 true 2 2 =
--- next^0 true 2 3 =
--- 2
+  1 = succ 0;
+  2 = succ 1;
+  3 = succ 2;
+  4 = succ 3;
+  5 = succ 4;
+  6 = succ 5;
+  false = 0;
+  half  = \n\s\z. n (\c\a\b. c (s b) a) false z z -- 55 bits
+  -- this generalizes as e.g.
+  -- third = \n\s\z. n (\r\a\b\c. r (s c) a b) (\_.false) z z z; -- 71 bits
+in half
