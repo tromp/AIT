@@ -1,36 +1,77 @@
-let BMS = let
-  0 = \f\x. x;
-  1 = \f. f;
-  succ = \n\f\x. f (n f x);
-  pred = \n\f\x. n (\g\h.h (g f))(\u.x)(\u.u);
+-- small lambda term for computing BMS^4(2)
+-- corresponding to Haskell code in BMS.hs
+-- original design due to Patcail
+-- use of tuple numerals due to 50_ft_lock
 
-  expand = \mod\m. let m1 = m 1 in \i.
-    m1 pred i                       -- rewrite from gt i m1
-      (\_. m (m1 pred (succ i)))    -- copy array element i+1 - m1
-      (let msis = m (succ i) succ
-       in msis (m1 succ mod pred (msis i) (\_.m1) 0)     -- msis (gt (msis i) (m1 succ mod) m1 0)
-      );
+let
+  id  = \x. x;
+  K = \x\y. x;
 
-  matrix0 = \n\k. n n pred k (\_.0) n;    -- single column of n n's  -- rewrite from gt k n
+  -- tuple numerals
+  -- Tn x = <...<x>...> with n nested 1-tuples
+  T0 = id;
+  -- 1-tuple
+  T1 = \x\f.f x;
+  -- tuple successor
+  Tsucc = \t\x\f. f (t x);
+  -- tuple predecessor
+  Tpred = \t\x. t x id;
 
-  -- bms
-  in \rows. let
-    -- mod is in [0..rows-1]
-    bms = \matrix\mod. matrix 1 (bms (expand mod matrix) (pred (mod (\_.mod) rows))) rows
-    -- this returns rows^recurse^arrayhead where recursion ends when arrayhead = 0
-  in bms (matrix0 rows) (pred rows);
+  -- Tm x (Tn y) = if n < m then y (Tm-1-n x) else x (Tn-m y)
+  -- less than
+  Tlt = \tn\tm\t\f. tm (K f) (tn (K t));
+  Tzero = \tn\t\f. tn (K t) (K f);
 
-  2 = \f\x. f (f x)
-in 2 2 BMS 2                      -- 404 bits, 50.5 bytes
+  -- add tuple numerals
+  Tadd = \tm\tn\x. tm (tn x);
+  -- subtract: tuple numeral minus tuple numeral (smaller or equal)
+  Tsub = \tn\tm\x. tm id (tn x);
 
--- [2,2,  2,2] of length 4
--- [2,  4,2,  2,2] of length 5
--- [6,4,  4,2,  2,2] of length 6
--- [4,  4,2,  2,2,  0,4, 4,2, 2,2] of length 11
--- [8,2,  6,6,  4,2,  2,2, 0,4, 4,2, 2,2] of length 14
--- [2,  6,6,  4,2,  2,2, 0,2, 6,6, 4,2, 2,2, 0,4, 4,2, 2,2] of length 21
--- [8,8,  6,6,  4,2,  2,2, 0,2, 6,6, 4,2, 2,2, 0,4, 4,2, 2,2] of length 22
--- [ skip 9 of lengths 29, 36, 41, 46, 49, 50, 53, 56, 57 ]
--- [0,4,  0,2,  0,8,  2,2, 0,4, 2,2, 0,2, .. ]
--- BMS 2 = 2^(2^(2^(2^(2^(2^(2^(2^(2^(2^(2^(2^(2^(2^(2^(2^(2)^57)^56)^53)^50)^49)^46)^41)^36)^29)^22)^21)^14)^11)^6)^5)^4
---       > 2^^20 
+  expand = \mod\m\m0\i.
+    Tlt i m0
+      (let add = Tadd (m (Tsucc i)) in add (Tlt (add i) (Tadd m0 mod) T0 m0))
+      (m (Tsub (Tsucc i) m0));              -- copy array element i+1 - m0
+
+  matrix0 = \n\k. Tlt k (Tadd n n) n T0;    -- two columns of n n's followed by all 0s
+
+  BMS = \rows1. let                         -- 326 bits
+    bms = \matrix\mod. let m0 = matrix T0 in
+          Tzero m0 m0
+                   (Tadd m0 (bms (expand mod matrix m0) (Tzero mod rows1 (Tpred mod))))
+  in bms (matrix0 (Tsucc rows1)) rows1;
+
+  mat0 = matrix0 T1;     -- [2,2,2,2,0,0]
+  mat1 = expand T1 mat0; -- [2,4,2,2,2,0,0]
+  mat2 = expand T0 mat1; -- [6,4,4,2,2,2,0,0]
+  mat3 = expand T1 mat2; -- [4,4,2,2,2,0,4,4,2,2,2,0,0]
+  mat4 = expand T0 mat3; -- [8,2,6,6,4,2,2,2,0,4,4,2,2,2,0,0]
+  mat5 = expand T1 mat4; -- [2,6,6,4,2,2,2,0,2,6,6,4,2,2,2,0,4,4,2,2,2,0,0]
+  mat6 = expand T0 mat5; -- [8,8,6,6,4,2,2,2,0,2,6,6,4,2,2,2,0,4,4,2,2,2,0,0]
+  mat7 = expand T1 mat6; -- [8,6,6,4,2,2,2,0,8,6,6,4,2,2,2,0,2,6,6,4,2,2,2,0,4,4,2,2,2,0,0]
+  mat8 = expand T0 mat7; -- [6,6,4,2,2,2,0,16,6,6,4,2,2,2,0,8,6,6,4,2,2,2,0,2,6,6,4,2,2,2,0,4,4,2,2,2,0,0]
+  mat9 = expand T1 mat8; -- [6,4,2,2,2,0,6,4,2,2,2,0,16,6,6,4,2,2,2,0,8,6,6,4,2,2,2,0,2,6,6,4,2,2,2,0,4,4,2,2,2,0,0]
+  mat10 = expand T0  mat9; -- [4,2,2,2,0,12,4,2,2,2,0,6,4,2,2,2,0,16,6,6,4,2,2,2,0,8,6,6,4,2,2,2,0,2,6,6,4,2,2,2,0,4,4,2,2,2,0,0]
+  mat11 = expand T1 mat10; -- [2,2,2,0,2,2,2,0,12,4,2,2,2,0,6,4,2,2,2,0,16,6,6,4,2,2,2,0,8,6,6,4,2,2,2,0,2,6,6,4,2,2,2,0,4,4,2,2,2,0,0]
+  mat12 = expand T0 mat11; -- [4,4,2,2,0,2,2,2,0,12,4,2,2,2,0,6,4,2,2,2,0,16,6,6,4,2,2,2,0,8,6,6,4,2,2,2,0,2,6,6,4,2,2,2,0,4,4,2,2,2,0,0]
+  mat13 = expand T1 mat12; -- [4,2,2,0,4,2,2,0,2,2,2,0,12,4,2,2,2,0,6,4,2,2,2,0,16,6,6,4,2,2,2,0,8,6,6,4,2,2,2,0,2,6,6,4,2,2,2,0,4,4,2,2,2,0,0]
+  mat14 = expand T0 mat13; -- [2,2,0,8,2,2,0,4,2,2,0,2,2,2,0,12,4,2,2,2,0,6,4,2,2,2,0,16,6,6,4,2,2,2,0,8,6,6,4,2,2,2,0,2,6,6,4,2,2,2,0,4,4,2,2,2,0,0]
+  mat15 = expand T1 mat14; -- [2,0,2,0,8,2,2,0,4,2,2,0,2,2,2,0,12,4,2,2,2,0,6,4,2,2,2,0,16,6,6,4,2,2,2,0,8,6,6,4,2,2,2,0,2,6,6,4,2,2,2,0,4,4,2,2,2,0,0]
+  mat16 = expand T0 mat15; -- [0,4,0,2,0,8,2,2,0,4,2,2,0,2,2,2,0,12,4,2,2,2,0,6,4,2,2,2,0,16,6,6,4,2,2,2,0,8,6,6,4,2,2,2,0,2,6,6,4,2,2,2,0,4,4,2,2,2,0,0]
+
+  T2 = Tsucc T1;
+  T3 = Tsucc T2;
+  T4 = Tsucc T3;
+  T5 = Tsucc T4;
+  T6 = Tsucc T5;
+  T7 = Tsucc T6;
+  T8 = Tsucc T7;
+  T9 = Tsucc T8;
+  T10 = Tsucc T9;
+  T11 = Tsucc T10;
+  T12 = Tsucc T11;
+  T13 = Tsucc T12;
+  T14 = Tsucc T13;
+  T15 = Tsucc T14;
+  T16 = Tsucc T15
+
+in BMS (BMS (BMS (BMS T0)))    -- 350 bits
