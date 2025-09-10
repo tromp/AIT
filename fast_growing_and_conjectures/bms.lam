@@ -13,9 +13,9 @@ let
   -- 1-tuple
   T1 = \x\f.f x;
   -- tuple successor
-  Tsucc = \t\x\f. f (t x);
+  Tsucc = \t\x. \f.f (t x);
   -- tuple predecessor
-  Tpred = \t\x. t x id;
+  Tpred = \t\x. (t x) id;
 
   -- Tm x (Tn y) = if n < m then y (Tm-1-n x) else x (Tn-m y)
   -- less than
@@ -72,6 +72,16 @@ let
   T13 = Tsucc T12;
   T14 = Tsucc T13;
   T15 = Tsucc T14;
-  T16 = Tsucc T15
+  T16 = Tsucc T15;
+
+  expand0 = \m\m0\i.
+    Tlt i m0
+      (let add = Tadd (m (Tsucc i)) in add (Tlt (add i) m0 T0 m0))
+      (m (Tsub (Tsucc i) m0));              -- copy array element i+1 - m0
+  matrix01 = \n\k. Tlt k n T1 T0;    -- n 1s followed by all 0s
+  BMS1 = \n. let                         -- ??? bits
+    bms1 = \matrix. let m0 = matrix T0 in
+          Tzero m0 m0 (Tadd m0 (bms1 (expand0 matrix m0)))
+  in bms1 (matrix01 n)
 
 in BMS (BMS (BMS (BMS T0)))    -- 350 bits
