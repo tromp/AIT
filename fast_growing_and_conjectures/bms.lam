@@ -1,4 +1,4 @@
--- small lambda term for computing BMS^4(2)
+-- small lambda term for computing BMS^4(1) = BMS^3(5)
 -- corresponding to Haskell code in BMS.hs
 -- original design due to Patcail
 -- use of tuple numerals due to 50_ft_lock
@@ -34,54 +34,11 @@ let
 
   matrix0 = \n\k. Tlt k (Tadd n n) n T0;    -- two columns of n n's followed by all 0s
 
+  -- take rows-1 as argument
   BMS = \rows1. let                         -- 326 bits
     bms = \matrix\mod. let m0 = matrix T0 in
           Tzero m0 m0
                    (Tadd m0 (bms (expand mod matrix m0) (Tzero mod rows1 (Tpred mod))))
-  in bms (matrix0 (Tsucc rows1)) rows1;
+  in bms (matrix0 (Tsucc rows1)) rows1
 
-  mat0 = matrix0 T1;     -- [2,2,2,2,0,0]
-  mat1 = expand T1 mat0; -- [2,4,2,2,2,0,0]
-  mat2 = expand T0 mat1; -- [6,4,4,2,2,2,0,0]
-  mat3 = expand T1 mat2; -- [4,4,2,2,2,0,4,4,2,2,2,0,0]
-  mat4 = expand T0 mat3; -- [8,2,6,6,4,2,2,2,0,4,4,2,2,2,0,0]
-  mat5 = expand T1 mat4; -- [2,6,6,4,2,2,2,0,2,6,6,4,2,2,2,0,4,4,2,2,2,0,0]
-  mat6 = expand T0 mat5; -- [8,8,6,6,4,2,2,2,0,2,6,6,4,2,2,2,0,4,4,2,2,2,0,0]
-  mat7 = expand T1 mat6; -- [8,6,6,4,2,2,2,0,8,6,6,4,2,2,2,0,2,6,6,4,2,2,2,0,4,4,2,2,2,0,0]
-  mat8 = expand T0 mat7; -- [6,6,4,2,2,2,0,16,6,6,4,2,2,2,0,8,6,6,4,2,2,2,0,2,6,6,4,2,2,2,0,4,4,2,2,2,0,0]
-  mat9 = expand T1 mat8; -- [6,4,2,2,2,0,6,4,2,2,2,0,16,6,6,4,2,2,2,0,8,6,6,4,2,2,2,0,2,6,6,4,2,2,2,0,4,4,2,2,2,0,0]
-  mat10 = expand T0  mat9; -- [4,2,2,2,0,12,4,2,2,2,0,6,4,2,2,2,0,16,6,6,4,2,2,2,0,8,6,6,4,2,2,2,0,2,6,6,4,2,2,2,0,4,4,2,2,2,0,0]
-  mat11 = expand T1 mat10; -- [2,2,2,0,2,2,2,0,12,4,2,2,2,0,6,4,2,2,2,0,16,6,6,4,2,2,2,0,8,6,6,4,2,2,2,0,2,6,6,4,2,2,2,0,4,4,2,2,2,0,0]
-  mat12 = expand T0 mat11; -- [4,4,2,2,0,2,2,2,0,12,4,2,2,2,0,6,4,2,2,2,0,16,6,6,4,2,2,2,0,8,6,6,4,2,2,2,0,2,6,6,4,2,2,2,0,4,4,2,2,2,0,0]
-  mat13 = expand T1 mat12; -- [4,2,2,0,4,2,2,0,2,2,2,0,12,4,2,2,2,0,6,4,2,2,2,0,16,6,6,4,2,2,2,0,8,6,6,4,2,2,2,0,2,6,6,4,2,2,2,0,4,4,2,2,2,0,0]
-  mat14 = expand T0 mat13; -- [2,2,0,8,2,2,0,4,2,2,0,2,2,2,0,12,4,2,2,2,0,6,4,2,2,2,0,16,6,6,4,2,2,2,0,8,6,6,4,2,2,2,0,2,6,6,4,2,2,2,0,4,4,2,2,2,0,0]
-  mat15 = expand T1 mat14; -- [2,0,2,0,8,2,2,0,4,2,2,0,2,2,2,0,12,4,2,2,2,0,6,4,2,2,2,0,16,6,6,4,2,2,2,0,8,6,6,4,2,2,2,0,2,6,6,4,2,2,2,0,4,4,2,2,2,0,0]
-  mat16 = expand T0 mat15; -- [0,4,0,2,0,8,2,2,0,4,2,2,0,2,2,2,0,12,4,2,2,2,0,6,4,2,2,2,0,16,6,6,4,2,2,2,0,8,6,6,4,2,2,2,0,2,6,6,4,2,2,2,0,4,4,2,2,2,0,0]
-
-  T2 = Tsucc T1;
-  T3 = Tsucc T2;
-  T4 = Tsucc T3;
-  T5 = Tsucc T4;
-  T6 = Tsucc T5;
-  T7 = Tsucc T6;
-  T8 = Tsucc T7;
-  T9 = Tsucc T8;
-  T10 = Tsucc T9;
-  T11 = Tsucc T10;
-  T12 = Tsucc T11;
-  T13 = Tsucc T12;
-  T14 = Tsucc T13;
-  T15 = Tsucc T14;
-  T16 = Tsucc T15;
-
-  expand0 = \m\m0\i.
-    Tlt i m0
-      (let add = Tadd (m (Tsucc i)) in add (Tlt (add i) m0 T0 m0))
-      (m (Tsub (Tsucc i) m0));              -- copy array element i+1 - m0
-  matrix01 = \n\k. Tlt k n T1 T0;    -- n 1s followed by all 0s
-  BMS1 = \n. let                         -- ??? bits
-    bms1 = \matrix. let m0 = matrix T0 in
-          Tzero m0 m0 (Tadd m0 (bms1 (expand0 matrix m0)))
-  in bms1 (matrix01 n)
-
-in BMS (BMS (BMS (BMS T0)))    -- 350 bits
+in BMS (BMS (BMS (BMS T0)))                 -- 350 bits
