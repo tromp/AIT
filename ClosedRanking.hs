@@ -28,11 +28,65 @@ termsize (V i)   = 2 + i
 termsize (L b)   = 2 + termsize b
 termsize (A x y) = 2 + termsize x + termsize y
 
+-- number of free variables in term
+nfree :: T -> Int
+nfree = go 0 where
+  go d (V i)   = if i >= d then 1 else 0
+  go d (L b)   = go (d+1) b
+  go d (A x y) = go d x + go d y
+
+-- number of bound variables in lambda body
+nbound :: T -> Int
+nbound = go 0 where
+  go d (V i)   = if i == d then 1 else 0
+  go d (L b)   = go (d+1) b
+  go d (A x y) = go d x + go d y
+
+-- sum of indices of bound variables in lambda body
+sumbound :: T -> Int
+sumbound = go 0 where
+  go d (V i)   = if i == d then i else 0
+  go d (L b)   = go (d+1) b
+  go d (A x y) = go d x + go d y
+
+-- list of redexes in a term
+redexes :: T -> [T]
+redexes (V i) = []
+redexes (L b) = redexes b
+redexes t@(A (L x) y) = t: redexes x ++ redexes y
+redexes (A x y) = redexes x ++ redexes y
+
+subst :: Int -> T -> T -> T
+subst i (V j)   c = if i == j then c else V (if j > i then j-1 else j)
+subst i (A a b) c = A (subst i a c) (subst i b c)
+subst i (L a)   c = L (subst (i+1) a (incv 0 c))
+
+incv :: Int -> T -> T
+incv i (V j)   = V (if i <= j then j+1 else j)
+incv i (A a b) = A (incv i a) (incv i b)
+incv i (L a)   = L (incv (i+1) a)
+
+-- reduce a redex
+reduce :: T -> T
+reduce (A (L x) y) = subst 0 x y
+
+-- size change for reducing a redex
+delta :: T -> Int
+delta (A (L x) y) = sumbound x * (nfree y - 1) + (nbound x - 1) * (termsize y - 2) - nfree (L x) - 6
+-- case nbound x of
+--   0 -> delta = -4 - termsize y - nfree (L x) < 0
+--   1 -> delta = sumbound x * (nfree y - 1) - nfree (L x) - 6 >= 0
+--                only when sumbound x > 0 && nfree y >= 1 + 6 / sumbound x
+delta t = 0
+
 -- binary encoding
 blc :: T -> String
 blc (V i) = take (i+1) ['1','1'..] ++ "0"
 blc (L b) = "00" ++ blc b
 blc (A x y) = "01" ++ blc x ++ blc y
+
+-- term has with no shrinking redex
+minimal = all (>= 0) . map delta . redexes
 
 -- terms that are closed within k nested lambdas, of size LessthanorEqual to n
 closedLE :: Int -> Int -> [(Int,T)]

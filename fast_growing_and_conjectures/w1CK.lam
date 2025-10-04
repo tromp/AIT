@@ -34,7 +34,7 @@ let
   O2 = \l\s\z.s(s z);        -- size 18
   O3 = \l\s\z.s(s(s z));     -- size 23
   -- limit ordinal sup { O0, O1, O2, ... }
-  Ow = Lim (\n\l\s\z.n s z); -- size 27
+  Ow = Lim (\n\l\s\z.n s z); -- size 27 -- reduces to \l\s\z. l (\n.n s z);
   O4 = \l.C4;                -- size 28
   Ow1 = Succ Ow;             -- size 32
   O5 = \l.C5;                -- size 33
@@ -53,13 +53,25 @@ let
   --        = Lim (\i. f i Lim Succ n) = Lim (\i. add n (f i))
   -- add with arguments flipped
   addf = \m\n. add n m;                  -- size 85
-  mul  = \n\m. m Lim (\x. add x n) Zero; -- size 116
+  mul  = \n\m. m Lim (\x. add x n) Zero; -- size 116 -- whereas equivalent (add n) has size 124
   -- mul n Zero = Zero Lim (\x. add x n) Zero = Zero
   -- mul n (Succ m) = Succ m Lim (\x. add x n) Zero
   --      = (\x. add x n) (m Lim (\x. add x n) Zero)
   --                = add (m Lim (\x. add x n) Zero) n = add (mul n m) n
   -- mul n (Lim f) = Lim f Lim (\x. add x n) Zero
   --        = Lim (\i. f i Lim (\x. add x n) Zero) = Lim (\i. mul n (f i))
+  -- mul O2 Ow
+  -- = Ow Lim (\x. add x O2) Zero
+  -- = Lim (\n\l\s\z.n s z) Lim (\x. add x O2) Zero
+  -- = (\l\s\z. l (\n. (\n\l\s\z.n s z) n l s z)) Lim (\x. add x O2) Zero
+  -- = (\l\s\z. l (\n. n s z)) Lim (\x. add x O2) Zero
+  -- = (\s\z. Lim (\n. n s z)) (\x. add x O2) Zero
+  -- = (\z. Lim (\n. n (\x. add x O2) z))  Zero
+  -- = Lim (\n. n (\x. add x O2) Zero)
+  -- mul Ow O2
+  -- = O2 Lim (\x. add x Ow) Zero
+  -- = (\l\s\z.s(s z)) Lim (\x. add x Ow) Zero
+  -- = add (add Zero Ow) Ow
   expw = \n. n Lim (\x. mul x Ow) O1;    -- size 143
   -- expw Zero = Zero Lim (\x. mul x Ow) O1 = O1
   -- expw (Succ n) = Succ n Lim (\x. mul x Ow) O1

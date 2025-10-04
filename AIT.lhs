@@ -177,8 +177,11 @@ The second argument n is the number of non-decreasing in size beta reductions co
 
 eta rule : optimize \x. f x, where x is not free in f, as f
 
->   opt _ (DBLam (DBApp fun (DBVar 0))) | not (occurs 0 fun) = single $ subst 0 undefined fun
->   opt n (DBLam body) = [(DBLam b, 2+s) | (b,s) <- opt n body]
+>   opt n (DBLam body) = do
+>     (b,_) <- opt n body
+>     single $ case b of
+>       (DBApp fun (DBVar 0)) | not (occurs 0 fun) -> subst 0 undefined fun
+>       _                                          -> DBLam b
 >   opt n (DBApp fun arg) = let
 >       funs = opt n fun
 >       args = opt n arg
@@ -326,7 +329,7 @@ Bitstring functions -----------------------------------------------------
 >   tex = concatMap (\c -> if c=='\\' then "\\lambda " else [c])
 >   html = concatMap (\c -> if c=='\\' then "\0955 " else [c])
 >   nl = (++ "\n")
->   opt = fst . head . optimize 3 1 -- bms 404 with 3 1 but 408 with 3 2 ?!
+>   opt = fst . head . optimize 3 1 -- old bms 404 with 3 1 but 408 with 3 2 ?!
 >   boxdiag b = boxChar b . diagram b
 >  in case op of
 >   "run"     -> nl .   bshow . nf . toDB . machine $  bitstoLC lcFalse input
