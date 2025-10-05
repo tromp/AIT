@@ -94,12 +94,14 @@ let
   --                = \l\s\z. l (\i. exp n (f i) l s z)
   --                = Lim (\i. exp n (f i))
 
-  expw = exp Ow;
+  expw = exp Ow;    -- size 61
   Owe2 = mul Ow Ow; -- size 50
   Owe3 = mul Owe2 Ow; -- size 70
   Owe2p1 = Succ Owe2;   -- size 55
   Oww      = expw Ow;                         -- size 57  w^w
-  Oeps0    = Lim (\n. n expw O1);             -- size 105  epsilon_0
+  Oeps0_   = Lim (\n. n expw O1);             -- size 105  epsilon_0 as sup {1,w,w^w,w^w^w,...}
+  -- patcail optimization
+  Oeps0    = Lim (\n. n expw (\l.n));         -- size 104  epsilon_0 as sup {0,w^1,w^w^2,w^w^w^3,...}
   OepsSucc = \e. Lim (\n. n expw (Succ e));   -- size 136  epsilon_i -> epsilon_i+1
 
   -- extract fundamental sequence
@@ -163,4 +165,4 @@ let
   w1CK9 = Owe2; -- size 50
   w1CK10 = Owe2p1; -- size 55
   w1CK11 = Oww; -- size 57
-in Oeps0 -- size 105
+in Oeps0
