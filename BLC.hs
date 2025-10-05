@@ -53,7 +53,7 @@ pass mg = do
     case main of
         [getName -> nm] -> do
             let binds' = prune nm binds flatBinds
-                code = AIT.optimize $ codeGen types nm binds'
+                code = AIT.optimize 1 0 1 $ codeGen types nm binds'
             liftIO $ putStrLn (show code)
             liftIO $ putStrLn (AIT.encode code)
             liftIO $ putStrLn "Ok."

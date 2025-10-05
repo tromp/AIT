@@ -166,12 +166,12 @@ Number of time variable occurs in term
 
 Optimize an expression; repeatedly contract redexes that reduce in size
 Return list of candidates paired with their size; the head is the shortest
-and remaining ones are larger by less than the function's first argument,
+and remaining ones (up to a maximum of width) are larger by less than the function's first argument,
 i.e. the slack.
 The second argument n is the number of non-decreasing in size beta reductions considered.
 
-> optimize :: Int -> Int -> DB -> [(DB, Int)]
-> optimize slack = opt where
+> optimize :: Int -> Int -> Int -> DB -> [(DB, Int)]
+> optimize width slack = opt where
 >   opt :: Int -> DB -> [(DB, Int)]
 >   opt _ v@(DBVar i) = [(v, (2+i))]
 
@@ -187,7 +187,7 @@ eta rule : optimize \x. f x, where x is not free in f, as f
 >       args = opt n arg
 >       prune = pr . sortBy (compare `on` snd)
 >       pr [] = error "Nothing to prune"
->       pr (hd@(_,ts):tl) = map head . group $ hd: takeWhile ((< ts+slack) . snd) tl
+>       pr (hd@(_,ts):tl) = take width . map head . group $ hd: takeWhile ((<= ts+slack) . snd) tl
 >     in prune $ do
 >       (fun', fs) <- funs
 >       (arg', as) <- args
@@ -235,7 +235,7 @@ Safe reductions (guaranteed to reach normal form)
 Of interest to Busy Beaver
 
 > expands :: DB -> Bool
-> expands x = x == fst (head (optimize 0 1 x)) && case reduct x of
+> expands x = x == fst (head (optimize 1 0 1 x)) && case reduct x of
 >               Just t@(DBApp (DBLam body) arg) -> size (subst 0 arg body) > size t
 >               _ -> False
 
@@ -329,7 +329,9 @@ Bitstring functions -----------------------------------------------------
 >   tex = concatMap (\c -> if c=='\\' then "\\lambda " else [c])
 >   html = concatMap (\c -> if c=='\\' then "\0955 " else [c])
 >   nl = (++ "\n")
->   opt = fst . head . optimize 3 1 -- old bms 404 with 3 1 but 408 with 3 2 ?!
+>   opt = fst . head . optimize 57 2 1
+>   -- increasing slack to 3 requires ALSO increasing width to 937 for loader
+>   -- increasing slack to 4 requires ALSO increasing width to 4105 for loader
 >   boxdiag b = boxChar b . diagram b
 >  in case op of
 >   "run"     -> nl .   bshow . nf . toDB . machine $  bitstoLC lcFalse input

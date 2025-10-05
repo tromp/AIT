@@ -6,16 +6,16 @@ let
   CZero = \f\x. x;
   Csucc = \n.\f\x. f (n f x);
   C0 = CZero;      -- size 6
-  C1 = Csucc C0;   -- size 4
+  C1 = Csucc C0;   -- size
   C2 = \s\z.s(s z);   -- size 16
   C3 = \s\z.s(s(s z));   -- size 21
-  C4 = \s\z.s(s(s(s z)));   -- size 26
+  C4 = \s\z.s(s(s(s z)));   -- size 26 -- same as C2 C2
   C5 = \s\z.s(s(s(s(s z))));   -- size 31
   C6 = \s\z.s(s(s(s(s(s z)))));   -- size 36
   C7 = \s\z.s(s(s(s(s(s(s z))))));   -- size 41
-  C8 = \s\z.s(s(s(s(s(s(s(s z)))))));   -- size 46
-  C9 = \s\z.s(s(s(s(s(s(s(s(s z))))))));   -- size 51
-  C10 = \s\z.s(s(s(s(s(s(s(s(s(s z)))))))));  -- size 56
+  C8 = C3 C2;          -- size 39
+  C9 = C2 C3;          -- size 39
+  C10 = \s. C2 (C5 s); -- size 56
 
   -- Kleene ordinals, corresponding to Church encoding of
   -- data Ord = Lim (Nat -> Ord) | Succ Ord | Zero
@@ -34,52 +34,73 @@ let
   O2 = \l\s\z.s(s z);        -- size 18
   O3 = \l\s\z.s(s(s z));     -- size 23
   -- limit ordinal sup { O0, O1, O2, ... }
-  Ow = Lim (\n\l\s\z.n s z); -- size 27 -- reduces to \l\s\z. l (\n.n s z);
+  Ow = Lim (\n\l\s\z.n s z); -- size 27 -- reduces to \l\s\z.l(\n.n s z);
   O4 = \l.C4;                -- size 28
-  Ow1 = Succ Ow;             -- size 32
+  Owp1 = Succ Ow;            -- size 32
   O5 = \l.C5;                -- size 33
+  Owp2 = Succ Owp1;          -- size 37
   O6 = \l.C7;                -- size 38
+  Owp3 = Succ Owp2;          -- size 42
   O7 = \l.C7;                -- size 43
-  O8 = \l.C8;                -- size 48
-  O9 = \l.C9;                -- size 53
+  O8 = \l.C3 (\f\x.f(f x));  -- size 41 -- \l.C3 C2 has size 44 unless optimizing with slack >= 4
+  O9 = \l.C2 C3;             -- size 41
+  Owp4 = Succ Owp3;          -- size 47
+  Owt2 = \l\s\z.l(\n.n s(l(\n.n s z)));    -- size 48
+  Owe2 = \l\s\z.l(\n.n(\x.l(\n.n s x)) z); -- size 50
+  Owp5 = Succ Owp4;          -- size 52
+  Owp5 = Succ Owp5;          -- size 57
   O10 = \l.C10;              -- size 58
 
   -- arithmetic
-  add  = \n\m. m Lim Succ n;             -- size 92
-  -- add n Zero = Zero Lim Succ n = n
-  -- add n (Succ m) = Succ m Lim Succ n
-  --               = Succ (m Lim Succ n) = Succ (add n m)
-  -- add n (Lim f) = Lim f Lim Succ n
-  --        = Lim (\i. f i Lim Succ n) = Lim (\i. add n (f i))
-  -- add with arguments flipped
-  addf = \m\n. add n m;                  -- size 85
-  mul  = \n\m. m Lim (\x. add x n) Zero; -- size 116 -- whereas equivalent (add n) has size 124
-  -- mul n Zero = Zero Lim (\x. add x n) Zero = Zero
-  -- mul n (Succ m) = Succ m Lim (\x. add x n) Zero
-  --      = (\x. add x n) (m Lim (\x. add x n) Zero)
-  --                = add (m Lim (\x. add x n) Zero) n = add (mul n m) n
-  -- mul n (Lim f) = Lim f Lim (\x. add x n) Zero
-  --        = Lim (\i. f i Lim (\x. add x n) Zero) = Lim (\i. mul n (f i))
-  -- mul O2 Ow
-  -- = Ow Lim (\x. add x O2) Zero
-  -- = Lim (\n\l\s\z.n s z) Lim (\x. add x O2) Zero
-  -- = (\l\s\z. l (\n. (\n\l\s\z.n s z) n l s z)) Lim (\x. add x O2) Zero
-  -- = (\l\s\z. l (\n. n s z)) Lim (\x. add x O2) Zero
-  -- = (\s\z. Lim (\n. n s z)) (\x. add x O2) Zero
-  -- = (\z. Lim (\n. n (\x. add x O2) z))  Zero
-  -- = Lim (\n. n (\x. add x O2) Zero)
-  -- mul Ow O2
-  -- = O2 Lim (\x. add x Ow) Zero
-  -- = (\l\s\z.s(s z)) Lim (\x. add x Ow) Zero
-  -- = add (add Zero Ow) Ow
-  expw = \n. n Lim (\x. mul x Ow) O1;    -- size 143
-  -- expw Zero = Zero Lim (\x. mul x Ow) O1 = O1
-  -- expw (Succ n) = Succ n Lim (\x. mul x Ow) O1
-  --    = (\x. mul x Ow) (n Lim (\x. mul x Ow) O1)
-  --               = mul (n Lim (\x. mul x Ow) O1) Ow = mul (expw n) Ow
-  -- expw (Lim f) = Lim f Lim (\x. mul x Ow) O1
-  --       = Lim (\i. f i Lim (\x. mul x Ow) O1) = Lim (\i. expw (f i))
+  -- contributed by int-e and patcail
 
+  add = \n\m. \l\s\z. m l s (n l s z);   -- size 49 -- equivalent to \n\m. m Lim Succ n
+  -- add n Zero = \l\s\z. Zero l s (n l s z)
+  --            = \l\s\z. n l s z = n
+  -- add n (Succ m) = \l\s\z. Succ m l s (n l s z)
+  --                = \l\s\z. s (m l s (n l s z))
+  --                = \l\s\z. s (add n m l s z)
+  --                = Succ (add n m)
+  -- add n (Lim f) = \l\s\z. Lim f l s (n l s z)
+  --               = \l\s\z. l (\i. f i l s (n l s z))
+  --               = \l\s\z. l (\i. add n (f i) l s z)
+  --               = Lim (\i. add n (f i))
+
+  mul = \n\m.\l\s\z. m l (n l s) z;       -- size 33 -- equivalent to \n\m. m Lim (\x. add x n) Zero
+  -- mul n Zero     = \l\s\z. Zero l (n l s) z
+  --                = \l\s\z. z
+  --                = Zero
+  -- mul n (Succ m) = \l\s\z. Succ m l (n l s) z
+  --                = \l\s\z. n l s (m l (n l s) z)
+  --                = \l\s\z. n l s (mul n m l s z)
+  --                = add (mul n m) n
+  -- mul n (Lim f)  = \l\s\z. Lim f l (n l s) z
+  --                = \l\s\z. l (\i. f i l (n l s) z)
+  --                = \l\s\z. l (\i. mul n (f i) l s z)
+  --                = Lim (\i. mul n (f i))
+
+  exp = \n\m. \l\s\z. m (\f\n. l (\i.f i n)) (n l) s z;   -- size 46 -- equivalent to \n\m. m Lim (\x. mul x n) O1
+  -- exp n Zero     = \l\s\z. Zero (\f\n. l (\i.f i n)) (n l) s z
+  --                = \l\s\z. s z
+  --                = O1
+  -- exp n (Succ m) = \l\s\z. Succ m (\f\n. l (\i.f i n)) (n l) s z
+  --                = \l\s\z. n l (m (\f\n. l (\i.f i n)) (n l) s) z
+  --                = \l\s\z. n l (exp n m l s) z
+  --                = mul (exp n m) n
+  -- exp n (Lim f)  = \l\s\z. Lim f (\f\n. l (\i.f i n)) (n l) s z
+  --                = \l\s\z. (\f\n. l (\i.f i n)) (\i. f i (\f\n. l (\i.f i n)) (n l) s) z
+  --                = \l\s\z. l (\i. (\i. f i (\f\n. l (\i.f i n)) (n l) s) i z)
+  --                = \l\s\z. l (\i. f i (\f\n. l (\i.f i n)) (n l) s z)
+  --                = \l\s\z. l (\i. exp n (f i) l s z)
+  --                = Lim (\i. exp n (f i))
+
+  expw = exp Ow;
+  Owe2 = mul Ow Ow; -- size 50
+  Owe3 = mul Owe2 Ow; -- size 70
+  Owe2p1 = Succ Owe2;   -- size 55
+  Oww      = expw Ow;                         -- size 57  w^w
+  Oeps0    = Lim (\n. n expw O1);             -- size 105  epsilon_0
+  OepsSucc = \e. Lim (\n. n expw (Succ e));   -- size 136  epsilon_i -> epsilon_i+1
 
   -- extract fundamental sequence
   True = \x\y.x;
@@ -92,17 +113,12 @@ let
       (\p. let sfp = (Succ (fst p)) in cons sfp sfp)
       (cons Zero Zero));
 
-  Ow2      = add Ow Ow;                       -- size 109  w * 2
-  Oww      = expw Ow;                         -- size 146  w^w
-  Oeps0    = Lim (\n. n expw O0);             -- size 167  epsilon_0
-  OepsSucc = \e. Lim (\n. n expw (Succ e));   -- size 187  epsilon_i -> epsilon_i+1
-
+  -- Fast Growing Hierarchy
+  -- type: O -> N -> N
   iter = \f\n. n f n;             -- iterate
   diag = \f\n. f n n;             -- diagonalize
 
-  -- Fast Growing Hierarchy
-  -- type: O -> N -> N
-  fgh = \a. a
+  fgh = \a. a                     -- size 64
               diag                -- f_a   n = f_a_n n
               iter                -- f_a+1 n = n f_a n
               Csucc;              -- f_0   n = n+1
@@ -112,21 +128,21 @@ let
 
   -- Hardy Hierarchy
   -- type: O -> N -> N
-  hh = \a. a
+  hh = \a. a                      -- size 60
               diag                -- h_a   n = h_a_n n
               (\f\n. f (Csucc n)) -- h_a+1 n = h_a (n+1)
               C1;                 -- h_0   n = n
 
   -- Middle Growing Hierarchy
   -- type: O -> N -> N
-  mgh = \a. a
+  mgh = \a. a                     -- size 65
               diag                -- m_a   n = m_a_n n
               (\f\n. f (f n))     -- m_a+1 n = m_a (m_a n)
               Csucc;              -- m_0   n = n+1
 
   -- Slow Growing Hierarchy
   -- type: O -> N -> N
-  sgh = \a. a
+  sgh = \a. a                     -- size 65
               diag                -- s_a   n = s_a_n n
               (\f\n. f (f n))     -- s_a+1 n = s_a (m_a n)
               Csucc;              -- s_0   n = n+1
@@ -134,17 +150,18 @@ let
   -- Fundamental sequence for w1CK
   -- w1CKi is the BLC-lexicographically-minimal ordinal exceeding all w1CKj for j < i
   -- similar to a Busy Beaver for ordinals
-  -- Conjectured first 12 elements:
-  w1CK0 = O1;  -- size 6
-  w1CK1 = O2;  -- size 18
-  w1CK2 = O3;  -- size 23
-  w1CK3 = Ow;  -- size 27
-  w1CK4 = O4;  -- size 28
-  w1CK5 = Ow1; -- size 32
-  w1CK6 = O5;  -- size 33
-  w1CK7 = O6;  -- size 38
-  w1CK8 = O7;  -- size 43
-  w1CK9 = O8;  -- size 48
-  w1CK10 = O9; -- size 53
-  w1CK11 = O10;-- size 58
-in fgh Oeps0
+  -- Conjectured first 13 elements:
+  w1CK0 = O1;   -- size 6
+  w1CK1 = O2;   -- size 18
+  w1CK2 = O3;   -- size 23
+  w1CK3 = Ow;   -- size 27
+  w1CK4 = O4;   -- size 28
+  w1CK5 = Owp1; -- size 32
+  w1CK6 = Owp2; -- size 37
+  w1CK7 = Owp3; -- size 42
+  w1CK8 = Owp4; -- size 47
+  w1CK9 = Owt2; -- size 48
+  w1CK10 = Owe2;-- size 50
+  w1CK11 = Owe2p1; -- size 55
+  w1CK12 = Oww; -- size 57
+in Oeps0 -- size 105
