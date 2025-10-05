@@ -6,7 +6,7 @@ let
   CZero = \f\x. x;
   Csucc = \n.\f\x. f (n f x);
   C0 = CZero;      -- size 6
-  C1 = Csucc C0;   -- size
+  C1 = Csucc C0;   -- size 4
   C2 = \s\z.s(s z);   -- size 16
   C3 = \s\z.s(s(s z));   -- size 21
   C4 = \s\z.s(s(s(s z)));   -- size 26 -- same as C2 C2
@@ -150,18 +150,17 @@ let
   -- Fundamental sequence for w1CK
   -- w1CKi is the BLC-lexicographically-minimal ordinal exceeding all w1CKj for j < i
   -- similar to a Busy Beaver for ordinals
-  -- Conjectured first 13 elements:
+  -- Conjectured first 12 elements:
   w1CK0 = O1;   -- size 6
   w1CK1 = O2;   -- size 18
   w1CK2 = O3;   -- size 23
   w1CK3 = Ow;   -- size 27
-  w1CK4 = O4;   -- size 28
-  w1CK5 = Owp1; -- size 32
-  w1CK6 = Owp2; -- size 37
-  w1CK7 = Owp3; -- size 42
-  w1CK8 = Owp4; -- size 47
-  w1CK9 = Owt2; -- size 48
-  w1CK10 = Owe2;-- size 50
-  w1CK11 = Owe2p1; -- size 55
-  w1CK12 = Oww; -- size 57
+  w1CK4 = Owp1; -- size 32
+  w1CK5 = Owp2; -- size 37
+  w1CK6 = Owp3; -- size 42
+  w1CK7 = Owp4; -- size 47
+  w1CK8 = Owt2; -- size 48
+  w1CK9 = Owe2; -- size 50
+  w1CK10 = Owe2p1; -- size 55
+  w1CK11 = Oww; -- size 57
 in Oeps0 -- size 105
