@@ -144,10 +144,10 @@ let
 
   -- Slow Growing Hierarchy
   -- type: O -> N -> N
-  sgh = \a. a                     -- size 65
+  sgh = \a. a                     -- size 62
               diag                -- s_a   n = s_a_n n
-              (\f\n. f (f n))     -- s_a+1 n = s_a (m_a n)
-              Csucc;              -- s_0   n = n+1
+              (\f\n. Csucc (f n)) -- s_a+1 n = s_a n + 1
+              (\n.n);             -- s_0   n = n   (size 66 for = 0)
 
   -- Fundamental sequence for w1CK
   -- w1CKi is the BLC-lexicographically-minimal ordinal exceeding all w1CKj for j < i
