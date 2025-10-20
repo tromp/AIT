@@ -18,45 +18,45 @@
 -- so it cannot produce all possible combinators.
 
 let
-  id    = \x. x;		-- identity						combinator I
-  o     = \x\y\c. x (y c);	-- compose						combinator B
-  tup1  = \x\y. y x;		-- 1-tuple						combinator T = CI
+  id    = \x. x;                     -- identity                               combinator I
+  o     = \x\y\c. x (y c);           -- compose                                                combinator B
+  tup1  = \x\y. y x;                 -- 1-tuple                                                combinator T = CI
   empty = tup1 id;
 
-  dup   = \c\x. c x x;					-- +       (A) -> (A) (A)	combinator W
-  zap   = \c\x. c;					-- -       (A) ->		combinator K
-  unqot = tup1;						-- <       (A) -> A		combinator T
-  quote = \c\x. c (tup1 x);				-- >       (A) -> ((A))
-  cat   = \c\x\y. c (\c. y (x c));			-- ,   (A) (B) -> (A B)
-  swap  = \c\x\y. c y x;				-- ~   (A) (B) -> (B) (A)	combinator C
+  dup   = \c\x. c x x;               -- +       (A) -> (A) (A)        combinator W
+  zap   = \c\x. c;                   -- -       (A) ->                combinator K
+  unqot = tup1;                      -- <       (A) -> A                combinator T
+  quote = \c\x. c (tup1 x);          -- >       (A) -> ((A))
+  cat   = \c\x\y. c (\c. y (x c));   -- ,   (A) (B) -> (A B)
+  swap  = \c\x\y. c y x;             -- ~   (A) (B) -> (B) (A)        combinator C
 
   -- +- ==
-  dupzap = o dup zap;		-- dupzap =beta= \x\y. x y =eta= id
+  dupzap = o dup zap;                -- dupzap =beta= \x\y. x y =eta= id
   -- >< ==
-  quoteunqot = o quote unqot;	-- quoteunqot =beta= \x\y. x y =eta= id
+  quoteunqot = o quote unqot;        -- quoteunqot =beta= \x\y. x y =eta= id
   -- ~~ ==
-  swapswap = o swap swap;	-- swapswap =beta= \x\y\z. x y z =eta= id
+  swapswap = o swap swap;            -- swapswap =beta= \x\y\z. x y z =eta= id
   -- (), ==
-  emptycat = o empty cat;	-- emptycat =beta= \x\y.x (\z.y z) =eta= id
+  emptycat = o empty cat;            -- emptycat =beta= \x\y.x (\z.y z) =eta= id
   -- +~ == +
-  dupswap = o dup swap;		-- dupswap =beta= dup
+  dupswap = o dup swap;              -- dupswap =beta= dup
   -- >- == -
-  quotezap = o quote zap;	-- quotezap  =beta= zap
+  quotezap = o quote zap;            -- quotezap  =beta= zap
   -- -- == ,- == ~-- == ~,-
   zapzap = o zap zap;
   catzap = o cat zap;
   swapzapzap = o swap zapzap;
-  swapcatzap = o swap catzap;	-- zapzap =beta= catzap =beta= swapzapzap =beta= swapcatzap
+  swapcatzap = o swap catzap;        -- zapzap =beta= catzap =beta= swapzapzap =beta= swapcatzap
   -- +>~ == >+<
   dupquoteswap = o (o dup quote) swap;
-  quotedupunqot = o (o quote dup) unqot;	-- dupquoteswap =beta= quotedupunqot
+  quotedupunqot = o (o quote dup) unqot;   -- dupquoteswap =beta= quotedupunqot
   -- +>~> == >+<> == >+
   dupquoteswapquote = o dup (o quote (o swap quote));
   quotedupunqotquote = o quote (o dup (o unqot quote));
-  quotedup = o quote dup;	-- dupquoteswapquote =beta= quotedupunqotquote =beta= quotedup
+  quotedup = o quote dup;            -- dupquoteswapquote =beta= quotedupunqotquote =beta= quotedup
   -- >,<< == ,<
   quotecatunqotunqot = o quote (o cat (o unqot unqot));
-  catunqot = o cat unqot;	-- quotecatunqotunqot =beta= catunqot
+  catunqot = o cat unqot;            -- quotecatunqotunqot =beta= catunqot
 
   --     [B] [A] k == A
   K = \c\x\y. x c;

@@ -187,6 +187,7 @@ eta rule : optimize \x. f x, where x is not free in f, as f
 >       args = opt n arg
 >       prune = pr . sortBy (compare `on` snd)
 >       pr [] = error "Nothing to prune"
+>       -- could allow more slack for application on variable, to allow O8 = \_.C3 C2
 >       pr (hd@(_,ts):tl) = take width . map head . group $ hd: takeWhile ((<= ts+slack) . snd) tl
 >     in prune $ do
 >       (fun', fs) <- funs
