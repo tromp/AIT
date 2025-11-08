@@ -1,44 +1,56 @@
 -- small lambda term for computing BMS^4(1) = BMS^3(5)
 -- corresponding to Haskell code in BMS.hs
 -- original design due to Patcail
--- use of tuple numerals due to 50_ft_lock
+-- tuple numeral design due to 50_ft_lock
 
 let
-  id  = \x. x;
+  id = \x. x;
   K = \x\y. x;
 
   -- tuple numerals
-  -- Tn x = <...<x>...> with n nested 1-tuples
+  -- Tn  x = <...<x>...> with n nested 1-tuples
+  -- T'n x = Tn (K x) = <...<K x>...>
   T0 = id;
+  T'0 = K;
   -- 1-tuple
   T1 = \x\f.f x;
   -- tuple successor
-  Tsucc = \t\x. \f.f (t x);
+  T'succ = \t\x. T1 (t x); -- works for both T and T'
+  Tsucc  = \t\x. t (T1 x); -- only for T, 1 bit shorter
   -- tuple predecessor
   Tpred = \t\x. (t x) id;
 
   -- Tm x (Tn y) = if n < m then y (Tm-1-n x) else x (Tn-m y)
-  -- less than
-  Tlt = \tn\tm\t\f. tm (K f) (tn (K t));
-  Tzero = \tn\t\f. tn (K t) (K f);
+  -- less than T' -> T -> Bool
+  T'lt = \tn\tm\t\f. tm (K f) (tn t);  
+  -- is non-zero
+  Tpos = T'lt T'0;
 
-  -- add tuple numerals
+  -- add T numeral to T or T' numeral
   Tadd = \tm\tn\x. tm (tn x);
-  -- subtract: tuple numeral minus tuple numeral (smaller or equal)
+  -- subtract (smaller or equal) T numeral from T or T' numeral
   Tsub = \tn\tm\x. tm id (tn x);
 
-  expand = \mod\m\m0\i.
-    Tlt i m0
-      (let add = Tadd (m (Tsucc i)) in add (Tlt (add i) (Tadd m0 mod) T0 m0))
-      (m (Tsub (Tsucc i) m0));              -- copy array element i+1 - m0
+  expand = \mod\m\m0\pm0Km0. \i.
+    T'lt i m0
+      (let add = Tadd (m (T'succ i));
+           -- ascend = T'lt (add i) (Tadd m0 mod) T0 m0
+           -- = Tadd m0 mod (K m0) (add i T0)    -- T'lt def
+           -- = m0 (mod (K m0)) (add i T0)       -- Tadd def
+           -- = add i T0 (pred m0 (mod (K m0)))  -- apply outer m0 tuple (m0 != T0)
+           -- = add i T0 (mod (pred m0 (K m0)))  -- Tadd is commutative on two T numerals
+           -- = add i T0 (mod pm0Km0)            -- (pred m0 (K m0)) given as pm0Km0
+           ascend = add i T0 (mod pm0Km0)
+       in add ascend)
+      (m (Tsub i (Tpred m0)));                   -- copy array element i+1 - m0
 
-  matrix0 = \n\k. Tlt k (Tadd n n) n T0;    -- two columns of n n's followed by all 0s
+  matrix0 = \n.\k. T'lt k (Tadd n n) n T0;       -- two columns of n n's followed by all 0s
 
   -- take rows-1 as argument
-  BMS = \rows1. let                         -- 326 bits
-    bms = \matrix\mod. let m0 = matrix T0 in
-          Tzero m0 m0
-                   (Tadd m0 (bms (expand mod matrix m0) (Tzero mod rows1 (Tpred mod))))
+  BMS = \rows1. let                              -- 308 bits
+    bms = \matrix\mod. let m0 = matrix T'0 in
+          m0 (K m0)
+             (\pm0Km0. Tadd m0 (bms (expand mod matrix m0 pm0Km0) (Tpos mod (Tpred mod) rows1)))
   in bms (matrix0 (Tsucc rows1)) rows1
 
-in BMS (BMS (BMS (BMS T0)))                 -- 350 bits
+in BMS (BMS (BMS (BMS T0)))
