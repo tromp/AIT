@@ -330,7 +330,7 @@ Bitstring functions -----------------------------------------------------
 >   tex = concatMap (\c -> if c=='\\' then "\\lambda " else [c])
 >   html = concatMap (\c -> if c=='\\' then "\0955 " else [c])
 >   nl = (++ "\n")
->   opt = fst . head . optimize 57 2 1
+>   opt = fst . head . optimize 99000 4 1
 >   -- increasing slack to 3 requires ALSO increasing width to 937 for loader
 >   -- increasing slack to 4 requires ALSO increasing width to 4105 for loader
 >   boxdiag b = boxChar b . diagram b

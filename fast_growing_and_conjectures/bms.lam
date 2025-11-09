@@ -44,13 +44,15 @@ let
        in add ascend)
       (m (Tsub i (Tpred m0)));                   -- copy array element i+1 - m0
 
-  matrix0 = \n.\k. T'lt k (Tadd n n) n T0;       -- two columns of n n's followed by all 0s
+  -- two columns of n n's followed by all 0s
+  matrix0 = \f\a.\k. let n = f a in T'lt k (Tadd n n) n T0;
+  -- separate f a arguments are needed to help optimizer
 
   -- take rows-1 as argument
   BMS = \rows1. let                              -- 308 bits
     bms = \matrix\mod. let m0 = matrix T'0 in
           m0 (K m0)
              (\pm0Km0. Tadd m0 (bms (expand mod matrix m0 pm0Km0) (Tpos mod (Tpred mod) rows1)))
-  in bms (matrix0 (Tsucc rows1)) rows1
+  in bms (matrix0 Tsucc rows1) rows1
 
 in BMS (BMS (BMS (BMS T0)))
