@@ -49,7 +49,7 @@ let
   -- separate f a arguments are needed to help optimizer
 
   -- take rows-1 as argument
-  BMS = \rows1. let                              -- 308 bits
+  BMS = \rows1. let                              -- 307 bits
     bms = \matrix\mod. let m0 = matrix T'0 in
           m0 (K m0)
              (\pm0Km0. Tadd m0 (bms (expand mod matrix m0 pm0Km0) (Tpos mod (Tpred mod) rows1)))
