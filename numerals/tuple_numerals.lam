@@ -17,7 +17,7 @@ let
   T = \x\f.f x;
   C2T = \c. c T;
   -- tuple successor
-  Tsucc = \t\x\f. f (t x);
+  Tsucc = \t\x. t (T x);
   -- tuple predecessor
   Tpred = \t\x. t x id;
 

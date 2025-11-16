@@ -333,6 +333,7 @@ Bitstring functions -----------------------------------------------------
 >   opt = fst . head . optimize 57 2 1
 >   -- increasing slack to 3 requires ALSO increasing width to 937 for loader
 >   -- increasing slack to 4 requires ALSO increasing width to 4105 for loader
+>   -- slack 8 needed to opimize matrix0 in bms.lam
 >   boxdiag b = boxChar b . diagram b
 >  in case op of
 >   "run"     -> nl .   bshow . nf . toDB . machine $  bitstoLC lcFalse input
