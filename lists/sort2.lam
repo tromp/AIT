@@ -1,0 +1,24 @@
+-- Sort a list of binary lists lexicographically.
+-- [] < 0:* < 1:*
+let
+  true = \x\y.x;
+  false = \x\y.y;
+  nil = false;
+  cons = \a\b\p.p a b;
+
+  -- 436 bits sort
+  succR = \n\a\as.n a (cons a as);
+  split = \xss.xss
+    (\xs\xss\d.split xss
+      (\n.xs (\x\xs\d\zs\os.
+        \t.t n (x (cons xs zs) zs) (x os (cons xs os)))
+      (\zs\os\t.t (succR n) zs os)))
+    (\t.(\nil.t nil nil nil) nil);
+  sort = \pre\xss.xss
+    (\d\d.split xss (\n\zs\os\tss.
+       let cp = \b\ts.pre (cons b ts) in
+       n (pre nil) (sort (cp true) zs (sort (cp false) os tss))));
+  main = \io.sort (\f.f) io nil
+in main
+-- echo -n abracadabra | ./blc run8 sort.lam
+-- aaaaabbcdrr

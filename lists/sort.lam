@@ -1,24 +1,35 @@
--- Sort a list of binary lists lexicographically.
+-- Sort a list of binary lists lexicographically (mergesort version).
 -- [] < 0:* < 1:*
+-- by Artyom Bologov (https://github.com/aartaka)
 let
   true = \x\y.x;
   false = \x\y.y;
+  not = \b\t\f.b f t;
   nil = false;
   cons = \a\b\p.p a b;
 
-  -- 436 bits sort
-  succR = \n\a\as.n a (cons a as);
-  split = \xss.xss
-    (\xs\xss\d.split xss
-      (\n.xs (\x\xs\d\zs\os.
-        \t.t n (x (cons xs zs) zs) (x os (cons xs os)))
-      (\zs\os\t.t (succR n) zs os)))
-    (\t.(\nil.t nil nil nil) nil);
-  sort = \pre\xss.xss
-    (\d\d.split xss (\n\zs\os\tss.
-       let cp = \b\ts.pre (cons b ts) in
-       n (pre nil) (sort (cp true) zs (sort (cp false) os tss))));
-  main = \io.sort (\f.f) io nil
-in main
+  leq = \a\b.a (\ahead\atail\z.
+                  (b true ahead (not ahead))
+                  (leq atail (b false))
+                  ahead)
+               true;
+
+  insert = \x. let insertx = \list.
+    list
+    (\head\tail\lx.
+      leq head x
+      (cons head (insertx tail ))
+      (cons x list) )
+    (cons x list)
+  in insertx;
+
+  sort = \list.		-- 300 bits
+    list (let go = 
+           (\head\tail\z.
+             insert head (tail go z))
+          in go) nil;
+
+in sort
+
 -- echo -n abracadabra | ./blc run8 sort.lam
 -- aaaaabbcdrr
