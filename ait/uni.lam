@@ -1,13 +1,29 @@
+-- Discord user 50_ft_lock disproved my longstanding conjecture
+-- "that any self-interpreter for any binary representation of lambda calculus
+-- must be at least 24 bytes in size"
+-- by drastically optimizing it from 206 bits down to 170 bits using
+-- cons' and skipvar below
+
 let
   -- binary LC interpreter
   -- intL cont bits = cont (\free.parsed) unparsed_bits
-  intL = \cont\list.list (\bit0\list1\intL\cont.list1 (\bit1.bit0
-    (intL (\exp.bit1 (cont (\args\arg.exp (\z.z arg args)))
-                   (intL (\exp2.cont (\args.exp args (exp2 args))))))
-    (bit1 (cont (\args.args bit1))
-         (\list2.intL (\var.cont (\args.var (args bit1))) list1))))
-    intL cont;
   
+  cons' =  \x\y\zx\zy. zx x (zy y);
+  -- lists built with cons' can be indexed by variable-encoding bitstreams:
+  -- (0:_) (cons' x0 xs1) = cons' x0 xs1  true _ =  true x0 (_ xs1) = x0
+  -- (1:l) (cons' x0 xs1) = cons' x0 xs1 false l = false x0 (l xs1) = l xs1
+  -- so for instance "1110..." (cons' x0 (cons' x1 (cons' x2 (cons' x3 _)))) = x3
+
+  skipvar = \l. l l l;
+  -- skips a variable encoding (e.g. skipvar "1110..." = "...") based on:
+  -- (1:l) (1:l) = (1:l) 1 l = l l
+  -- (0:l) (0:l) = (0:l) 0 l = 0 l
+
+  intL = \cont\list. list (\bit0\list1. bit0
+     (list1 (\bit1. intL (\exp. bit1 (cont (\args\arg. exp (cons' arg args)))
+                                     (intL (\exp2. cont (\args. exp args (exp2 args)))))))
+     (cont list1 (skipvar list1)));
+
   -- loop
   omega = omega;
 
