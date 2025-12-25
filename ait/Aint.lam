@@ -1,0 +1,10 @@
+let
+  -- binary CL interpreter with single point basis {A}
+  -- intA cont bits = cont parsed unparsed_bits
+  I = \x.x;
+  A = \x\y\z.x z (y (\t.z));
+  CL = \cont\list.list(\bit.bit(cont A)(CL(\x.CL(\y.cont(x y)))))
+in CL I
+
+-- (λ 1 1) (λ (λ λ λ 1 (λ 1 (3 (λ λ λ 3 1 (2 (λ 2)))) (4 (λ 5 (λ 5 (2 1)))))) (1 1)) (λ 1)
+
