@@ -69,6 +69,8 @@ nf a0 = go False S.empty a0 where
     go hnf s (Abs a) | not hnf = Abs <$> go hnf s a
     go hnf s (App a b) = do
         -- note: reset loop detection for reduction to hnf
+        -- without the reset, `nf` would fail to find the normal form
+        -- (\1 1) (\\1 (2 2 (\2))) -->* \1 1
         a <- go True (if hnf then s else S.empty) a
         b <- return (simp b)
         let r@(App ra _) = botFree 0 (App a b)
