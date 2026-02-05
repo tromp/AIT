@@ -1,10 +1,10 @@
--- Bucholz Ordinal (BO) growth in 80 bits
+-- Bucholz Ordinal (BO) growth in 68 bits
 -- https://docs.google.com/document/d/1xlzaEQGarqnCocf4R2UWfqE3ck8YF_P32CmYxGXLhAI/edit?tab=t.0
 let
   2 = \f\x.f(f x);
   H = \g. \a\b\c. c g g g a b c;
-  E = \n.n H n n n n
-in 2 2 E 2 -- 100 bits
+  E = \n.n H n n n n   -- 68 bits
+in 2 2 E 2             -- 100 bits
 
 --   E 2
 -- = 2 H 2              2 2 2
