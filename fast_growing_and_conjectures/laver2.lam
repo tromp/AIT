@@ -1,5 +1,4 @@
 -- computes infinite Laver table as in section 3.4 of https://arxiv.org/pdf/1810.00548.pdf
--- except with arguments reversed, ie. p * q = laver q p
 let
   0 = \s\z. z;
   succ = \n\s\z. s n; -- Scott numerals
@@ -16,15 +15,13 @@ let
   -- idx 0 (cons h t) = cons h t 0 = 0 t h = h
   -- idx (succ n) (cons h t) = cons h t (succ n) = (succ n) t h = t n
   revpos = \t\h\r.h (\_. t revpos (\z.z r h)) r; -- reverse positive prefix and append r
-  iterate = \f. let it = \x\z.z (it (f x)) x in it;
 
 -- laver b 0 = b
 -- laver b a = cycle (go (a-1)) !! b
 -- go a = cycle (0 : reverse (takeWhile (/= 0) (iterate (laver a) a)))
 
-  laver = let 
-    go = \a.let r = \z.z (iterate (laver a) a revpos r) z in r;
-    laver = \b\a. a (\a1. go a1 b) b
-  in laver    -- 213 bits with slack 6 in optimize
+  -- 212 bits
+  laver = \a\b. a (\a1.
+   let go = \z.z (let it = \x\z.z (it (laver x a1)) x in it a1 revpos go) z in go b) b
 in
-  laver -- 3 7
+  laver -- 6 6

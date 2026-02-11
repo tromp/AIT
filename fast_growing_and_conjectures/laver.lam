@@ -35,4 +35,4 @@ let
     in laver;  -- 107 bits
   dblp1 = \n\f\x. n f (n f (f x)); -- map n to 2*n+1
   go = \mx. laver mx 16 mx (\_. mx) (go (dblp1 mx))
-in go 1  -- 213 bits with slack 6 in optimize
+in go 1  -- 213 bits
