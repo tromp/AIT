@@ -6,7 +6,7 @@ let
   3 = \f\x. f (f (f x));
   6 = \f.2 (3 f);
   7 = \f\x.f (6 f x);
-  16 = (\x. x x x) 2;
+  16 = 2 2 2;
   pred = \n\f\x. n (\g\h. h (g f)) (\h. x) (\x. x);
 
   -- cons = \h\t\z.z h t;
@@ -21,6 +21,6 @@ let
   laver = let 
     go = \a. let r = \z.z 0 (iterate (\b. laver b a) a revfrom0 r) in r;
     laver = \a. a (\b. idx b (go (pred a)))
-  in laver
+  in laver     -- 266 bits with slack 6 in optimize
 in
   laver -- 7 3

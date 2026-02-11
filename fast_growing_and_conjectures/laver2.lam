@@ -1,7 +1,7 @@
 -- computes infinite Laver table as in section 3.4 of https://arxiv.org/pdf/1810.00548.pdf
 -- except with arguments reversed, ie. p * q = laver q p
 let
-  0    =   \s\z. z;
+  0 = \s\z. z;
   succ = \n\s\z. s n; -- Scott numerals
   1 = succ 0;
   2 = succ 1;
@@ -11,7 +11,10 @@ let
   6 = succ 5;
   7 = succ 6;
 
-  -- cons = \h\t\z.z t h; -- applying to head last gives trivial list indexing as (list n)
+  -- cons = \h\t\z.z t h; -- applying to head last gives trivial list indexing
+  -- idx n list = list n
+  -- idx 0 (cons h t) = cons h t 0 = 0 t h = h
+  -- idx (succ n) (cons h t) = cons h t (succ n) = (succ n) t h = t n
   revpos = \t\h\r.h (\_. t revpos (\z.z r h)) r; -- reverse positive prefix and append r
   iterate = \f. let it = \x\z.z (it (f x)) x in it;
 
@@ -22,6 +25,6 @@ let
   laver = let 
     go = \a.let r = \z.z (iterate (laver a) a revpos r) z in r;
     laver = \b\a. a (\a1. go a1 b) b
-  in laver
+  in laver    -- 213 bits with slack 6 in optimize
 in
   laver -- 3 7
