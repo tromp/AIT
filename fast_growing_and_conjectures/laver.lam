@@ -1,13 +1,12 @@
 -- https://en.wikipedia.org/wiki/Laver_table
 -- halts (with n+1 T1 C(2^(n-1)+1)) if 2^n size Laver table with first row period beyond 16 is found
--- saving 1 byte over former laver.lam (now renamed to laver0.lam) courtesy of 50_ft_lock
+-- saving 12 bits over former laver.lam (now renamed to laver0.lam) courtesy of 50_ft_lock
 let
   K = \x\y. x;
 
   C1 = \x.x;
   succ = \n\f\x. n f (f x);
   C2 = succ C1;
-  C16 = (\x.x x x) C2;
   C3 = succ C2;
   C4 = succ C3;
   
@@ -28,8 +27,9 @@ let
   -- laver aBort = leq mx aBort laver (\b.b (T1 (succ a)) laver) = T1
   
   go = \mx. let
-   C2 = succ C1
-  in Laver mx C1 (C2 C2 C2) aBort (go (C2 mx))
+   C2 = succ C1;
+   C16 = C2 C2 C2;
+  in Laver mx C1 C16 aBort (go (C2 mx))
 in go T1 -- 201 bits with slack 6
 
 -- Laver mx C1 C16 = laver Cn with either n=mx or n<mx:
