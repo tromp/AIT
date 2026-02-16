@@ -1,6 +1,6 @@
 -- https://en.wikipedia.org/wiki/Laver_table
 -- halts (with n+1 T1 C(2^(n-1)+1)) if 2^n size Laver table with first row period beyond 16 is found
--- saving 1 byte over former laver.lam, courtesy of 50_ft_lock
+-- saving 1 byte over former laver.lam (now renamed to laver0.lam) courtesy of 50_ft_lock
 let
   K = \x\y. x;
 
@@ -35,11 +35,11 @@ in go T1 -- 205 bits
 --   laver Cn  aBort = (\b.b (\x.x (succ Cn)) laver) aBort
 --                   = aBort (\x.x (succ Cn)) laver = K <succ Cn>
 -- Computing normal forms of Laver T4 Cm Cn aBort, for all m,n in 1..4 gives:
--- 		C1		C2		C3		C4
--- C1		K<C3>		T1		K<C3>		T1
--- C2		K<C4>		T1		K<C4>		T1
--- C3		T1		T1		T1		T1
--- C4		K<C2>		K<C3>		K<C4>		T1
+--      C1      C2      C3      C4
+-- C1   K<C3>   T1      K<C3>   T1
+-- C2   K<C4>   T1      K<C4>   T1
+-- C3   T1      T1      T1      T1
+-- C4   K<C2>   K<C3>   K<C4>   T1
 
 -- for go2 = \mx. Laver mx C1 C2 aBort (go2 (C2 mx)), we have
 -- go2 T1 = Laver T1 C1 C2 aBort (go2 T2)
