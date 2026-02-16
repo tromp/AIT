@@ -27,8 +27,10 @@ let
   in laver;
   -- laver aBort = leq mx aBort laver (\b.b (T1 (succ a)) laver) = T1
   
-  go = \mx. Laver mx C1 C16 aBort (go (C2 mx))
-in go T1 -- 205 bits with slack 6
+  go = \mx. let
+   C2 = succ C1
+  in Laver mx C1 (C2 C2 C2) aBort (go (C2 mx))
+in go T1 -- 201 bits with slack 6
 
 -- Laver mx C1 C16 = laver Cn with either n=mx or n<mx:
 --   laver Cmx aBort = laver aBort = T1
