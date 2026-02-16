@@ -69,5 +69,5 @@ dlaver i j = laver i j - laver i' j' where
 main = do
     -- table mx "laver0" laver0
     -- table mx "laver1" laver1
-    table 31 "32x22 laver"  laver
-    mapM_ print [(n, length l, l) | (n,l) <- zip [1..31]lavers ]
+    table 31 "32x32 laver"  laver
+    mapM_ print [(n, length l, l) | (n,l) <- zip [1..31] lavers ]

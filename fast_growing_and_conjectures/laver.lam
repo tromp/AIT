@@ -1,38 +1,57 @@
 -- https://en.wikipedia.org/wiki/Laver_table
--- halts (with table size - 1) if Laver table with last row period beyond 16 is found
+-- halts (with n+1 T1 C(2^(n-1)+1)) if 2^n size Laver table with first row period beyond 16 is found
+-- saving 1 byte over former laver.lam, courtesy of 50_ft_lock
 let
--- Let mx = 2^n - 1. We consider a dual version of the shelf, determined
--- by a |> mx = a-1 (mod 2^n)
+  K = \x\y. x;
 
--- Example for n=3, mx = 2^n-1 = 7:
---   b=0 -->
--- a=0 0 1 2 3 4 5 6 7
---   | 0 0 0 0 0 0 0 0
---   v 0 1 0 1 0 1 0 1
---     0 2 0 2 0 2 0 2
---     0 1 2 3 0 1 2 3
---     0 4 0 4 0 4 0 4
---     0 1 4 5 0 1 4 5
---     0 2 4 6 0 2 4 6
--- which satisfies
---   0 |> b  = b
---   a |> 0  = 0
---   a |> mx = a-1
---   a |> b  = (a |> b+1) |> a-1
--- Note that the latter two equations iterate f_a = \x. x |> (a-1).
--- In fact, for a > 0, we implement a |> b = f_a^{mx-b} (a-1) as f_a^{mx*b} 0,
--- exploiting the fact that a |> mx = a-1 = 0 |> a-1 = f_a 0
--- and (modulo 2^n) 1+mx-b = -b = -1 * b = mx*b
+  C1 = \x.x;
+  succ = \n\f\x. n f (f x);
+  C2 = succ C1;
+  C16 = (\x.x x x) C2;
+  C3 = succ C2;
+  C4 = succ C3;
+  
+  T1 = \x\y.y x;
+  T2 = C2 T1;
+  T4 = C2 T2;
+  
+  -- test whether Tuple numeral Tm is less than or equal to Church numeral Tn
+  leq = \Tm\Cn\t\f. Tm (K t) (Cn T1 (K f));
+  aBort = \x. K (K x);
+  -- leq mx aBort = \t\f. mx (K t) (aBort T1 (K f))
+  --              = \t\f. mx (K t) (K T1) = \t\f. T1
 
-  0 = \f\x. x;
-  1 = \x. x;
-  -- inline 2 to avoid need for slack 6 in optimize
-  16 = let 2 = \f\x. f (f x) in (\x. x x x) 2;
-  pred = \n\f\x. n (\g\h. h (g f)) (\h. x) (\x. x);
-  laver = \mx.
-    -- swap argument order to simplify iterated laver
-    let laver = \b\a. a (\_. mx (b (laver (pred a))) 0) b
-    in laver;  -- 107 bits
-  dblp1 = \n\f\x. n f (n f (f x)); -- map n to 2*n+1
-  go = \mx. laver mx 16 mx (\_. mx) (go (dblp1 mx))
-in go 1  -- 213 bits
+  Laver = \mx.
+    -- takes two Church numerals a and b and returns (laver (a |> b))
+    let laver = \a. leq mx a laver (\b.b (T1 (succ a)) laver)
+  in laver;
+  -- laver aBort = leq mx aBort laver (\b.b (T1 (succ a)) laver) = T1
+  
+  go = \mx. Laver mx C1 C2 aBort (go (C2 mx))
+in go T1 -- 205 bits
+
+-- Laver mx C1 C16 = laver Cn with either n=mx or n<mx:
+--   laver Cmx aBort = laver aBort = T1
+--   laver Cn  aBort = (\b.b (\x.x (succ Cn)) laver) aBort
+--                   = aBort (\x.x (succ Cn)) laver = K <succ Cn>
+-- Computing normal forms of Laver T4 Cm Cn aBort, for all m,n in 1..4 gives:
+-- 		C1		C2		C3		C4
+-- C1		K<C3>		T1		K<C3>		T1
+-- C2		K<C4>		T1		K<C4>		T1
+-- C3		T1		T1		T1		T1
+-- C4		K<C2>		K<C3>		K<C4>		T1
+
+-- for go2 = \mx. Laver mx C1 C2 aBort (go2 (C2 mx)), we have
+-- go2 T1 = Laver T1 C1 C2 aBort (go2 T2)
+--        = Laver T1 C1 aBort (go2 T2)
+--        = <go2 T2>
+--        = <Laver T2 C1 C2 aBort (go2 T4)>
+--        = <Laver T2 C2 aBort (go2 T4)>
+--        = <<go2 T4>>
+--        = <<Laver T4 C1 C2 aBort (go2 T8)>>
+--        = <<Laver T4 C4 aBort (go2 T8)>>
+--        = <<<go2 T8>>>
+--        = <<<Laver T8 C1 C2 aBort (go2 T16)>>>
+--        = <<<Laver T8 C4 aBort (go2 T16)>>>
+--        = <<<K <C5> (go2 T16)>>>
+--        = <<<<C5>>>>

@@ -1,0 +1,39 @@
+-- https://en.wikipedia.org/wiki/Laver_table
+-- halts (with table size - 1) if Laver table with last row period beyond 16 is found
+let
+-- Let mx = 2^n - 1. We consider a dual version of the shelf, determined
+-- by a |> mx = a-1 (mod 2^n)
+
+-- Example for n=3, mx = 2^n-1 = 7:
+--   b=0 -->
+-- a=0 0 1 2 3 4 5 6 7
+--   | 0 0 0 0 0 0 0 0
+--   v 0 1 0 1 0 1 0 1
+--     0 2 0 2 0 2 0 2
+--     0 1 2 3 0 1 2 3
+--     0 4 0 4 0 4 0 4
+--     0 1 4 5 0 1 4 5
+--     0 2 4 6 0 2 4 6
+-- which satisfies
+--   0 |> b  = b
+--   a |> 0  = 0
+--   a |> mx = a-1
+--   a |> b  = (a |> b+1) |> a-1
+-- Note that the latter two equations iterate f_a = \x. x |> (a-1).
+-- In fact, for a > 0, we implement a |> b = f_a^{mx-b} (a-1) as f_a^{mx*b} 0,
+-- exploiting the fact that a |> mx = a-1 = 0 |> a-1 = f_a 0
+-- and (modulo 2^n) 1+mx-b = -b = -1 * b = mx*b
+
+  0 = \f\x. x;
+  1 = \x. x;
+  -- inline 2 to avoid need for slack 6 in optimize
+  16 = let 2 = \f\x. f (f x) in (\x. x x x) 2;
+  pred = \n\f\x. n (\g\h. h (g f)) (\h. x) (\x. x);
+  laver = \mx.
+    -- swap argument order to simplify iterated laver
+    let laver = \b\a. a (\_. mx (b (laver (pred a))) 0) b
+    in laver;  -- 107 bits
+  dblp1 = \n\f\x. n f (n f (f x)); -- map n to 2*n+1
+  go = \mx. laver mx 16 mx (\_. mx) (go (dblp1 mx))
+  -- can't replace dblp1 by succ since laver mx 16 mx = 4 for mx=29
+in go 1  -- 213 bits
