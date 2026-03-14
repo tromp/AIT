@@ -3,7 +3,6 @@ Look for small bases
 > import System.IO
 > import Data.List
 > import Data.Tuple
-> import qualified Data.Heap as Heap
 > import Data.Function
 > -- import Debug.Trace
 > import qualified Data.Set as Set
