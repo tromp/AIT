@@ -16,6 +16,7 @@
 -- combine programs with composition, not with application.
 -- In particular, this translation always preserves the continuation argument,
 -- so it cannot produce all possible combinators.
+-- Also see https://hugomg.github.io/publications/2024-converting-concatenative.pdf
 
 let
   id    = \x. x;                     -- identity                               combinator I
