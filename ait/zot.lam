@@ -1,3 +1,4 @@
+-- https://cstheory.stackexchange.com/questions/32309/concatenative-binary-lambda-calculus-combinatory-logic/53685#53685
 let
 I = \x.x;
 K = \x\y.x;

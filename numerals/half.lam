@@ -9,7 +9,11 @@ let
   5 = succ 4;
   6 = succ 5;
   false = 0;
-  half  = \n\s\z. n (\c\a\b. c (s b) a) false z z -- 55 bits
+  half  = \n\s\z. n (\c\a\b. c (s b) a) false z z; -- 55 bits
+  -- next two courtesy of 50_ft_lock
+  half' = \n\s\z. n (\a\b.b s (a (b (\_.b)))) (\_.z) (\i.i); -- rounds up instead -- 54 bits
+  halfPosEven = \n.n (\b.b (\_\f\x.f (b f x))) (\_\_\i.i) -- Only for positive even numbers -- 47 bits 
+
   -- this generalizes as e.g.
   -- third = \n\s\z. n (\r\a\b\c. r (s c) a b) (\_.false) z z z; -- 71 bits
 in half

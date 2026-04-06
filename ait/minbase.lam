@@ -1,0 +1,27 @@
+-- https://math.stackexchange.com/questions/153163/what-is-the-shortest-function-of-lambda-calculus-that-generates-all-functions-of
+-- https://cstheory.stackexchange.com/questions/31883/smallest-possible-universal-combinator/53689
+-- https://web.ics.purdue.edu/~dulrich/C-pure-intuitionism-page.htm
+-- {S,K} of sumsize 23+7 = 30 is not a minimal base.
+-- And neither is {X} where X = \x. x S K of size 38
+-- It's {A} where A = \x\y\z. x z (y (\_.z)) of size 26
+-- A has type (a -> b -> c) -> ((d -> a) -> b) -> a -> c     -- CCaCbcCCCdabCac
+-- Another is Meredith's 
+-- G = \x\y\z. y (\_.z) (x z) of size 26
+-- G has type (a -> b) -> ((c -> a) -> b -> d) -> a -> d     -- CCabCCCcaCbdCad
+-- as shown in the Appendix of "On a theorem of Tarski" by Adrian Rezus 1982
+-- https://www.researchgate.net/publication/268174627_On_a_theorem_of_Tarski
+let
+  A =                         \x\y\z. x z (y (\_.z));
+  -- A A =                    \x\y\z. y z (x (\_.y) (\_.z))
+  x3 = A (A A) A A A;             -- \_\_\x\y\z. x (z (\_.y (\_.z)))
+
+  W = A A (A (A (A A) A));                              --  7 As
+  D = A (A (A A) A) (A (A A) A);                        --  9 As
+  I = A (A (A (A A) A)) (A (A A) A);                    -- 10 As
+  K = A (A A) (A (A A) A A A A A);                      -- 11 As
+  F = A (A (A A) (A (A A) A A A A A));                  -- 12 As
+  B = A (A (A (A (A A) A)) (A A) A) (A (A (A A)));      -- 14 As
+  C = A (A (A (A A A A) A) (A A A (A A))) A A;          -- 15 As
+  S' = A (A (A A) A) A A A A A A (A (A A) A);           -- 15 As   -- \x\y\z. y z (x z)
+  S = A (A (A A (A A (A A)) (A (A (A A (A A)))))) A A;  -- 16 As
+in S
