@@ -10,18 +10,28 @@
 -- G has type (a -> b) -> ((c -> a) -> b -> d) -> a -> d     -- CCabCCCcaCbdCad
 -- as shown in the Appendix of "On a theorem of Tarski" by Adrian Rezus 1982
 -- https://www.researchgate.net/publication/268174627_On_a_theorem_of_Tarski
+-- which tends to be less efficient than A according to the minimal expressions below
 let
-  A =                         \x\y\z. x z (y (\_.z));
-  -- A A =                    \x\y\z. y z (x (\_.y) (\_.z))
-  x3 = A (A A) A A A;             -- \_\_\x\y\z. x (z (\_.y (\_.z)))
+  G = \x\y\z. y (\_.z) (x z);
+  T = G (G G G) G;                                                            --  5 Gs
+  D = G G (G G (G G G));                                                      --  7 Gs
+  I = G G (G G (G (G G G) G));                                                --  9 Gs
+  K = G G (G (G (G (G G G)) G) G G);                                          -- 11 Gs
+  F = G G G (G (G (G G) G) G G) G G;                                          -- 12 Gs
+  W = G G (G (G G)(G (G (G G) G) G) G G);                                     -- 13 Gs
+  B = G (G (G (G (G G G)))(G (G G G) G) G)(G (G (G G G)) G G);                -- 20 Gs
+  S = G (G (G (G G G)))(G G G)(G (G (G (G (G G G)))(G (G G G) G) G) G);       -- 23 Gs
+  C = G (G (G (G G (G G)))) G (G (G (G G)(G G)) G (G (G (G (G G)) G G) G G)); -- 24 Gs
 
-  W = A A (A (A (A A) A));                              --  7 As
-  D = A (A (A A) A) (A (A A) A);                        --  9 As
-  I = A (A (A (A A) A)) (A (A A) A);                    -- 10 As
-  K = A (A A) (A (A A) A A A A A);                      -- 11 As
-  F = A (A (A A) (A (A A) A A A A A));                  -- 12 As
-  B = A (A (A (A (A A) A)) (A A) A) (A (A (A A)));      -- 14 As
-  C = A (A (A (A A A A) A) (A A A (A A))) A A;          -- 15 As
-  S' = A (A (A A) A) A A A A A A (A (A A) A);           -- 15 As   -- \x\y\z. y z (x z)
-  S = A (A (A A (A A (A A)) (A (A (A A (A A)))))) A A;  -- 16 As
+  A = \x\y\z. x z (y (\_.z));
+  W = A A (A (A (A A) A));                              --  7 As              vs 13 Gs
+  D = A (A (A A) A) (A (A A) A);                        --  9 As              vs  7 Gs
+  I = A (A (A (A A) A)) (A (A A) A);                    -- 10 As              vs  9 Gs
+  K = A (A A) (A (A A) A A A A A);                      -- 11 As              vs 11 Gs
+  F = A (A (A A) (A (A A) A A A A A));                  -- 12 As              vs 12 Gs
+  B = A (A (A (A (A A) A)) (A A) A) (A (A (A A)));      -- 14 As              vs 20 Gs
+  T = A (A A)(A (A (A (A A (A A A))) (A A) A));         -- 14 As              vs  5 Gs
+  C = A (A (A (A A A A) A) (A A A (A A))) A A;          -- 15 As              vs 24 Gs
+  S'= A (A (A A) A) A A A A A A (A (A A) A);            -- 15 As  -- \x\y\z. y z (x z)
+  S = A (A (A A (A A (A A)) (A (A (A A (A A)))))) A A;  -- 16 As              vs 23 Gs
 in S
