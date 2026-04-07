@@ -15,17 +15,31 @@
 -- as shown in the Appendix of "On a theorem of Tarski" by Adrian Rezus 1982
 -- https://www.researchgate.net/publication/268174627_On_a_theorem_of_Tarski
 -- G is less efficient than A according to the minimal expressions below
+-- A third shortest, H, is less efficient still
 let
+  H = \x\y\z. y z (x (\_.z));
+  W = H (H H (H H) H (H (H H)));                                                                     --  9 Hs
+  D = H H H H (H H) (H (H H));                                                                       --  9 Hs
+  S'= H (H (H H H H)) (H (H (H H H) H) H H (H H));                                                   -- 16 Hs
+  I = H (H (H (H (H H)) (H H) H H H)) H (H H H H H);                                                 -- 17 Hs
+  K = H (H (H (H H) H) H (H H (H H (H (H (H H)))) H)) H;                                             -- 17 Hs
+  T = H (H (H H) (H H)) H (H (H H) (H (H (H H)) (H H)) H (H H H));                                   -- 20 Hs
+  F = H H H H (H (H (H (H H) H) H (H H (H H (H (H (H H)))) H)) H) H;                                 -- 22 Hs
+  C = H H (H (H H)) (H (H H (H H)) (H H H) H (H H H H H H (H (H H))));                               -- 23 Hs
+  S = H (H (H H)) (H H) H H (H H H H (H H) H (H (H H))) (H (H (H H H H)));                           -- 24 Hs
+  B = H H (H (H (H (H (H H H H))) (H H) H) H (H (H (H H) (H (H H) H) H H) (H H (H H H (H H)) H H))); -- 33 Hs
+
   G = \x\y\z. y (\_.z) (x z);
-  T = G (G G G) G;                                                            --  5 Gs
-  D = G G (G G (G G G));                                                      --  7 Gs
-  I = G G (G G (G (G G G) G));                                                --  9 Gs
-  K = G G (G (G (G (G G G)) G) G G);                                          -- 11 Gs
-  F = G G G (G (G (G G) G) G G) G G;                                          -- 12 Gs
-  W = G G (G (G G)(G (G (G G) G) G) G G);                                     -- 13 Gs
-  B = G (G (G (G (G G G)))(G (G G G) G) G)(G (G (G G G)) G G);                -- 20 Gs
-  S = G (G (G (G G G)))(G G G)(G (G (G (G (G G G)))(G (G G G) G) G) G);       -- 23 Gs
-  C = G (G (G (G G (G G)))) G (G (G (G G)(G G)) G (G (G (G (G G)) G G) G G)); -- 24 Gs
+  T = G (G G G) G;                                                             --  5 Gs
+  D = G G (G G (G G G));                                                       --  7 Gs
+  I = G G (G G (G (G G G) G));                                                 --  9 Gs
+  K = G G (G (G (G (G G G)) G) G G);                                           -- 11 Gs
+  F = G G G (G (G (G G) G) G G) G G;                                           -- 12 Gs
+  W = G G (G (G G) (G (G (G G) G) G) G G);                                     -- 13 Gs
+  B = G (G (G (G (G G G))) (G (G G G) G) G) (G (G (G G G)) G G);               -- 20 Gs
+  S = G (G (G (G G G))) (G G G) (G (G (G (G (G G G))) (G (G G G) G) G) G);     -- 23 Gs
+  C = G (G (G (G G (G G)))) G (G (G (G G) (G G)) G (G (G (G (G G)) G G) G G)); -- 24 Gs
+  S'= G (G (G (G G G G) G)) (G G G) (G (G (G (G (G G G))) (G (G G G) G) G) G); -- 25 Gs
 
   A = \x\y\z. x z (y (\_.z));
   W = A A (A (A (A A) A));                              --  7 As              vs 13 Gs
@@ -34,8 +48,8 @@ let
   K = A (A A) (A (A A) A A A A A);                      -- 11 As              vs 11 Gs
   F = A (A (A A) (A (A A) A A A A A));                  -- 12 As              vs 12 Gs
   B = A (A (A (A (A A) A)) (A A) A) (A (A (A A)));      -- 14 As              vs 20 Gs
-  T = A (A A)(A (A (A (A A (A A A))) (A A) A));         -- 14 As              vs  5 Gs
+  T = A (A A) (A (A (A (A A (A A A))) (A A) A));         -- 14 As             vs  5 Gs
   C = A (A (A (A A A A) A) (A A A (A A))) A A;          -- 15 As              vs 24 Gs
-  S'= A (A (A A) A) A A A A A A (A (A A) A);            -- 15 As  -- \x\y\z. y z (x z)
+  S'= A (A (A A) A) A A A A A A (A (A A) A);            -- 15 As              vs 25 Gs
   S = A (A (A A (A A (A A)) (A (A (A A (A A)))))) A A;  -- 16 As              vs 23 Gs
 in S
