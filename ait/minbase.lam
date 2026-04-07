@@ -4,13 +4,17 @@
 -- {S,K} of sumsize 23+7 = 30 is not a minimal base.
 -- And neither is {X} where X = \x. x S K of size 38
 -- It's {A} where A = \x\y\z. x z (y (\_.z)) of size 26
--- A has type (a -> b -> c) -> ((d -> a) -> b) -> a -> c     -- CCaCbcCCCdabCac
+-- A has type (a -> b -> c) -> ((d -> a) -> b) -> a -> c     -- CCaCbcCCCdabCac -- CCpCqrCCCspqCpr
 -- Another is Meredith's 
 -- G = \x\y\z. y (\_.z) (x z) of size 26
--- G has type (a -> b) -> ((c -> a) -> b -> d) -> a -> d     -- CCabCCCcaCbdCad
+-- as "the combinator corresponding to CCpqCCCspCqrCpr"
+-- mentioned on page 180 of the 1963 paper "Notes on the axiomatics of the propositional calculus"
+-- by C.A. Meredith and A.N. Prior
+-- https://projecteuclid.org/journals/notre-dame-journal-of-formal-logic/volume-4/issue-3/Notes-on-the-axiomatics-of-the-propositional-calculus/10.1305/ndjfl/1093957574.pdf
+-- G has type (a -> b) -> ((c -> a) -> b -> d) -> a -> d     -- CCabCCCcaCbdCad -- CCpqCCCspCqrCpr 
 -- as shown in the Appendix of "On a theorem of Tarski" by Adrian Rezus 1982
 -- https://www.researchgate.net/publication/268174627_On_a_theorem_of_Tarski
--- which tends to be less efficient than A according to the minimal expressions below
+-- G is less efficient than A according to the minimal expressions below
 let
   G = \x\y\z. y (\_.z) (x z);
   T = G (G G G) G;                                                            --  5 Gs
