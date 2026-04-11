@@ -1,0 +1,34 @@
+-- simpler solutoin to problem posed by Wim Vree and answered by Henk Barendregt in section 8 of
+-- https://repository.ubn.ru.nl/bitstream/handle/2066/17241/13257.pdf
+let
+  id = \x. x;
+
+  T = \t\f. t;
+  F = \t\f. f;
+
+  cons = \x\y\z. z x y;
+  nil = F;
+
+  0 = \s\z.z;
+  succ = \n\s\z. s (n s z);
+  1 = \s.s;
+  2 = succ 1;
+  3 = succ 2;
+  4 = succ 3;
+  5 = succ 4;
+  6 = succ 5;
+  7 = succ 6;
+  
+  S = \n\cont\x. n (\l. cont (cons x l));
+  Z = \l. l nil;
+
+  vararg = \n. n S Z id
+
+in vararg   -- λn.n(λnλcλx.n(λl.c(λz.zxl)))(λl.l(λxλy.y))(λx.x)
+
+-- Example: vararg 3 0 1 2
+-- = S (S (S Z)) id 0 1 2
+-- = S (S Z) (\l. id (cons 0 l)) 1 2
+-- = S Z (\l. cons 0 (cons 1 l)) 2
+-- = Z (\l. cons 0 (cons 1 (cons 2 l)))
+-- = cons 0 (cons 1 (cons 2 l))
