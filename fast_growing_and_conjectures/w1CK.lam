@@ -103,22 +103,34 @@ let
   -- patcail optimization
   Oeps0    = Lim (\n. n expw (\l.n));         -- size 104  epsilon_0 as sup {0,w^1,w^w^2,w^w^w^3,...}
   -- 50_ft_lock construction
-  Oeps0 = let
+  Oeps0 = let                                 -- size 103 bits
     id = \x.x;
     squareLim = \f.\l\s\z. l (\n. (let a=f n l in a (a s)) z); -- limit ordinal sup { (f C0)^2, (f C1)^2, (f C2)^2, ... }
     f1 = \a.a squareLim id a;
     Ow' = squareLim (\n\l\s\z.n s z);         -- sup {C0^2, C1^2, C2^2, ... }
-  in squareLim (\n.n f1 Ow');                 -- size 103 bits
+  in squareLim (\n.n f1 Ow');
   -- f1 α = [α] α where
   --   [0] α = α
   --   [γ+1] α = [γ] α
   --   [γ_] α = sup {([γ_n] α)^2}
-  -- [ω^2 * α] ω = ω^ω^α for all α:
-  --   [0] ω = ω = ω^ω^0
-  --   [ω^2 * (α+1)] ω = sup {([ω^2 * α + ωn] ω)^2} = sup {((ω^ω^α)^2^n)^2} = (ω^ω^α)^ω = ω^(ω^α * ω) = ω^ω^(α+1)
-  --   [ω^2 * α_] ω = sup {([ω^2 * α_n] ω)^2} = sup {(ω^ω^α_n)^2} = ω^ω^α_
+  -- [ω^2 * α] β = β^ω^α for all α,β:
+  --   [0] β = β = β^ω^0
+  --   [ω^2 * (α+1)] β = sup {([ω^2 * α + ωn] β)^2} = sup {((β^ω^α)^2^n)^2} = (β^ω^α)^ω = β^(ω^α * ω) = β^ω^(α+1)
+  --   [ω^2 * α_] β = sup {([ω^2 * α_n] β)^2} = sup {(β^ω^α_n)^2} = β^ω^α_
+  -- f1 ω = [ω] ω = ω^2
+  -- f1^2 ω = f1 ω^2 > [ω^2] ω = ω^ω
+  -- f1^3 ω = f1 ω^ω > [ω^ω] ω = ω^ω^ω^ω
 
   OepsSucc = \e. Lim (\n. n expw (Succ e));   -- size 136  epsilon_i -> epsilon_i+1
+
+  OepsSucc = \eps. let                        -- size 97 bits
+    id = \x.x;
+    squareLim = \f.\l\s\z. l (\n. (let a=f n l in a (a s)) z);
+    f1 = \a.a squareLim id a;
+  in squareLim (\n.n f1 eps);
+  -- f1 εi = [εi] εi > [εi] ω = ω^ω^εi
+  -- f1^2 εi = f1 ω^ω^εi = [ω^ω^εi] ω^ω^εi > [ω^ω^εi] ω = ω^ω^ω^ω^εi
+  -- sup {f1^n εi} = ε(i+1})
 
   -- extract fundamental sequence
   True = \x\y.x;
