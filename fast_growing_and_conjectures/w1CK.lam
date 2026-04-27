@@ -128,9 +128,12 @@ let
     squareLim = \f.\l\s\z. l (\n. (let a=f n l in a (a s)) z);
     f1 = \a.a squareLim id a;
   in squareLim (\n.n f1 eps);
-  -- f1 εi = [εi] εi > [εi] ω = ω^ω^εi
-  -- f1^2 εi = f1 ω^ω^εi = [ω^ω^εi] ω^ω^εi > [ω^ω^εi] ω = ω^ω^ω^ω^εi
+  -- f1 εi = [εi] εi = εi^ω^εi = εi^εi = ω^ω^(εi * 2)
+  -- f1 (f1 εi) = f1 ω^ω^(εi * 2) >= [ω^ω^(εi * 2)] ω = ω^ω^ω^ω^(εi * 2)
   -- sup {f1^n εi} = ε(i+1})
+
+  -- by thedarklord2317
+  OepsSucc = \eps.Lim (\n.n (\m.exp m m) eps);  -- 89 bits
 
   -- extract fundamental sequence
   True = \x\y.x;
@@ -193,4 +196,4 @@ let
   w1CK9 = Owe2; -- size 50
   w1CK10 = Owe2p1; -- size 55
   w1CK11 = Oww; -- size 57
-in Oeps0
+in OepsSucc
