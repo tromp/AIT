@@ -1,0 +1,44 @@
+-- https://tromp.github.io/blog/2021/11/05/sk-numerals
+let
+  true  = \t\f. t;
+  false = \t\f. f;
+
+  -- Church numerals
+  C0 = \f\x. x;
+  Csucc = \n\f\x. f (n f x);
+  C1 = Csucc C0;
+  C2 = Csucc C1;
+  C3 = Csucc C2;
+  C4 = Csucc C3;
+  C5 = Csucc C4;
+
+  -- SK numerals
+  I = \x. x;
+  K = \x\y. x;
+  S = \x\y\z. x z (y z);
+  F0 = K;           -- F0 x y = x
+  Fsucc = S;
+  Fpred = \n\x\y. n (K y) x;
+  -- Fpred (Fsucc n)
+  -- = \x\y. S n (K y) x
+  -- = \x\y. n x y = n
+  -- Fsucc (Fpred n) u v
+  -- = S (\x\y. n (K y) x) u v
+  -- = (\x\y. n (K y) x) v (u v)
+  -- = n (K (u v)) v
+  -- \=  n u v
+  Fiszero = \n. n false I S K;
+  F2C = \n. Fiszero n C0 (Csucc (F2C (Fpred n)));
+  cons = \x\y\z. z x y;
+  F2C = \n. let p = cons (\f\y\x. cons f (Csucc y)) C0 in n p (p p) false;
+  F1 = Fsucc F0;    -- F1 x y = y
+  F2 = Fsucc F1;    -- F2 x y = x y
+  F3 = Fsucc F2;    -- F3 x y = y (x y)
+  F4 = Fsucc F3;    -- F4 x y = x y (y (x y))
+  F5 = Fsucc F4;    -- F5 x y = y (x y) (x y (y (x y)))
+  Fm1 = Fpred F0;   -- F-1 x y = K y
+  Fm2 = Fpred Fm1;  -- F-2 x y = K x
+  Fm3 = Fpred Fm2;  -- F-3 x y = K (K y)
+  Fm4 = Fpred Fm3;  -- F-4 x y = K (K x)
+  Fm5 = Fpred Fm4;  -- F-5 x y = K (K (K y))
+in F2C F5
