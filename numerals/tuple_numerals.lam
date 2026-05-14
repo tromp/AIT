@@ -1,3 +1,14 @@
+-- This way of representing numbers was also found by
+-- Ian Mackie, "Linear Numeral Systems"
+-- J Autom Reasoning (2019) 63:887–909
+-- https://doi.org/10.1007/s10817-018-9456-6
+-- and by Parigot, M., Rozière, P., "Constant time reductions in lambda-calculus"
+-- In: Borzyszkowski, A.M., Sokolowski S. (eds.)
+-- Mathematical Foundations of Computer Science 1993
+-- 18th International Symposium, MFCS’93
+-- Gdansk, Poland, August 30 - September 3, 1993
+-- Proceedings, Lecture Notes in Computer Science
+-- vol. 711, pp. 608–617. Springer (1993)
 let
   id  = \x. x;
   K = \x\y. x;
@@ -17,7 +28,8 @@ let
   T = \x\f.f x;
   C2T = \c. c T;
   -- tuple successor
-  Tsucc = \t\x. t (T x);
+  Tsucc = \t\x. t (T x); -- 18 bits, one bit shorter than Tsucc' = \t\x. T (t x)
+
   -- tuple predecessor
   Tpred = \t\x. t x id;
 
@@ -28,14 +40,22 @@ let
   T4 = Tsucc T3;
   T5 = Tsucc T4;
 
+  -- We can also go negative!
+  Tm1 = Tpred T0;
+  Tm2 = Tpred Tm1;
+  Tm3 = Tpred Tm2;
+  Tm4 = Tpred Tm3;
+  Tm5 = Tpred Tm4;
+
   true  = \x\y. x;
   false = \x\y. y;
   -- Tm x (Tn y) = if n < m then y (Tm-1-n x) else x (Tn-m y)
+  -- But the comparisons fail on negative numerals:(
   -- less than
   Tlt = \tn\tm. tm (K false) (tn (K true));
   Teq = \tn\tm. tm (\z. z (K true) false true) (tn (K false));
 
-  -- add tuple numerals
+  -- add tuple numerals (fails on negative)
   Tadd = \tm\tn\x. tm (tn x);
   -- subtract: tuple numeral minus tuple numeral (smaller or equal)
   Tsub = \tn\tm\x. tm id (tn x);

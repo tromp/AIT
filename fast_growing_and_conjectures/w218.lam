@@ -5,6 +5,8 @@ let
   w218 = T T T -- 61 bits
 in w218
 
+-- (λ2.(λA.(λT.(λw218.w218) (T T T)) (λy.y (y A))) (λa.λb.λc.c a b 2)) (λf.λx.f (f x))
+
 --   T T                                                            T
 -- = T (T A)                                                        T
 -- = T (A AA)                                                       T
