@@ -1,0 +1,45 @@
+let
+  0    =   \f\x. x;
+  succ = \n\f\x. n f (f x);
+  1 = succ 0;
+  2 = succ 1;
+  3 = succ 2;
+  4 = succ 3;
+  5 = succ 4;
+  6 = succ 5;
+  7 = succ 6;
+  8 = succ 7;
+  9 = succ 8;
+  10 = succ 9;
+
+  false = 0;
+  true = \x\y.x;
+  cons = \x\y\p. p x y;
+  -- reversing normal convention
+  tail = \l.l true;
+  head = \l.l false;
+  index = \n\l. head (n tail l);
+  -- modulo, 106 bits
+  mod = \n\m. \f\z.  index n
+    -- F cont m = cons m (cont (f m))
+    -- F^m (K r) z =  F (F^(m-1) (K r)) z = cons z (cons (f z) (cons (f(f z)) ... r))
+    (n (\r.m (\cont\m. cons (cont (f m)) m) (\_. r) z) (\_. z)); -- use n as poor man's Y
+ 
+  -- isZero, 22 bits
+  isZero = \n\t\f. n (\_. f) t;
+  
+  -- GCD, Greatest Common Divisor based on modulo, 162 bits
+  gcd = \a. \b. isZero b a (gcd b (mod a b));
+
+  -- Alternative implementations: Euclid's original algorithm relied on subtraction rather than modulo:
+  -- subtraction in 56 bits:
+  sub = \m. \n. n (\p. \f. \x. p (\g. \h. h (g f)) (\u. x) (\u. u)) m;
+  -- GCD subtraction-based, 183 bits
+  gcd2= \a. \b. isZero b a (isZero (sub a b) (gcd2 a (sub b a)) (gcd2 b (sub a b)));
+  -- Another subtraction-based GCD, also 183 bits
+  gcd3= (\f. \a. \b. isZero b a (isZero (sub a b) (f a b) (f b a))) (\x. \y. gcd3 x (sub y x));
+  -- Another possible alternative would be to avoid Euclid's algorithm by 
+  -- brute-force testing candidates at decrements of one with the 'divides' function.
+  -- But for now, the modulo-based implementation above is still the simplest at 162 bits.
+
+in gcd -- 9 6
