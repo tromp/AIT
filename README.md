@@ -2,3 +2,57 @@ AIT
 ===
 
 Algorithmic Information Theory, using Binary Lambda Calculus
+
+This software allows one to run some experiments with
+binary lambda calculus as a vehicle for Algorithmic Information Theory.
+
+To run a lambda calculus machine:
+
+  `./blc run program_file`
+
+where program_file holds the programa text, e.g.
+
+  `./blc run id.lam`
+
+The machine takes its input from stdin, so this works just like cat with no argument.
+
+You can do
+  `make prog.blc`
+or 
+  `make prog.blc8`
+to compile programs for universal machine uni.lam or the byte oriented uni8.lam
+The compiled code is best placed in the bin subdirectory.
+Setting environment variable BLCPATH allow ./uni to find binaries there.
+
+Run the bit-oriented universal machine with
+
+  `./blc run uni.lam [conditional data]`
+
+or in absence of conditional data, with
+
+  `./uni -b`
+
+Run the byte-oriented universal machine with
+
+  `./blc run8 uni8.lam [conditional data]`
+
+or in absence of conditional data, with
+
+  `./uni`
+
+Running `./blc` without arguments will show all available actions.
+
+  `./uni -h` will show how to see all options and typical uses
+
+See the lambda source files *.lam for more examples.
+
+Implementations of the universal machine in many other languages
+may be found at https://rosettacode.org/wiki/Universal_Lambda_Machine
+
+See http://en.wikipedia.org/wiki/Binary_lambda_calculus
+for background information and the paper [LC.pdf](https://github.com/tromp/AIT/blob/master/LC.pdf) for technical details.
+
+credits:
+Module Lambda is derived from Lennart Augustsson's
+http://www.augustsson.net/Darcs/Lambda/
+Chris Hendrie and Bertram Felgenhauer contributed code and ideas
