@@ -40,9 +40,9 @@ or in absence of conditional data, with
 
   `./uni`
 
-Running ./blc without arguments will show all available actions.
+Running `./blc` without arguments will show all available actions.
 
-  `./uni -h will show how to see all options and typical uses`
+  `./uni -h` will show how to see all options and typical uses
 
 See the lambda source files *.lam for more examples.
 
@@ -50,7 +50,7 @@ Implementations of the universal machine in many other languages
 may be found at https://rosettacode.org/wiki/Universal_Lambda_Machine
 
 See http://en.wikipedia.org/wiki/Binary_lambda_calculus
-for background information and the paper LC.pdf for technical details.
+for background information and the paper [LC.pdf](https://github.com/tromp/AIT/blob/master/LC.pdf) for technical details.
 
 credits:
 Module Lambda is derived from Lennart Augustsson's
