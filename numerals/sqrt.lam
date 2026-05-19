@@ -1,0 +1,28 @@
+let
+  0    =   \f\x. x;
+  succ = \n\f\x. n f (f x);
+  1 = succ 0;
+  2 = succ 1;
+  3 = succ 2;
+  4 = succ 3;
+  5 = succ 4;
+  6 = succ 5;
+  7 = succ 6;
+  8 = succ 7;
+  9 = succ 8;
+  10 = succ 9;
+  isZero = \n\t\f. n (\_. f) t;
+  -- multiplication, 19 bits
+  mul = \a\b\f.a(b f);
+  -- square, 16 bits
+  sq = \x\f.x(x f);
+  -- subtraction, 56 bits
+  sub = \m\n. n (\p. \f. \x. p (\g. \h. h (g f)) (\u. x) (\u. u)) m;
+  -- less or equal, 76 bits
+  leq = \m\n. isZero (sub m n);
+
+  -- square root, rounded down, 156 bits
+  iter = \x\r . (leq (sq r) x) (iter x (succ r) r) ;
+  sqrt = \x . iter x 0;
+
+in sqrt -- 9
