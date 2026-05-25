@@ -340,7 +340,7 @@ u32 lowerVars(u32 db, u32 depth) {
 u32 eta(u32 x) {
   u32 f = mem[x], a = mem[x+1];
   if (!isComb(f) && mem[a] == 'V' && mem[a+1]==0 && !hasVar0(f, 0))
-    return app('E', lowerVars(f, 0));
+    return ETA ? lowerVars(f, 0) : app('E', lowerVars(f, 0));
   return app('L', x);
 }
 
