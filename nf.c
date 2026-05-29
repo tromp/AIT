@@ -9,8 +9,6 @@
 #include <getopt.h>
 #include <time.h>
 
-#define ETA 0
-
 enum {
   NCOMB = 128, // memory addresses 0..NCOMB-1 represent primitive combinators like 'S' or 'K'
   MINMEMSZ = 1<<20, // starting memory size
@@ -61,7 +59,7 @@ u32 clapp(u32 f, u32 a) {
   return f=='K' && a=='I' ? 'F' // these rewrites are known to help
        : f=='B' && a=='K' ? 'D'
        : f=='C' && a=='I' ? 'T'
-       : ETA && f=='D' && a=='I' ? 'K'
+       : f=='D' && a=='I' ? 'K'
        : mem[f]=='B' && a=='I'? mem[f+1]
        : mem[f]=='R' && a=='I'? app('T',mem[f+1])
        : mem[f]=='B' && mem[f+1]=='C' &&  a=='T'? ':'
@@ -131,7 +129,7 @@ u32 combineK(u32 n1, u32 d1, u32 n2, u32 d2) {
      :             combineK(mem[n1],combineK(0,'C', mem[n1],d1), mem[n2],d2);
   else
     return n2==0 ? combineK(mem[n1],d1, 0,d2)
-     : mem[n2+1] ? (ETA && !mem[n2] && mem[n2+1] && d2=='I' ? d1 // eta optimization not handled by clapp
+     : mem[n2+1] ? (!mem[n2] && mem[n2+1] && d2=='I' ? d1 // eta optimization not handled by clapp
                  : combineK(mem[n1],combineK(0,'B', mem[n1],d1), mem[n2],d2))
          :         combineK(mem[n1],d1, mem[n2],d2);
 }
@@ -239,8 +237,7 @@ void gc() {
 void show(u32 n) {
   if (!isComb(n)) {
     u32 f = mem[n], a = mem[n+1];
-    if (f == 'E') show(a);
-    else if (f == 'V') putch('0'+a);
+    if (f == 'V') putch('0'+a);
     else if (f == 'L') { putch('\\'); show(a); }
     else { putch('`'); show(f); show(a); }
   } else putch(n);
@@ -324,7 +321,6 @@ void run(u32 x) {
 u32 hasVar0(u32 db, u32 depth) {
   u32 f = mem[db], a = mem[db+1];
   if (f=='V') return a == depth;
-  if (f=='E') return hasVar0(a, depth);
   if (f=='L') return hasVar0(a, depth+1);
   return hasVar0(f, depth) || hasVar0(a, depth);
 }
@@ -332,7 +328,6 @@ u32 hasVar0(u32 db, u32 depth) {
 u32 lowerVars(u32 db, u32 depth) {
   u32 f = mem[db], a = mem[db+1];
   if (f=='V') return app(f, a > depth ? a-1 : a);
-  if (f=='E') return app(f, lowerVars(a, depth));
   if (f=='L') return app(f, lowerVars(a, depth+1));
   return app(lowerVars(f, depth), lowerVars(a, depth));
 }
@@ -340,7 +335,7 @@ u32 lowerVars(u32 db, u32 depth) {
 u32 eta(u32 x) {
   u32 f = mem[x], a = mem[x+1];
   if (!isComb(f) && mem[a] == 'V' && mem[a+1]==0 && !hasVar0(f, 0))
-    return ETA ? lowerVars(f, 0) : app('E', lowerVars(f, 0));
+    return lowerVars(f, 0);
   return app('L', x);
 }
 
