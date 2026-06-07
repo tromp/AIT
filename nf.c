@@ -1,16 +1,17 @@
 // John Tromp's Binary Lambda Calculus universal machine based on Ben Lynn's
 // ION machine at https://crypto.stanford.edu/~blynn/compiler/ION.html
 
-#include <assert.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include <getopt.h>
+#include <assert.h>
 #include <time.h>
 
 enum {
+  STACKRAIL = 2, // mimimum distance from top of stack to end of stack due to 'I' rewrite
   NCOMB = 128, // memory addresses 0..NCOMB-1 represent primitive combinators like 'S' or 'K'
   MINMEMSZ = 1<<20, // starting memory size
   MAXMEMSZ = 1<<31, // memory won't be doubled beyond this size
@@ -21,8 +22,7 @@ typedef uint32_t u32;
 u32 memsize, // current size of both mem and gcmem heaps in units of u32
     *mem,    // main memory heap holding LC and CL terms and on which graph reduction happens
     *gcmem,  // 2nd heap where GC stores all accessible terms before swapping back with main
-    *spTop,  // top of stack which is at top of memory (mem + memsize-2)
-    *etaTop, // top of currrent boehm node subject to eta expansion
+    *spTop,  // top of stack which is at top of memory (mem + memsize - STACKRAIL)
     nvar,    // number of eta expansions in boehm path down to current node
     *sp,     // stack pointer; stack grows down from top holding spine of CL applications
     hp,      // heap pointer where new app nodes are allocated
@@ -40,15 +40,16 @@ static inline u32 isComb(u32 n) {
   return n < NCOMB;
 }
 
+// create application of f to x at end of heap
 static inline u32 app(u32 f, u32 x) {
   mem[hp] = f;
   mem[hp+1] = x;
-  return (hp+=2)-2;
+  return (hp += 2) - 2;
 }
 
 u32 nbits, inbits, mode;
 
-// read 1 bit from file pointer fp, using inbits as a 1-byte buffer
+// read 1 bit from stdin, using inbits as a 1-byte buffer
 // mode=0 for 1 bit per byte; mode=7 for 8 bits per byte
 u32 getbit() {
   if (!nbits) {
@@ -84,8 +85,7 @@ u32 clapp(u32 f, u32 a) {
        : app(f, a);
 }
 
-// parse blc encoded lambda term from file pointer fp,
-// (ab)using pseudo combinators V and L to represent variables and lambdas
+// parse bcl combinator term from stdin
 u32 parseBCL() {
   if (!getbit())
     return "KS"[getbit()];
@@ -93,7 +93,7 @@ u32 parseBCL() {
   return clapp(f, a);
 }
 
-// parse blc encoded lambda term from file pointer fp,
+// parse blc encoded lambda term from stdin
 // (ab)using pseudo-combinators V and L to represent variables and lambdas
 u32 parseBLC() {
   u32 x;
@@ -151,7 +151,7 @@ u32 combineK(u32 n1, u32 d1, u32 n2, u32 d2) {
 
 // zipWith(bitwise or) two list of booleans
 u32 zip(u32 nf, u32 na) {
-  return !nf ? na : !na ? nf : app(zip(mem[nf],mem[na]),mem[nf+1]|mem[na+1]);
+  return !nf ? na : !na ? nf : app(zip(mem[nf],mem[na]),mem[nf+1] | mem[na+1]);
 }
 
 // convert lambda calculus to combinatory logic by Kiselyov's algorithm
@@ -213,6 +213,7 @@ u32 evac(u32 n) {
   return hp0;
 }
 
+// reallocate m to fit size u32's, zeroing the NCOMB primitive combinators
 u32 *reheap(u32* m, u32 size) {
   m = realloc(m, (size_t)size * sizeof(u32));
   if (!m)
@@ -240,7 +241,7 @@ void gc() {
   }
   if (qDblMem)
     gcmem = reheap(gcmem, memsize *= 2);
-  sp = gcmem + memsize - 2;
+  sp = gcmem + memsize - STACKRAIL;
   u32 di = hp = NCOMB;
   // gcmem[NCOMB..di-1] already index gcmem
   // gcmem[di..hp-1] still index old mem
@@ -296,14 +297,14 @@ static inline void lazy(u32 delta, u32 f, u32 a) {
       return;
     }
   }
-  /* assert(sp < spTop); */
+  assert(sp < spTop);
   sp += delta;
   u32 *p = mem + sp[1];
   *sp = p[0] = f; p[1] = a;
 }
 
 void run(u32 x) {
-  *(sp = spTop = mem + memsize - 2) = x;
+  *(sp = spTop = mem + memsize - STACKRAIL) = x;
   for (char outbits = 0; ; steps++) {
     if (dbgSTP && !(steps & STEPMASK))
       stats();
