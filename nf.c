@@ -1,5 +1,4 @@
-// John Tromp's Binary Lambda Calculus universal machine based on Ben Lynn's
-// ION machine at https://crypto.stanford.edu/~blynn/compiler/ION.html
+// John Tromp's Binary Lambda Calculus normal form machine
 
 #include <stdio.h>
 #include <unistd.h>
@@ -110,8 +109,7 @@ u32 parseBLC() {
 u32 unDoubleVar(u32 n, u32 db) {
   u32 udf, f = mem[db];
   if (f == 'V') {
-    // TODO // assert(mem[db+1] != n); // should be guaranteed by parent calls
-    return mem[db+1] == n ? 0 : db;
+    return mem[db+1] == n ? 0 : db; // Lam (Var n) might still occur
   }
   u32 uda, a = mem[db+1];
   if (f == 'L')
