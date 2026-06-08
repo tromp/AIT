@@ -7,9 +7,11 @@
 #include <stdint.h>
 #include <string.h>
 #include <getopt.h>
+#include <assert.h>
 #include <time.h>
 
 enum {
+  STACKRAIL = 2, // mimimum distance from top of stack to end of stack due to 'I' rewrite
   NCOMB = 128, // memory addresses 0..NCOMB-1 represent primitive combinators like 'S' or 'K'
   MINMEMSZ = 1<<20, // starting memory size
   MAXMEMSZ = 1<<31, // memory won't be doubled beyond this size
@@ -20,8 +22,7 @@ typedef uint32_t u32;
 u32 memsize, // current size of both mem and gcmem heaps in units of u32
     *mem,    // main memory heap holding LC and CL terms and on which graph reduction happens
     *gcmem,  // 2nd heap where GC stores all accessible terms before swapping back with main
-    *spTop,  // top of stack which is at top of memory (mem + memsize-2)
-    *etaTop, // top of currrent boehm node subject to eta expansion
+    *spTop,  // top of stack which is at top of memory (mem + memsize - STACKRAIL)
     nvar,    // number of eta expansions in boehm path down to current node
     *sp,     // stack pointer; stack grows down from top holding spine of CL applications
     hp,      // heap pointer where new app nodes are allocated
@@ -39,14 +40,17 @@ static inline u32 isComb(u32 n) {
   return n < NCOMB;
 }
 
+// create application of f to x at end of heap
 static inline u32 app(u32 f, u32 x) {
   mem[hp] = f;
   mem[hp+1] = x;
-  return (hp+=2)-2;
+  return (hp += 2) - 2;
 }
 
 u32 nbits, inbits, mode;
 
+// read 1 bit from stdin, using inbits as a 1-byte buffer
+// mode=0 for 1 bit per byte; mode=7 for 8 bits per byte
 u32 getbit() {
   if (!nbits) {
     nbits = mode;
@@ -55,27 +59,33 @@ u32 getbit() {
   return (inbits>>nbits) & 1;
 }
 
+// create the equivalent of f applied to a
 u32 clapp(u32 f, u32 a) {
-  return f=='K' && a=='I' ? 'F' // these rewrites are known to help
-       : f=='B' && a=='K' ? 'D'
-       : f=='C' && a=='I' ? 'T'
-       : f=='D' && a=='I' ? 'K'
-       : mem[f]=='B' && a=='I'? mem[f+1]
-       : mem[f]=='R' && a=='I'? app('T',mem[f+1])
-       : mem[f]=='B' && mem[f+1]=='C' &&  a=='T'? ':'
-       : mem[f]=='S' && mem[f+1]=='I' &&  a=='I'? 'M'
-       : !qOpt ? app(f, a)      // ones below require -q but never seem to occur
-       : f=='F' ? 'I'
-       : f=='S' && a=='K' ? 'F'
-       : f=='B' && a=='I' ? 'I'
-       : f=='C' && a=='C' ? 'R'
-       : mem[f]=='B' && mem[f+1]=='S' &&  a=='K'? 'B'
-       : mem[f]=='B' && mem[mem[f+1]]=='S' &&  a=='K'? app('C',mem[mem[f+1]+1])
-       : mem[a]=='K' && f=='S'? app('B',mem[a+1])
-       : mem[f]=='R' && mem[f+1]=='I' &&  a=='B'? 'I'
-       : app(f, a);   // switch(f) and switch(mem[f]) turn out to be WAY slower
+  return // these rewrites are known to help. BTW, switch(f) and switch(mem[f]) turn out to be WAY slower
+         f=='K' && a=='I' ? 'F'				// K I x y = I y = y = F x y
+       : f=='B' && a=='K' ? 'D'				// B K x y z = K (x y) z = x y = D x y z
+       : f=='C' && a=='I' ? 'T'				// C I x y = I y x = y x = T x y
+       : f=='D' && a=='I' ? 'K'				// D I x y = I x = x = K x y
+       : mem[f]=='B' && a=='I'? mem[f+1]		// B M I x = M (I x) = M x
+       : mem[f]=='R' && a=='I'? app('T',mem[f+1])	// R M I x = I x M = x M = T M x
+       : mem[f]=='B' && mem[f+1]=='C' && a=='T'? ':'	// B C T x y z = C (T x) y z = T x z y = z x y
+       : mem[f]=='S' && mem[f+1]=='I' && a=='I'? 'M'	// S I I x = I x (I x) = x x = M x
+       : !qOpt ? app(f, a)
+         // ones below require -q but never seem to occur
+       : f=='F' ? 'I'					// F I x = x = I x
+       : f=='S' && a=='K' ? 'F'				// S K x y = K y (x y) = y = F x y
+       : f=='B' && a=='I' ? 'I'				// B I x y = I (x y) = I x y
+       : f=='C' && a=='C' ? 'R'				// C C x y z = C y x z = y z x = R x y z
+       : mem[f]=='B' && mem[f+1]=='S' &&  a=='K'? 'B'	// B S K x y z = S (K x) y z = K x z (y z) = x (y z)
+       : mem[f]=='B' && mem[mem[f+1]]=='S' && a=='K'	// B (S M) K x y = S M (K x) y = M y (K x y) = M y x
+                          ? app('C',mem[mem[f+1]+1])	// = C M x y
+       : mem[a]=='K' && f=='S'? app('B',mem[a+1])	// S (K M) x y = K M y (x y) = M (x y) = B M x y
+       : mem[f]=='R' && mem[f+1]=='I' && a=='B'? 'I'	// R I B x y = B x I y = x (I y) = x y
+         // no optimization possible, so just make a new app node
+       : app(f, a);
 }
 
+// parse bcl combinator term from stdin
 u32 parseBCL() {
   if (!getbit())
     return "KS"[getbit()];
@@ -83,6 +93,8 @@ u32 parseBCL() {
   return clapp(f, a);
 }
 
+// parse blc encoded lambda term from stdin
+// (ab)using pseudo-combinators V and L to represent variables and lambdas
 u32 parseBLC() {
   u32 x;
   if (getbit()) {
@@ -97,8 +109,10 @@ u32 parseBLC() {
 // if DB term has all occurances of Var n doubled, return undoubled version, else return 0
 u32 unDoubleVar(u32 n, u32 db) {
   u32 udf, f = mem[db];
-  if (f == 'V')
-    return db;
+  if (f == 'V') {
+    // TODO // assert(mem[db+1] != n); // should be guaranteed by parent calls
+    return mem[db+1] == n ? 0 : db;
+  }
   u32 uda, a = mem[db+1];
   if (f == 'L')
     return (uda = unDoubleVar(n+1,a)) ? app('L', uda) : 0;
@@ -110,11 +124,12 @@ u32 unDoubleVar(u32 n, u32 db) {
 }
 
 // recognize recursive functions by (\x.x x) (\x. f (x x)) template
+// note that \x. x x would have been converted to clapp(clapp('S','I'),'I') = 'M'
 u32 recursive(u32 f, u32 a) {
   return f=='M' && mem[a]=='L' && mem[f=mem[a+1]]!='V' && (f=unDoubleVar(0,f)) ? app('L',f) : 0;
 }
 
-// Kiselyov bracket abstraction, explained in
+// combine step of Kiselyov bracket abstraction, explained in
 // https://crypto.stanford.edu/~blynn/lambda/kiselyov.html
 // based on the paper https://okmij.org/ftp/tagless-final/ski.pdf
 // we store list of booleans bools as foldr (\bool n-> app(n,bool?1:0)) 0 bools
@@ -134,10 +149,13 @@ u32 combineK(u32 n1, u32 d1, u32 n2, u32 d2) {
          :         combineK(mem[n1],d1, mem[n2],d2);
 }
 
+// zipWith(bitwise or) two list of booleans
 u32 zip(u32 nf, u32 na) {
-  return !nf ? na : !na ? nf : app(zip(mem[nf],mem[na]),mem[nf+1]|mem[na+1]);
+  return !nf ? na : !na ? nf : app(zip(mem[nf],mem[na]),mem[nf+1] | mem[na+1]);
 }
 
+// convert lambda calculus to combinatory logic by Kiselyov's algorithm
+// set list pn of booleans indicating variable use
 u32 convertK(u32 db, u32 *pn) {
   u32 nf, cf, na, ca, f = mem[db], a = mem[db+1];
   if (f == 'V') {
@@ -157,39 +175,45 @@ u32 convertK(u32 db, u32 *pn) {
   return combineK(nf,cf, na,ca);
 }
 
+// call Kiselyov bracket abstraction and verify lack of free variables
 u32 toCLK(u32 db) {
   u32 n, cl = convertK(db,&n);
   // if (n) die("program not a closed term");
   return cl;
 }
 
+// evacuate cell n from mem to gcmem returning new index
 u32 evac(u32 n) {
   if (isComb(n))
-    return n;
+    return n;	// only applications need to migrate
+  assert((n&1) == 0);
   u32 x = mem[n];
   u32 y = mem[x];
-  while (y == 'T') {
-    mem[n] = y = mem[n+1];
-    mem[n+1] = mem[x+1];
+  while (y == 'T') {		// migrate T M N as N M
+    mem[n] = y = mem[n+1];	// N
+    mem[n+1] = mem[x+1];	// M
     y = mem[x = y];
   }
-  if (y == 'K') {
-    mem[n+1] = mem[x+1];
+  if (y == 'K') {		// migrate K M N as I M
+    mem[n+1] = mem[x+1];	// M
+    x = mem[n] = 'I';
+  } else if (y == 'F') {	// migrate F M N as I N
     x = mem[n] = 'I';
   }
   y = mem[n + 1];
-  if (!x) return y;
+  if (!x) return y;		// !x signals past migration to y
   if (x == 'I') {
     mem[n] = 0;
     return mem[n+1] = evac(y);
   }
-  gcmem[hp] = x;
-  gcmem[hp+1] = y;
-  mem[ n] = 0;
-  mem[ n+1] = hp;
-  return (hp += 2) - 2;
+  u32 hp0 = hp;
+  gcmem[hp++] = x; gcmem[hp++] = y;	// migrate x y
+  mem[n] = 0;				// signal migration to
+  mem[n+1] = hp0;			// new index
+  return hp0;
 }
 
+// reallocate m to fit size u32's, zeroing the NCOMB primitive combinators
 u32 *reheap(u32* m, u32 size) {
   m = realloc(m, (size_t)size * sizeof(u32));
   if (!m)
@@ -208,6 +232,7 @@ void stats() {
   fprintf(stderr, "\nsteps %u heap %u stack %td\n", steps, hp, spTop - sp);
 }
 
+// run garbage collector
 void gc() {
   nGC++;
   if (dbgGC) {
@@ -216,8 +241,10 @@ void gc() {
   }
   if (qDblMem)
     gcmem = reheap(gcmem, memsize *= 2);
-  sp = gcmem + memsize - 2;
+  sp = gcmem + memsize - STACKRAIL;
   u32 di = hp = NCOMB;
+  // gcmem[NCOMB..di-1] already index gcmem
+  // gcmem[di..hp-1] still index old mem
   for (*sp = evac(*spTop); di < hp; di++) {
     u32 x = gcmem[di] = evac(gcmem[di]);
     di++;
@@ -261,19 +288,23 @@ static inline void lazy(u32 delta, u32 f, u32 a) {
     if (mem[sp[i+1]] != sp[i]) {
       if (mem[sp[i+1]+1] != sp[i]) die("Lazy orphan");
       sp -= 2;
-      mem[sp[i+3]+1] = sp[i+2] = app('L', sp[i+1] = app(sp[i] = sp[i+2], app('V', nvar++)));
+      u32 x = sp[i+2];
+      sp[i] = x;
+      sp[i+1] = app(x, app('V', nvar++));
+      mem[sp[i+3]+1] = sp[i+2] = app('L', sp[i+1]);
       if (mem[sp[i+1]] != sp[i]) die("Fucked orphan");
       sp += i;
       return;
     }
   }
+  assert(sp < spTop);
   sp += delta;
   u32 *p = mem + sp[1];
   *sp = p[0] = f; p[1] = a;
 }
 
 void run(u32 x) {
-  *(sp = spTop = mem + memsize - 2) = x;
+  *(sp = spTop = mem + memsize - STACKRAIL) = x;
   for (char outbits = 0; ; steps++) {
     if (dbgSTP && !(steps & STEPMASK))
       stats();
@@ -307,7 +338,9 @@ void run(u32 x) {
                   else mem[parent] = mem[left+1]; // bypass mem[left] == 'f'
                   if (++sp == spTop) return;
                 }
-                lazy(0, app('f', *sp), *sp = mem[parent+1]); break;
+                x = *sp;
+                *sp = mem[parent+1];
+                lazy(0, app('f', x), *sp); break;
       default: printf("ascii(%u)='%c'\n",x,x); die("unknown combinator");
     }
   }
@@ -320,10 +353,17 @@ u32 hasVar0(u32 db, u32 depth) {
   return hasVar0(f, depth) || hasVar0(a, depth);
 }
 
+u32 lowerVars(u32 db, u32 depth) {
+  u32 f = mem[db], a = mem[db+1];
+  if (f=='V') return app(f, a > depth ? a-1 : a);
+  if (f=='L') return app(f, lowerVars(a, depth+1));
+  return app(lowerVars(f, depth), lowerVars(a, depth));
+}
+
 u32 eta(u32 x) {
   u32 f = mem[x], a = mem[x+1];
   if (!isComb(f) && mem[a] == 'V' && mem[a+1]==0 && !hasVar0(f, 0))
-    return f;
+    return lowerVars(f, 0);
   return app('L', x);
 }
 
