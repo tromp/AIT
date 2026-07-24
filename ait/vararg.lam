@@ -31,4 +31,4 @@ in vararg   -- λn.n(λnλcλx.n(λl.c(λz.zxl)))(λl.l(λxλy.y))(λx.x)
 -- = S (S Z) (\l. id (cons 0 l)) 1 2
 -- = S Z (\l. cons 0 (cons 1 l)) 2
 -- = Z (\l. cons 0 (cons 1 (cons 2 l)))
--- = cons 0 (cons 1 (cons 2 l))
+-- = cons 0 (cons 1 (cons 2 nil))
