@@ -45,9 +45,13 @@ let
   O8 = \l.C3 (\f\x.f(f x));  -- size 41 -- \l.C3 C2 has size 44 unless optimizing with slack >= 4
   O9 = \l.C2 C3;             -- size 41
 
-  -- Owe2 = \l\s\z.l(\n.n(\x.l(\n.n s x)) z); -- size 50  w^2
+  -- Ow2 = \l\s\z.l(\n.n(\x.l(\n.n s x)) z); -- size 50  w^2
   -- Discord user triangle_but_5_d found a shorter equivalent:
-  Owe2 = \l.(\s\z.s(s z))(\s\z.l(\n.n s z));  -- size 45  w^2
+  Ow2 = \l. C2 (\s\z.l(\n.n s z));  -- size 45  w^2
+  Ow3 = \l. C3 (\s\z.l(\n.n s z));  -- size 50  w^3
+
+  Ow4 = \l. C4 (\s\z.l(\n.n s z));  -- size 55  w^4
+  Ow5 = \l. C5 (\s\z.l(\n.n s z));  -- size 60  w^5
 
   Owp4 = Succ Owp3;          -- size 47
   Owt2 = \l\s\z.l(\n.n s(l(\n.n s z)));    -- size 48  w*2
@@ -99,8 +103,7 @@ let
   --                = Lim (\i. exp n (f i))
 
   expw = exp Ow;                              -- size 61
-  Owe3 = let Owe2 = mul Ow Ow in mul Owe2 Ow; -- size 70
-  Owe2p1 = let Owe2 = mul Ow Ow in Succ Owe2; -- size 55
+  Ow2p1 = let Ow2 = mul Ow Ow in Succ Ow2; -- size 55
   Oww      = expw Ow;                         -- size 57  w^w   -- \\\3 (\1 (\\6 (\1 3 2)) 3 2)
   Oeps0_   = Lim (\n. n expw O1);             -- size 105  epsilon_0 as sup {1,w,w^w,w^w^w,...}
   -- patcail optimization
@@ -186,7 +189,7 @@ let
   -- Fundamental sequence for w1CK
   -- w1CKi is the BLC-lexicographically-minimal ordinal exceeding all w1CKj for j < i
   -- similar to a Busy Beaver for ordinals
-  -- Conjectured first 9 elements:
+  -- Conjectured first 11 elements:
   w1CK0 = O1;   -- size 6
   w1CK1 = O2;   -- size 18
   w1CK2 = O3;   -- size 23
@@ -194,6 +197,8 @@ let
   w1CK4 = Owp1; -- size 32
   w1CK5 = Owp2; -- size 37
   w1CK6 = Owp3; -- size 42
-  w1CK7 = Owe2; -- size 45
-  w1CK8 = Oww;  -- size 57
+  w1CK7 = Ow2;  -- size 45
+  w1CK8 = Ow3;  -- size 50
+  w1CK9 = Ow4;  -- size 55
+  w1CK10 = Oww; -- size 57
 in Oww
