@@ -1,3 +1,4 @@
+-- Found my user MJCount in Esolangs Discord
 let
   C0 = \f\x. x;  -- size 6
   C1 = \f. f;        -- size 4
