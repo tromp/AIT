@@ -56,6 +56,11 @@
         = n+1 n n+2 = n n n+2 = ... = KA KA n+2 = A n+2
 	(\1 (\2)) A = A KA = A 0 = A 1 =...
 (32,298,\(\1 1) (\1 (1 (2 (\2))))) 975507
+-- Let T x = x (x (y Kx))
+-- \y. T T
+-- = \y. T (T (y KT))
+-- = \y. y KT (y KT (y (K (y KT)))) (y KT (y KT (y (K (y KT)))) (K (y KT (y KT (y (K (y KT)))))))
+
 32: closed 978447 halt 975507 nonhalt 2939 fail 1  33.9354s
 -- TODO: (\1 1) (\1 (\\1 (3 2)))
 	Let A x = x (\y. <x y>)
