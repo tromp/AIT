@@ -1,14 +1,18 @@
 -- has a normal form (namely, \x.x) iff the Goldbach conjecture is false
 let
+  -- Discord Googology and Apeirology user AUGL found a 1-bit optimization
+  -- by abstracting the (\x. x x) common in three implicit uses of Y
+  -- making Y explicit turns out to save even more; 10 bits
+   Y = \f. (\x. x x) (\x. f(x x));
    zero = \x\y.x;
    one = \x\y.y;
-   sieve = \N\p.p one (let
+   sieve = Y (\siev\N\p.p one (let
      SN = \r.let oneS = \cont\x\xs\p.p x (xs cont) in oneS (oneS (N r));
-     F = SN F in (sieve SN) F);
+     F = Y (\f. SN f) in (siev SN) F));
    zeroS = \cont\x\xs\p.p zero (xs cont);
    primes = sieve zeroS;
-   check = \testp\p.
+   check = Y (\chec\testp\p.
      let testp1 = \q.q q p (\qs.qs testp) q in -- note: last q = \qs\v.v
-     \ps.primes testp1 (ps (check testp1));
+     \ps.primes testp1 (ps (chec testp1)));
    main = primes (check (\q\qs\v\x.x))
-in main
+in main  -- 257 bits
