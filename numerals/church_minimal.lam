@@ -1,4 +1,4 @@
--- Found my user MJCount in Esolangs Discord
+-- Found by user MJCount in Esolangs Discord
 let
   C0 = \f\x. x;  -- size 6
   C1 = \f. f;        -- size 4
@@ -8,7 +8,7 @@ let
   C5 = \f\x. f (f (f (f (f x))));    -- size 31
   C6 = \f\x. f (f (f (f (f (f x)))));    -- size 36
   C7 = \f\x. f (f (f (f (f (f (f x))))));    -- size 41
-  C8 = C3 C2;    -- size 39
+  C8 = \f. (\c. (c (c c f))) C2; -- size 37 with blc-O6
   C9 = C2 C3;    -- size 39
   -- C10 = \f\x (C5 x @2 f;
   -- C11 = (C2 1 (\n\f\x (f(f((n(n f x);
@@ -301,4 +301,4 @@ let
   -- C299 = \f\x (f(f (\c ((c(c((ccf (C2 x ((ccf 3;
   -- C300 = \f (\c (c (C2 f (\f\x (f((c(cf x) 3;
   -- C301 = (\c (((cc (\n\f\x (f(f(f((c(n f x) ((ccc 2
-in C9
+in C8

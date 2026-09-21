@@ -1,6 +1,6 @@
 -- has a normal form (namely, \x.x) iff the Goldbach conjecture is false
 let
-  -- Discord Googology and Apeirology user AUGL found a 1-bit optimization
+  -- Discord Googology and Apeirology user DropperAUGL found a 1-bit optimization
   -- by abstracting the (\x. x x) common in three implicit uses of Y
   -- making Y explicit turns out to save even more; 10 bits
    Y = \f. (\x. x x) (\x. f(x x));
