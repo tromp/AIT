@@ -25,14 +25,17 @@ let
   dbl = \x. x x;
   omega = dbl dbl;
 
-  intL2 = dbl (\x. let intL = x x in
+  intL = dbl (\x. let intL = x x in
      \cont.
        let next = (\bit1.intL (\exp.bit1
              (cont (\args\arg.exp (cons' arg args)))
              (intL (\exp2.cont (\args.exp args (exp2 args))))))
        in \list.list (\bit0\list1.bit0 (list1 next)
             (cont list1 (skipvar list1))));
-in intL2 (\z.z omega) -- size 190 bits
+
+  uni_non_strict = intL dbl; -- size 178 bits
+  uni = intL (\z.z omega)    -- size 190 bits
+in uni
 
 -- test with
 -- (cat delimit.blc; echo -n 1111000111001) | ../blc run uni.lam
