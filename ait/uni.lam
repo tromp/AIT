@@ -1,8 +1,10 @@
+-- binary LC universal machine for closed programs
 -- Discord user 50_ft_lock disproved my longstanding conjecture
 -- "that any self-interpreter for any binary representation of lambda calculus
 -- must be at least 24 bytes in size"
 -- by drastically optimizing it from 206 bits down to 170 bits using
 -- cons' and skipvar below
+-- Sean Palmer further optimized the universal machine by 6 bits
 
 let
   -- binary LC interpreter
@@ -19,18 +21,18 @@ let
   -- (1:l) (1:l) = (1:l) 1 l = l l
   -- (0:l) (0:l) = (0:l) 0 l = 0 l
 
-  intL = \cont\list. list (\bit0\list1. bit0
-     (list1 (\bit1. intL (\exp. bit1 (cont (\args\arg. exp (cons' arg args)))
-                                     (intL (\exp2. cont (\args. exp args (exp2 args)))))))
-     (cont list1 (skipvar list1)));
-
   -- loop
-  omega = omega;
+  dbl = \x. x x;
+  omega = dbl dbl;
 
-  -- binary LC universal machine for closed programs
-  uni = intL (\z.z omega);
-
-in uni
+  intL2 = dbl (\x. let intL = x x in
+     \cont.
+       let next = (\bit1.intL (\exp.bit1
+             (cont (\args\arg.exp (cons' arg args)))
+             (intL (\exp2.cont (\args.exp args (exp2 args))))))
+       in \list.list (\bit0\list1.bit0 (list1 next)
+            (cont list1 (skipvar list1))));
+in intL2 (\z.z omega) -- size 190 bits
 
 -- test with
 -- (cat delimit.blc; echo -n 1111000111001) | ../blc run uni.lam
