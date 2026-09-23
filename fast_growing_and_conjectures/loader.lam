@@ -1,3 +1,7 @@
+-- Discord user DrooperAUGL wrote a python program for optimizing lambda calculus binaries
+-- by beam searching on beta expansions and reductions, that led to optimizing loader from
+-- 1850 bits down to 1797.
+
 let  derive = (let
   -- 
   Y = \f. (\x. x x) (\x. f(x x));
