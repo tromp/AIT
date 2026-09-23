@@ -1,4 +1,4 @@
--- Discord user DrooperAUGL wrote a python program for optimizing lambda calculus binaries
+-- Discord user DropperAUGL wrote a python program for optimizing lambda calculus binaries
 -- by beam searching on beta expansions and reductions, that led to optimizing loader from
 -- 1850 bits down to 1797.
 
