@@ -3,18 +3,31 @@ let
   -- trees are made from cons nodes and nil leaves
   cons  = \a\b\c.c a b;
   -- nil = \x\y.y -- false
-  -- inequality on trees; return (cons _ _) on different inputs; nil/false on equal inputs
-  neq   = \s\t.s (\a\b\t.t (\a'\b'\s.neq a a' (\_\_\_.s) (neq b b')) s) t;
-  -- substitute y for subtrees x in tree t
-  subs  = \x\y. let go = \t. neq t x (\_\_\_. t (\a\b\_. cons (go a) (go b)) t) y in go;
+
   -- post applied non-nil-tree predecessor
-  tpred = \a\b. a (\_\_\b. let t' = cons (a tpred) b in subs b t' t') b; -- 291 bits
+  -- 284 bits
+  -- Optimization: the recursion is an explicit knot (self self = tpred), so
+  -- that a tpred can be bound to p outside the lambda taking the node's
+  -- children. The helpers are bound after p, inside it, which is what makes
+  -- the compiler keep p instead of substituting it back (3 bits for const3,
+  -- 2 for p, 2 for map2).
+  tpred = (\x.x x) (\self\a. a (let
+    p = a (self self);
+    -- inequality on trees; return (cons _ _) on different inputs; nil/false on equal inputs
+    neq   = \s\t.s (\a\b\t.t (\a'\b'\s.neq a a' (\_\_\_.s) (neq b b')) s) t;
+    -- constant function of four arguments, for ignoring three arguments
+    const3 = \x\_\_\_.x;
+    -- node with f applied to both children, taking a spare argument first
+    map2  = \f\a\b\_. cons (f a) (f b);
+    -- substitute y for subtrees x in tree t
+    subs  = \x\y. let go = \t. neq t x (const3 (t (map2 go) t)) y in go
+  in \_\_\b. let t' = cons p b in subs b t' t'));
 
   -- tree to church
   t2c = \t\f.let go = \t.t (\_\_\x.f (go (t tpred) x)) in go t;
 
   t0 = \x\y.y;
-  grow = \n.t2c (n (\t. cons t t0) t0); -- 389 bits
+  grow = \n.t2c (n (\t. cons t t0) t0); -- 382 bits
 
   tsucc = cons t0;
   t1 = tsucc t0;
@@ -26,13 +39,12 @@ let
   1 = \f\x.f x;
   2 = \f\x.f (f x);
   3 = \f\x.f (f (f x));
-in 2 2 grow 2 -- 421 bits
+in 2 2 grow 2 -- 414 bits
 
--- (λ 1 1 (λ λ (λ 1 1) (λ λ 1 (λ λ λ 6 (5 5 (4 ((λ 1 1) (λ λ 1 (λ λ λ (λ (λ 1 1) (λ (λ λ (λ 1 1) (λ (λ λ 1 (λ λ λ 1 (λ λ λ 8 6 3 (λ λ λ 4) (8 5 2)) 4)) (1 1)) 1 5 (λ λ λ 4 (λ λ λ λ 1 (9 4) (9 3)) 4) 4) (1 1)) 1) (λ 1 (5 (6 6)) 2))))) 1))) (2 (λ λ 1 2 (λ λ 1)) (λ λ 1))) 1) (λ λ 2 (2 1))
+-- (λ 1 1 (λ λ (λ 1 1) (λ λ 1 (λ λ λ 6 (5 5 (4 ((λ 1 1) (λ λ 1 ((λ λ λ λ (λ (λ 1 1) (λ λ (λ 1 1) (λ (λ λ 1 (λ λ λ 1 (λ λ λ 8 6 3 (λ λ λ 4) (8 5 2)) 4)) (1 1)) 1 4 ((λ λ λ λ 4) (1 ((λ λ λ λ λ 1 (5 4) (5 3)) (2 2)) 1)) 3) 1) (λ 1 5 2)) (1 (2 2)))))) 1))) (2 (λ λ 1 2 (λ λ 1)) (λ λ 1))) 1) (λ λ 2 (2 1))
 -- (λC2 C2 C2
--- grow@(λn λf (λ 1 1) (λgo λt t (λ_ λ_ λx f (go go (t ((λ 1 1) (λtp λa a (λ_ λ_ λb (λy (λ 1 1) (λ (λx λt (λ 1 1) (λgo (λ λ 1 (λ λ λ 1 (λ λ λ 8 6 3 (λ λ λ 4) (8 5 2)) 4)) (1 1)) 1 5 (λ λ λ 4 (λa λb λ_ λz z (go a) (go b)) t) y) (1 1)) 1) (λz z (a (tp tp)) b))))) x))) (n (λt λz z t t0@(λ λ 1)) t0@(λ λ 1)))
+-- grow@(λn λf (λ 1 1) (λgo λt t (λ_ λ_ λx f (go go (t ((λ 1 1) (λtp λa a ((λp λ_ λ_ λb (λy (λ 1 1) (λgo λt (λ 1 1) (λ (λneq λs s (λa λb λt t (λa2 λb2 λs2 neq a a2 (λ_ λ_ λ_ s2) (neq b b2)) s)) (1 1)) t b ((λx λ_ λ_ λ_ x) (t ((λf λa λb λ_ λc c (f a) (f b)) (go go)) t)) y) y) (λc c p b)) (a (tp tp)))))) x))) (n (λt λz z t t0@(λ λ 1)) t0@(λ λ 1)))
 -- C2) (λf λx f (f x))
-
 
 -- t2c (cons tm tn)	0	1	2	3	4	5     n=6
 ----------------+--------------------------------------------------------

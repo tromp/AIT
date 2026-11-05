@@ -1,4 +1,4 @@
--- 830 bit brainfuck interpreter with
+-- 806 bit brainfuck interpreter with
 -- 8-bit cells and unbounded tape in both directions
 -- input appears after a ']' uniquely delimiting the BF program
 let
@@ -15,28 +15,35 @@ let
          ) (cont list) in step;
   op = \down. step down id id;
 
-  -- this version is 4 bits shorter
+  -- this version is 4 bits shorter, and next is bound outside the unused
+  -- \dummy lambda to keep the indices of its free variables small
   alu = \down.let alu = \list\cont.list
-         (\msb\r\dummy.alu r (\ret\f.cont (\p.p (f msb) ret)
-          (down (msb f id) (msb id f))))
+         (\msb\r.let next = alu r (\ret\f.cont (\p.p (f msb) ret)
+                                  (down (msb f id) (msb id f))) in \dummy.next)
          (cont list not) in alu;
   op = \down\cell. alu down cell true;
   -- iszero = \cell. alu true cell false false;
 
   -- foo post-applied to a list, returns body.loop body if all 0s, else id
-  loop = \body.let loop = \cont\cell.
-    cell (let foo = \b\l.b (l foo) (\c.body (loop c)) in foo) cont cell in loop;
+  -- (again is bound outside of \cont\cell, which it does not depend on)
+  loop = \body.let loop = let again = \c.body (loop c) in \cont\cell.
+    cell (let foo = \b\l.b (l foo) again in foo) cont cell in loop;
 
-  parse = \cont\bfs.bfs (\bf.let fls=false in bf fls fls fls (\b4\bf4.bf4 fls fls(\b1\bf1.bf1 (\b0\bla.
-     let more=\sim1.parse (\sim2.cont (\cont.sim1 (sim2 cont))) in b4 (more (
-      b0 (\cont\cell\right\left\input.b1 (input (\b.cont b right left))            -- ,
-                                         (\z.z cell (cont cell right left input))) -- .
+  -- bindings sit outside the lambdas that they do not depend on, which keeps the
+  -- indices of their free variables small: more outside \b1, instr outside the
+  -- unused \bla, rest outside \bf1, and k (for ,) outside \input
+  parse = \cont\bfs.bfs (\bf.let fls=false in bf fls fls fls (\b4\bf4.bf4 fls fls (
+     let more=\sim1.parse (\sim2.cont (\cont.sim1 (sim2 cont))) in \b1.
+     let rest=\b0.let instr=b4 (more (
+      b0 (\cont\cell\right\left.let k=\b.cont b right left in \input.
+                                       b1 (input k)                          -- ,
+                                          (\z.z cell (k cell input)))        -- .
          (\cont\cell.cont (op b1 cell))))(                                         -- -/+
       b0 (more (\cont\cell\right\left.b1 (left  (\b.cont b  (\z.z cell right)))    -- <
                                          (right     cont    (\z.z cell left))))(   -- >
         b1 (cont id)                                                               -- ]
            (parse (\body.more (loop body))                                         -- [
-    )))))));
+    ))) in \bla.instr in \bf1.bf1 rest)));
 
   byte0 = let two=\f\x.f(f x); three=\f.f(f(f(\l\z.z true l))) in three two nil;
   rpt0 = let rpt=\z.z byte0 rpt in rpt

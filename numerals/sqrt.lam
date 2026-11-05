@@ -24,9 +24,11 @@ let
   lt  = \m\n\t\f.  n T (\_.f) (m T (\_.t));
   leq = \n\m\t\f.  n T (\_.t) (m T (\_.f));
 
-  -- square root, rounded down, 118 bits
+  -- square root, rounded down, 116 bits
+  -- go n = leq (sq n1) sqr (go n1) n where n1 = succ n, with leq expanded:
+  -- its second half, sqr T (\_.n), doesn't use n1, so it stays outside the let
   sqrt = \sqr. let
-    go = \n. let n1 = succ n in leq (sq n1) sqr (go n1) n
+    go = \n. (let n1 = succ n in sq n1 T (\_.go n1)) (sqr T (\_.n))
   in go 0
 
 in sqrt -- 10

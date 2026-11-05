@@ -8,22 +8,27 @@ let
   nil = false;
   cons = \a\b\p.p a b;
 
-  leq = \a\b.a (\ahead\atail\z.
-                  (b true ahead (not ahead))
-                  (leq atail (b false))
-                  ahead)
+  -- The cons case of a list gets head, tail and the (ignored) nil case.
+  -- Here that last argument z is bound after the body, which doesn't use
+  -- it, so the body sits one lambda shallower.
+  leq = \a\b.a (\ahead\atail.
+                  let r = (b true ahead (not ahead))
+                          (leq atail (b false))
+                          ahead
+                  in \z.r)
                true;
 
   insert = \x. let insertx = \list.
+    let xlist = cons x list in
     list
     (\head\tail\lx.
       leq head x
       (cons head (insertx tail ))
-      (cons x list) )
-    (cons x list)
+      xlist )
+    xlist
   in insertx;
 
-  sort = \list.		-- 300 bits
+  sort = \list.		-- 290 bits
     list (let go = 
            (\head\tail\z.
              insert head (tail go z))

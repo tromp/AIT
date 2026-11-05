@@ -19,21 +19,20 @@
   F = \m\f\t. m 1tuple (\c. f (c t)) id;
   div = \n\m. \f\x. n 1tuple (K x) (n (F m f) x);
 
-  -- 2+471 bits
+  -- 2+452 bits
   go = \c.
       let f = \a'. div a' c not in \a\b.
-      let add  = \a\b\s\z. a s (b s z);
-          succ = add 1;
-          d    = f a true;
-          d'   = f (add a b) d
-      in  d' (\n. cons d (go c (add a a) (add b b) n))
-             (\n. let n'  = succ n;
-                      2n1 = add n n';
-                      b'  = mul b n
-                  in  go (mul 2n1 c) (add (mul 2n1 a) b') b' n');
+      let add  = \a\b\s\z. a s (b s z)
+      in  -- the bindings are lambda parameters applied to arguments rather than
+          -- nested lets, so that the arguments don't get shifted by each other;
+          -- the second branch sits outside their scope for the same reason
+          (\next\d. f (add a b) d (\n. cons d (next n)))
+              (go c (add a a) (add b b)) (f a true)
+          (\n. (\2n1\b'. go (mul 2n1 c) (add (mul 2n1 a) b') b')
+                  (add n (add 1 n)) (mul b n) (add 1 n));
   pi1 = go 1 1 1 1;
 
-  -- YOLO, 2+432 bits
+  -- YOLO, 2+436 bits
   step = \cont\n\c\a\b.
       let n'  = succ n;
           2n1 = add n n'

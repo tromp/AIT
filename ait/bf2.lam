@@ -16,16 +16,20 @@
   alu   = \n.let alu = \xs\cnt.xs
            (\x\xs\dummy.alu xs (\xs\f.cnt (\p.p (f x) xs) (n x f id)))
            (cnt xs not) in alu;
-  arith = \n\cnt\x.cnt (alu n x true);
 
   isz   = \x.alu id x false false;
   loop  = \body\cnt.let loop = \x.isz x (cnt x) (body loop x) in loop;
-  loop  = \body.let loop = \cont\cell.
-    cell (let foo = \b\l.b (l foo) (\c.body (loop c)) in foo) cont cell in loop;
+  -- again is bound outside of \cont\cell, which it does not depend on
+  loop  = \body.let loop = let again = \c.body (loop c) in \cont\cell.
+    cell (let foo = \b\l.b (l foo) again in foo) cont cell in loop;
 
-  parse = 
-    let op = \op.\u\xs.xs parse (\cnt\xs.\p.p (\f.op (cnt f)) xs);
-        nop = op id;
+  -- explicit knot (self self = parse), so that next, which parses the rest of
+  -- the program and hands it to k, can be shared between op and [
+  parse = (\x.x x) (\self.
+    let next = \k\u\xs.xs (self self) k in
+    -- arith and op are bound in parallel, so that op isn't shifted by arith
+    (\arith\op.
+    let nop = op id;
         b = \t\f\x.x (\bit\x.bit t f x);
         0 = \t.b t nop;
         1 = b nop
@@ -36,8 +40,10 @@
                  (0(op putc)))))                                   -- .
            (1(1(b(0(op left))                                      -- <
                  (0(op right)))))))                                -- >
-       (0(1(1(b(1(1(\u\xs.xs parse (\body.op (loop body) body))))  -- [
-               (0(1(\u\xs.\p.p id xs))))))));                      -- ]
+       (0(1(1(b(1(1(next (\body.op (loop body) body))))           -- [
+               (0(1(\u\xs.\p.p id xs))))))))                      -- ]
+    ) (\n\cnt\x.cnt (alu n x true))
+      (\op.next (\cnt\xs.\p.p (\f.op (cnt f)) xs)));
   zeros = \p.p (let two = \f\x.f (f x); three = \f.f (f (f (\xs\p.p true xs)))
                 in  three two nil) zeros;
   cont = \p.zeros (p (\x\ls\rs\io.nil)) p

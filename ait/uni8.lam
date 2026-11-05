@@ -1,21 +1,35 @@
+-- BLC8 universal machine for closed programs: 304 bits (38 bytes)
+-- a9lim reduced it from 355 bits (344 for the IOCCC uni8.Blc):
+-- every bit is read through one reader, get, which refills from the next
+-- byte when the current one runs out. A refill always lands on a fresh byte
+-- of eight bits, so get never needs to refill twice and is not recursive.
+-- The parser branches on a code's first bit before reading the second, and
+-- step takes that first bit as an argument: after a variable's tag 11, the
+-- second 1 is also the first bit of the rest of its code, so step re-enters
+-- with it instead of pushing it back onto the stream.
+-- Variables keep the Scott-pair environment.
+\bytes.bytes (
 let
-  -- binary LC interpreter
-  -- int8 cont bits bytes = cont (\free.parsed) unparsed_bytes
-  int8 = \cont\bits.bits (\bit0\bits1\z.bits1 (\bit1\bits2\z.(\cont.bit0
-    (int8 (\exp.bit1 (cont (\args\arg.exp (\z.z arg args)))
-                   (int8 (\exp2.cont (\args.exp args (exp2 args))))) bits2)
-    (bit1 (cont (\args.args bit1) bits2)
-         (int8 (\var.cont (\args.var (args bit1))) bits1))) cont)
-      (\bytes.bytes (\byte.int8 cont (\z.z bit0 byte))))
-    (\bytes.bytes (int8 cont));
-  
-  -- loop
-  omega = omega;
-
-  -- binary LC universal machine for closed programs
-  uni8 = \bytes.bytes (int8 (\exp\bits.exp omega))
-  
-in uni8
+  -- get k bits = k bit bits', reading the next byte when bits is nil
+  get = \k.(\h\bits.bits h (\bytes.bytes (\byte.byte h byte)))
+              (\b\tail\ignored.k b tail);
+  -- step cont b bits parses a term whose first bit b is already read
+  step =
+    let int8 = \cont.get (step cont)
+    in \cont\b.get (\c.b
+      (int8 (\exp.c
+        (cont (\args\arg.exp (\z.z arg args)))
+        (int8 (\exp2.cont (\args.exp args (exp2 args))))))
+      (c (cont (\args.args c))
+         (step (\var.cont (\args.var (args c))) c)))
+in
+  -- free variables diverge in the base environment get get get, which
+  -- has no head normal form: it reduces to ever more leading lambdas and
+  -- never to a head variable, so like (\x.x x) (\x.x x) it gives every
+  -- program the same normal form, or none.
+  -- (\x.x) instead gives a non-strict machine of 283 bits (36 bytes):
+  -- cont exp bits bytes = exp bits bytes = M bytes for closed M
+  get (step (\exp\bits.exp (get get get))))
 
 -- test with
 -- cat id.Blc id.lam | ./blc run8 uni8.lam

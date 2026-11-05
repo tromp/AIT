@@ -2,8 +2,10 @@
 -- "that any self-interpreter for any binary representation of lambda calculus
 -- must be at least 24 bytes in size"
 -- by drastically optimizing it from 206 bits down to 170 bits using
--- the seemingly magical cons' and skipvar below
--- Sean Palmer further optimized by 2 bits
+-- the seemingly magical cons' below and skipvar (\l. l l l)
+-- Sean Palmer further optimized by 2 bits,
+-- skipping the whole stream before dispatch saves 3 more,
+-- and letting the stream select its own tail saves 3 more
 
 let
   -- binary LC interpreter
@@ -15,16 +17,20 @@ let
   -- (1:l) (cons' x0 xs1) = cons' x0 xs1 false l = false x0 (l xs1) = l xs1
   -- so for instance "1110..." (cons' x0 (cons' x1 (cons' x2 (cons' x3 _)))) = x3
 
-  skipvar = \l. l l l;
-  -- skips a variable encoding (e.g. skipvar "1110..." = "...") based on:
-  -- (1:l) (1:l) = (1:l) 1 l = l l
-  -- (0:l) (0:l) = (0:l) 0 l = 0 l
+  -- reader: list I V next, where V = \next. list (\_. cont) (list list next)
+  -- and next = \bit1. ..., the parser's second-tag stage.
+  -- "list I" makes the first cell its own selection, bit0 list1:
+  -- on a 0 tag that is K list1, so the zero branch is list1 itself, applied
+  -- to next: list1 next = next bit1 list2.
+  -- On a variable (1:l) it is F l, which selects V and passes it next.
+  -- V reopens the whole stream: list (\_. cont) hands l to cont, and
+  -- list list next skips past the variable's first 0, as skipvar did:
+  -- (1:l) (1:l) = l l, (0:l) (0:l) = 0 l, so list list next = the rest,
+  -- with next as an erased third operand.
 
   intL = (\x. x x) (\x. let intL = x x in
-     \cont.
-       let next = (\bit1.intL (\exp.bit1
+     \cont. \list. list (\a. a) (\next. list (\_. cont) (list list next))
+       (\bit1.intL (\exp.bit1
              (cont (\args\arg.exp (cons' arg args)))
-             (intL (\exp2.cont (\args.exp args (exp2 args))))))
-       in \list.list (\bit0\list1.bit0 (list1 next)
-            (cont list1 (skipvar list1))));
-in intL -- size 168 bits
+             (intL (\exp2.cont (\args.exp args (exp2 args)))))));
+in intL -- size 162 bits

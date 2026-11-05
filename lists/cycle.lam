@@ -1,5 +1,10 @@
 let
-  rec = \x\xs\ys\p.p x (xs rec ys);
-  cat = \xs.xs rec;
-  cycle = \xs. let cyc = cat xs cyc in cyc
+  cycle = \xs.
+    let
+      -- Y is local, so that the one use in rec and the one in the
+      -- cycle itself share it, and xs is not in front of it
+      Y = \f.(\x.x x) (\x.f (x x));
+      rec = Y (\rec\x\xs\ys\p.p x (xs rec ys));
+      cat = xs rec    -- cat ys = xs followed by ys
+    in Y cat          -- cyc = cat cyc
 in cycle

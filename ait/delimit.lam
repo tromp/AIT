@@ -8,9 +8,10 @@ let
  one = id;
 
  -- readbit cont n (bit:list) = cont (2*n+bit) list
- readbit = \cont\n\list.list (\bit.cont (\f\x.(n f (n f (bit x (f x))))));
+ -- nf = n f is shared by the two uses
+ readbit = \cont\n\list.list (\bit.cont (\f.let nf = n f in \x.nf (nf (bit x (f x)))));
 
- -- 139 bit decoder
+ -- 138 bit decoder
  -- delimit cont (levenstein_code_for_n ++ list) = cont n list
  delimit = \cont\list.list (\bit.bit (cont zero) (delimit (\len.len readbit cont one)));
 
@@ -23,7 +24,7 @@ let
  nil = false;
  -- 185 bit converter
  church2bits = \n\_.n inc nil;
-in delimit church2bits -- 2 + 139 + 185 =  326 bits
+in delimit church2bits -- 2 + 138 + 185 =  325 bits
 
 -- test with
 

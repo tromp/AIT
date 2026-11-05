@@ -1,15 +1,15 @@
 -- nf outputs the normal form of the input blc term
 let
+  -- one fixpoint combinator shared by both recursive functions
+  Y = \f. (\x. x x) (\x. f (x x));
+
   id    = \x.x;
   true  = \t\f.t;
   false = \t\f.f;
   nil   = false;
   cons  = \x\y\z. z x y;
-  cons0 = cons true;
   cons1 = cons false;
   compose = \f\g\x. f (g x);
-  cons00 = compose cons0 cons0;
-  cons01 = compose cons0 cons1;
   tail = \l. l false;
   succ = \n\f\x.f (n f x);
   zero = false;
@@ -23,22 +23,30 @@ let
   A = \t1\t2. \l\a\v. a t1 t2;
   V = \d.     \l\a\v. v d;
 
-  parseval = \cont\xs.
-    xs (\b0\ys\parseval\cont.ys (\b1. b0
-       (parseval (\t1.(b1 (cont (\ctx. L (\v.t1 (\p.p v ctx))))
-         (parseval (\t2.cont (\ctx. let tc1 = t1 ctx; A1 = A tc1
-           in tc1 (\f. f) (\_\_. A1) (\_. A1) (t2 ctx)))))))
-       (b1 (cont (\ctx. ctx b1))
-           (\d.parseval (\v.cont (\ctx. v (ctx b1))) ys))))
-       parseval cont;
+  -- apply t to u: beta reduce if t is a Lam, else build an App;
+  -- A1 drops V's field, and under one more \_ both of A's
+  appT = \t. let A1 = \_. A t in caseT t id (\_. A1) A1;
 
-  ser = \t\lvl. caseT t
+  -- parser after int.lam (cons' cells, the variable's code as its lookup,
+  -- the stream selecting its own tail), ported by a9lim
+  parseval = Y (\parseval. \cont. \xs.
+      xs (\a. a) (\next. xs (\_. cont) (xs xs next))
+      (\b1. parseval (\t1. b1
+         (cont (\ctx. L (\v. t1 (\zx\zy. zx v (zy ctx)))))
+         (parseval (\t2. cont (\ctx. appT (t1 ctx) (t2 ctx)))))));
+
+  -- cons0 is bound inside ser, where its de Bruijn index is small
+  ser = Y (\ser. \t. let
+      cons0  = cons true;
+      cons00 = compose cons0 cons0;
+      cons01 = compose cons0 cons1
+    in \lvl. caseT t
     -- Lambda: apply to a free variable to further reduce whnf
     (\f.     compose cons00 (ser (f (V lvl)) (succ lvl)))
     -- Application
     (\t1\t2. compose cons01 (compose (ser t1 lvl) (ser t2 lvl)))
     -- Variable
-    (\v.     compose (v tail) (compose (lvl cons1) cons0));
+    (\v.     compose (v tail) (compose (lvl cons1) cons0)));
 
   nf = parseval (\t. ser (t t) zero)
 in nf

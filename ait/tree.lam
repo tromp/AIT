@@ -7,7 +7,8 @@ let
   -- apply node to 3 arguments x (reduced), y, and z
   step = \x\y\z. x (\x1\x'. x1
     (\x2\w. ap (ap z w) x') -- △(△wx)yz = z w x
-    (ap (ap y z) (ap x' z)) -- △(△x) yz = y z (x z)
+    (\a\n. let apz = \x. ap x z in a (apz y) (apz x')) -- △(△x) yz = y z (x z)
+                            -- i.e. ap (ap y z) (ap x' z), with ap _ z shared
     ) y;                    -- △ △   yz = y
   -- evaluate an arbitrary tree
   eval = \t. t  (\t1.       -- delay \z

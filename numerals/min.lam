@@ -7,5 +7,6 @@ let
   -- 1-tuple
   T = \x\y. y x;
 
-  min = \n\m. n T (K n) (m T (K m));
+  -- dyn is bound inside \n\m, next to its two uses
+  min = \n\m. let dyn = \n. n T (K n) in dyn n (dyn m);
 in min -- 3 2

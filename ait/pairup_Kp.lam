@@ -7,49 +7,61 @@ let
   id = \x.x;
   -- numbers a la splitAt: n cont list = cont prefix_take_n_list drop_n_list
   zero = \cont.cont id;
-  succ = \n\cont\list.list (\h.n (\pref.cont (\r\z.z h (pref r))));
   -- binary LC interpreter
-  intL = \cont\list.list (\bit0\list1.list1 (\bit1.bit0
-    (intL (\exp.bit1 (cont (\args\arg.exp (\z.z arg args)))
-                   (intL (\exp2.cont (\args.exp args (exp2 args))))))
-    (bit1 (cont (\args.args bit1))
-         (\list2.intL (\var.cont (\args.var (args bit1))) list1))));
-  -- binary LC universal machine allowing open programs
-  uniL1 = intL (\x.x x);
-  -- read varables of the form 1 1^k 0
-  readvar = \cont\list.list (\bit0.bit0
-     (cont zero)
-     (readvar (\v.cont (succ v))));
-  -- binary LC parser
-  readc = \cont\list.list (\bit0\list1.list1 (\bit1.(\pref01.bit0
-    (readc (\pref1\exp1.bit1
-      (cont (\suff.pref01 (pref1 suff)) (\l\a\v.l exp1))
-      (readc (\pref2\exp2.cont (\suff.pref01 (pref1 (pref2 suff)))
-        (\l\a\v.a exp1 exp2)))))
-    (\list2.readvar (\var.cont (\suff.pref01 (var true list2 suff))
-        (\l\a\v.v var)) list1))
-      (\suff\z.z bit0 (\z.z bit1 suff))));
-  -- partial symbolic reduction using Thorsten Altenkirch's technique
-  eval = \term\env.term
-    (\body\f\k\n.f (\x.eval body (\z.z x env)))
-    (\term1\term2.(eval term1 env) (\f.f (eval term2 env)) (\f\k\n.n) (\f\k\n.n))
-    (\var.var (\pref\rest.rest true) env);
-  symbit = \x\l\a\v.l (\l\a\v.l (\l\a\v.v (x succ id zero)));
-  -- mink returns the smallest number of at least k bits of data that prog
-  -- will "read" from it to produce a pair <_,restofdata>
-  -- it does so by symbolically reducing prog applied to data applied to false
-  -- note that variable (\l\a\v.v k) is free in the expression
-  -- one k is just a dummy since the reduction should never yield a lambda
-  mink = \prog\prefsymbits\k\data.
-    eval (\l\a\v.a (\l\a\v.a
-           prog (prefsymbits (\l\a\v.v k))) (symbit false))
-         (\z\f\k\n.k)
-      k
-      k
-      (data (\b.mink prog  (\z.prefsymbits (\l\a\v.l (\l\a\v.a
-         (\l\a\v.a (\l\a\v.v zero) (symbit b)) z)))(succ k)));
+  -- parser after int.lam (cons' cells, the variable's code as its lookup,
+  -- the stream selecting its own tail), ported by a9lim
+  intL = (\x. x x) (\x. let intL = x x in
+     \cont. \list. list (\a. a) (\next. list (\_. cont) (list list next))
+       (\bit1.intL (\exp.bit1
+             (cont (\args\arg.exp (\zx\zy. zx arg (zy args))))
+             (intL (\exp2.cont (\args.exp args (exp2 args)))))));
   -- program list returns the program at the start of binary stream list
-  program = readc (\pref\prog\data.pref ((mink prog id zero data) true data false));
+  -- its helpers are local to it, which makes it a closed term
+  program = let
+    succ = \n\cont\list.list (\h.n (\pref.cont (\r\z.z h (pref r))));
+    -- read varables of the form 1 1^k 0
+    readvar = \cont\list.list (\bit0.bit0
+       (cont zero)
+       (readvar (\v.cont (succ v))));
+    -- binary LC parser
+    readc = \cont\list.list (\bit0\list1.list1 (\bit1.
+      -- continue with bit0 bit1 in front of the bits read by pref
+      let cont01 = \pref.cont (\suff\z.z bit0 (\z.z bit1 (pref suff))) in
+      bit0
+      (readc (\pref1\exp1.bit1
+        (cont01 pref1 (\l\a\v.l exp1))
+        (readc (\pref2\exp2.cont01 (\suff.pref1 (pref2 suff))
+          (\l\a\v.a exp1 exp2)))))
+      (\list2.readvar (\var.cont01 (var true list2)
+          (\l\a\v.v var)) list1)));
+    -- partial symbolic reduction using Thorsten Altenkirch's technique
+    eval = \term\env.term
+      (\body\f\k\n.f (\x.eval body (\z.z x env)))
+      (\term1\term2.(eval term1 env) (\f.f (eval term2 env)) (\f\k\n.n) (\f\k\n.n))
+      (\var.var (\pref\rest.rest true) env);
+    -- mink returns the smallest number of at least k bits of data that prog
+    -- will "read" from it to produce a pair <_,restofdata>
+    -- it does so by symbolically reducing prog applied to data applied to false
+    -- note that variable (\l\a\v.v k) is free in the expression
+    -- one k is just a dummy since the reduction should never yield a lambda
+    -- (the knot is written out to bind appsym outside its self-application)
+    mink = (\x. x x) (let
+      -- application and variable terms below are written \l.(\a\v. ...), so
+      -- that their \a\v part can be built outside the binders it doesn't use
+      -- appsym m b is the term \l.m applied to the term for bit b
+      appsym = \m\b.let n = b succ id zero in
+        \l\a\v.a (\l.m) (\l\a\v.l (\l\a\v.l (\l\a\v.v n)));
+    in \x. let mink = x x in \prog\prefsymbits\k\data.
+      eval (appsym (\a\v.a prog (prefsymbits (\l\a\v.v k))) false)
+           (\z\f\k\n.k)
+        k
+        k
+        (data (\b.mink prog (\z.prefsymbits (let body = \a\v.a
+           (appsym (\a\v.v zero) b) z in \l\a\v.l (\l.body)))(succ k))));
+  in readc (\pref\prog\data.pref ((mink prog id zero data) true data false));
+  -- binary LC universal machine allowing open programs
+  -- (defined after program, so that blc keeps one shared copy)
+  uniL1 = intL (\x.x x);
   -- pairup listpq returns <<x,y>,z> if the binary stream listpq
   -- starts with a program p for x, followed by a program q for
   -- computing y given p, followed by the remainder stream z

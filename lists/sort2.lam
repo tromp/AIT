@@ -6,7 +6,7 @@ let
   nil = false;
   cons = \a\b\p.p a b;
 
-  -- 436 bits sort
+  -- 415 bits sort
   succR = \n\a\as.n a (cons a as);
   split = \xss.xss
     (\xs\xss\d.split xss
@@ -14,10 +14,12 @@ let
         \t.t n (x (cons xs zs) zs) (x os (cons xs os)))
       (\zs\os\t.t (succR n) zs os)))
     (\t.(\nil.t nil nil nil) nil);
-  sort = \pre\xss.xss
-    (\d\d.split xss (\n\zs\os\tss.
-       let cp = \b\ts.pre (cons b ts) in
-       n (pre nil) (sort (cp true) zs (sort (cp false) os tss))));
+  sort = \pre.
+    -- sortb b sorts the lists that continue pre with the bit b; it is
+    -- bound outside of \xss, next to pre
+    let sortb = \b.sort (\ts.pre (cons b ts))
+    in \xss.xss (\d\d.split xss (\n\zs\os\tss.
+         n (pre nil) (sortb true zs (sortb false os tss))));
   main = \io.sort (\f.f) io nil
 in main
 -- echo -n abracadabra | ./blc run8 sort.lam

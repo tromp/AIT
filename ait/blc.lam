@@ -3,13 +3,17 @@ let
   1 = \x\y.y;
 
   -- all cont = TREE (\free.term)
-  all = \cont\bit0.bit0
-    (\bit1.bit1 (all (\exp (cont (\args\arg.exp (\z.z arg args)))))
-                (all (\exp1 (all (\exp2.cont (\args.exp1 args (exp2 args)))))))
-    (\bit1.bit1 (cont (\args.args bit1))
-                (all (\var.cont (\args.var (args bit1))) bit1)); -- needed int-e to come up with taking 1 subtree
+  -- Every code starts with two bits, so all takes both up front:
+  -- abstraction and application share the parse of their first subterm,
+  -- and a variable's second bit is also the first bit of the rest.
+  all = \cont\bit0\bit1.bit0
+    (all (\exp.bit1
+      (cont (\args\arg.exp (\z.z arg args)))
+      (all (\exp2.cont (\args.exp args (exp2 args))))))
+    (bit1 (cont (\args.args bit1))
+          (all (\var.cont (\args.var (args bit1))) bit1)); -- needed int-e to come up with taking 1 subtree
   
-  blc = all (\z.z z); -- size 195
+  blc = all (\z.z z); -- size 186
 
   -- inline blc!
   2 = blc 0 0 0 0 0 1 1 1 0 0 1 1 1 0 1 0;

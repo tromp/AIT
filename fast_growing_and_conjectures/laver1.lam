@@ -10,17 +10,25 @@ let
   pred = \n\f\x. n (\g\h. h (g f)) (\h. x) (\x. x);
 
   -- cons = \h\t\z.z h t;
-  revfrom0 = \h\t.h (\r. t revfrom0 (\z.z h r));
-  iterate = \f. let it = \x\z.z x (it (f x)) in it;
   idx = \i\xs. i (\l.l (\h\t.t)) xs (\h\t.h);
 
 -- laver 0 b = b
 -- laver a b = cycle (go (a-1)) !! b
 -- go a = cycle (0 : reverse (takeWhile (/= 0) (iterate (\b -> laver b a) a)))
 
-  laver = let 
-    go = \a. let r = \z.z 0 (iterate (\b. laver b a) a revfrom0 r) in r;
+  -- 262 bits
+  -- The recursions are written out as self-application knots. Inside go,
+  -- one \x.x x (dbl) serves the three loops of go (go's own, iterate and
+  -- revfrom0) and the recursive call laver b a = dbl self b a.
+  -- The list ls does not depend on the knot variable r, so it is bound
+  -- outside the knot's lambdas (r and z).
+  laver = (\x.x x) (\self. let
+    go = \a. let
+      dbl = \x.x x;
+      revfrom0 = dbl (\rf\h\t.h (\r. t (rf rf) (\z.z h r)));
+      iterate = \f. dbl (\it\x\z.z x (it it (f x)))
+    in dbl (let ls = iterate (\b. dbl self b a) a revfrom0 in \r\z.z 0 (ls (r r)));
     laver = \a. a (\b. idx b (go (pred a)))
-  in laver     -- 266 bits with slack 6 in optimize
+  in laver)
 in
   laver -- 7 3

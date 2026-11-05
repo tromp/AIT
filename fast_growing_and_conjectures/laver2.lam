@@ -14,14 +14,23 @@ let
   -- idx n list = list n
   -- idx 0 (cons h t) = cons h t 0 = 0 t h = h
   -- idx (succ n) (cons h t) = cons h t (succ n) = (succ n) t h = t n
-  revpos = \t\h\r.h (\_. t revpos (\z.z r h)) r; -- reverse positive prefix and append r
 
 -- laver b 0 = b
 -- laver b a = cycle (go (a-1)) !! b
 -- go a = cycle (0 : reverse (takeWhile (/= 0) (iterate (laver a) a)))
 
-  -- 212 bits
-  laver = \a\b. a (\a1.
-   let go = \z.z (let it = \x\z.z (it (laver x a1)) x in it a1 revpos go) z in go b) b
+  -- 208 bits
+  -- The recursions are written out as self-application knots. Inside go,
+  -- one \x.x x (dbl) serves the three loops (go's own, iterate and revpos)
+  -- and the recursive call laver x a1 = dbl self x a1.
+  -- The list ls does not depend on the knot variable r, so it is bound
+  -- outside the knot's lambdas (r and z).
+  laver = (\x.x x) (\self\a\b. a (\a1. let
+    go = let
+      dbl = \x.x x;
+      revpos = dbl (\rp\t\h\r.h (\_. t (rp rp) (\z.z r h)) r); -- reverse positive prefix and append r
+      iterate = dbl (\it\x\z.z (it it (dbl self x a1)) x)
+    in dbl (let ls = iterate a1 revpos in \r\z.z (ls (r r)) z)
+  in go b) b)
 in
   laver -- 6 6

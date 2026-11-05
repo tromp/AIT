@@ -30,24 +30,35 @@
   Cadd  = \a\b\f\x. a f (b f x);
   cons = \a\b\p. p a b;
 
-  -- 399+2 bits
-  go = \Tb\Ta\Tc. let
-      prod = \bit\Ta'\Cn. cons bit (go (Tadd Tb Tb) (Tadd Ta' Ta') Tc Cn) in
+  -- 390+2 bits
+  -- go is an explicit knot (self self = go) that takes Tb first. Tb is only
+  -- ever replaced by a numeral applied to the old Tb, so the recursive call
+  -- is `next g` = go (g Tb) with g = 2 or Cn, and the recursion needs
+  -- no Tb argument of its own.
+  go = (\x. x x) (\self\Tb.
+    let next = \g. self self (g Tb)
+    in \Ta\Tc. let
+      -- the numeral 2 yields both Tadd Tb Tb and Tadd Ta' Ta'; it is let-bound
+      -- around the two uses only, so Tc and Cn stay out of its scope
+      prod = \bit\Ta'\Cn. cons bit ((let two = \f\x. f (f x) in next two (two Ta')) Tc Cn) in
       (Tc (\_. prod bit1 (Tsub Tc Ta)))      -- case Ta >= Tc
-      (Ta (\_.                               -- case Ta < Tc
-         (Tc
+      (Ta (let                               -- case Ta < Tc
+         less =
+           (Tc
              (\_\Cn. let                     -- case Ta+Tb >= Tc
                     x2np1 = CTmul (Csucc (Cadd Cn Cn));
                     CnxTb = CTmul Cn Tb
-              in go CnxTb (Tadd (x2np1 Ta) CnxTb) (x2np1 Tc) (Csucc Cn)))
-         (Ta (Tb (\_. prod bit0 Ta)))        -- case Ta+Tb < Tc
-      ));
+              in next Cn (Tadd (x2np1 Ta) CnxTb) (x2np1 Tc) (Csucc Cn))
+             (Ta (Tb (\_. prod bit0 Ta)))     -- case Ta+Tb < Tc
+           )
+         -- bound outside of \_ so that its free variables are not shifted
+         in \_. less)));
 
   C1 = id;
   T1 = \x\f. f x;
   pi = go T1 T1 T1 C1;
 
-  -- YOLO, 376+2 bits
+  -- YOLO, 377+2 bits
   step = \cont\Tb\Ta\Tc\Cn.
       let
           x2np1 = CTmul (Csucc (Cadd Cn Cn));

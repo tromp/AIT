@@ -1,6 +1,7 @@
 -- Discord user DropperAUGL wrote a python program for optimizing lambda calculus binaries
 -- by beam searching on beta expansions and reductions, that led to optimizing loader from
--- 1850 bits down to 1797.
+-- 1850 bits down to 1797. a9lim reduced it to 1781 with three beta-convertible moves found
+-- by a certified local search: see the comments at pilam, sers and rules.
 
 let  derive = (let
   -- 
@@ -36,7 +37,8 @@ let  derive = (let
   eql = \eq. let go = Y (\g\l\m. l (\t\l1\_. m (\t2\m1\F. eq t t2 (g l1 m1) F) F) (m (\b\m1\_. l) T)) in go;
 
   -- term constructors
-  pilam   = \bp\ta\fb \pla\bs\vr. pla (Just bp) ta fb;
+  pilam   = \bp\ta\fb \pla. (\t\bs\vr. t) (pla (Just bp) ta fb); -- = \pla\bs\vr. pla (Just bp) ta fb
+                              -- dropping bs and vr after the pla call is shorter once inlined
   -- app  = \ta\tb    \pla\bs\vr. pla Nothing ta tb; -- repeated below in rules def for optimization
   sort    = \bx       \pla\bs\vr. bs bx;
   var     = \v        \pla\bs\vr. vr v;
@@ -50,48 +52,49 @@ let  derive = (let
   -- close an open term
   close = \ot. ot freevars;
 
-  -- serialize closed term t before list tl at abstraction depth d		367 bits
-  sers = Y (\ser\d. let serd = ser d in \t\tl. let cT = cons T; cF = cons F in case t
-    (\mb\ta\tb. cT (serd ta (mb (\bp. cT (cons bp (ser (Csucc d) (tb (var (d tail))) tl)))
+  -- serialize closed term t before list tl at abstraction depth d		354 bits
+  -- serb and serd are bound together, next to d, so neither sits inside the other
+  sers = Y (\ser\d. (\serb\serd. \t\tl. let cT = cons T; cF = cons F in case t
+    (\mb\ta\tb. cT (serd ta (mb (\bp. cT (cons bp (serb tb tl)))
                                   (cF (serd tb tl)))))
     (\bx.       cF (cT (cons bx tl)))
-    (\v.        v (d cF (cF (cT tl)))));
+    (\v.        v (d cF (cF (cT tl)))))
+    (\tb. ser (Csucc d) (tb (var (d tail))))   -- serb: serialize binder body tb at depth d+1
+    (ser d));                                  -- serd: serialize at depth d
 
   -- serialize an open term, e.g.
   -- ser (\env. λ*.0) = ser (\env. pilam F (sort F)    id     ) = "0 101 0 1 110"
   -- ser (\env. λ*.1) = ser (\env. pilam F (sort F) (head env)) = "0 101 0 1 1110"
   ser = \ot. sers C0 (close ot) nil;
 
-  -- open term equality		647 bits
+  -- open term equality		623 bits
   eqt = \ot1\ot2. eql eqb (ser ot1) (ser ot2);
 
-  -- context equality		685 bits
+  -- context equality		660 bits
   eqc = eql eqt;
 
   -- lift an open term
   lift = \ot\env. ot (tail env);
 
-  -- rules 2+3+4+5+6		-- 1500 bits
-  rules = \jdg0\jdg. jdg0 (\ctx0\typ0\trm0. jdg (\ctx. eqc ctx0 ctx (\typ\trm (\app_typ0_trm0\trm_ctx\isSort
+  -- rules 2+3+4+5+6		-- 1479 bits
+  rules = \jdg0\jdg. jdg0 (\ctx0\typ0\trm0. jdg (\ctx. eqc ctx0 ctx (\typ\trm (\iApp\trm_ctx\isSort
     let
       weaken = isSort (\y\z. z (judge trm_ctx (lift typ0) (lift trm0)) y) id;
-      iApp   = case (close typ0)
-        (\mb\ta. mb (\bp. eqt (\_.ta) typ (\tb. \y\z. z (let
+      iLamPi = ctx (\tp\ctx1. cons ( let
+           abstract = \bp\ta\fb. \env. (pilam bp (ta env) (\x. fb (cons x env)))
+         in judge ctx1 (isSort id (abstract T tp) typ) (abstract isSort tp trm)));
+      iVar   = \tl. isSort (cons (judge trm_ctx (lift trm) head) tl) tl
+    in \tl. weaken (iApp (\bx. id) (\v. id) (iLamPi (iVar tl))) -- iApp's sort and var cases
+  )
+  (case (close typ0) (let  -- iApp, defined outside the let and taking its last two cases late
+      app_typ0_trm0 = \apply. judge ctx (apply typ0 trm) (apply trm0 trm)
+    in \mb\ta. mb (\bp. eqt (\_.ta) typ (\tb. \y\z. z (let
           apply = \ot1\ot2. \env. (let t1 = ot1 env in t1
               (\mb\_\tb. mb (\bp. tb))
               (\_.       id)
               (\_.       id)
               (let app = \ta\tb\pla\bs\vr. pla Nothing ta tb in app t1)) (ot2 env) -- repeat app def for optimization
-         in app_typ0_trm0 apply) y)))
-        (\bx.       id)
-        (\v.        id);
-      iLamPi = ctx (\tp\ctx1. cons ( let
-           abstract = \bp\ta\fb. \env. (pilam bp (ta env) (\x. fb (cons x env)))
-         in judge ctx1 (isSort id (abstract T tp) typ) (abstract isSort tp trm)));
-      iVar   = \tl. isSort (cons (judge trm_ctx (lift trm) head) tl) tl
-    in \tl. weaken (iApp (iLamPi (iVar tl)))
-  )
-  (\apply. judge ctx (apply typ0 trm) (apply trm0 trm))
+         in app_typ0_trm0 apply) y))))
   (cons trm ctx)
   (\t. case (close typ) (\_\_\_. \f.f) (\_.     \f.t) (\_.     \f.f))
   ) (\typ\trm. id)));
@@ -102,9 +105,9 @@ let  derive = (let
     expand = \l. ffold (\j1. ffold (\j2. comp (rules j1 j2)) l id) l (cons axiom nil);
     length  = \l\f. ffold (\_. f) l;
     sizepower = ffold (\jdg. jdg (\_\_\trm. length (ser trm)))
-  in sizepower (n expand nil) n);                                       -- 1761 bits
+  in sizepower (n expand nil) n);                                       -- 1745 bits
 
   2 = \f\x. f (f x)
-in 2 2 2 derive 2						-- 1797 bits / 224.625 bytes
+in 2 2 2 derive 2						-- 1781 bits / 222.625 bytes
 
 -- derive 2 = sizetower [* |- * : □,* |- 0 : *, |- * : □] 2 = ((2^3)^3)^3 = 2^27

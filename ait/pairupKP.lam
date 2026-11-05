@@ -4,35 +4,20 @@
 -- 1) ps and qs represent the lambda calculus programs p and q, respectively,
 -- 2) p (pi ++ Omega) evaluates to the normal form po
 -- 3) q qi (ps ++ pi) evaluates to qo.
-\io. let
+--
+-- The definitions form three nested scopes: the first doesn't mention uni,
+-- the second defines uni, and the third takes appT as a parameter, applied
+-- from outside the second, so that appT's reference to nfT stays one binder
+-- shallower. The whole input io is applied outside all of them.
+\io. (let
   id = \x.x;
   true = \x\y.x;
   false = \x\y.y;
   nil = false;
   omega = omega;
 
-  -- IF_DIRTY: 784 bits / !IF_DIRTY: 823 bits
+  -- IF_DIRTY: 756 bits / !IF_DIRTY: 795 bits
   IF_DIRTY = true;
-
-  ----------------------------------------------------------------------------
-  -- parse binary lambda calculus using HOAS, capturing program.
-  -- uni :: ((t -> t) -> t)     -- abstraction
-  --     -> (t -> (t -> t))     -- application
-  --     -> (([t] -> t) -> ([Bool] -> [Bool]) -> [Bool] -> r)
-  --        -- continuation taking program, parsed string, remainder of input
-  --     -> ([Bool] -> [Bool])  -- initial difference list (id)
-  --     -> [Bool]              -- input
-  --     -> r
-
-  uni = \abs\app.let uni0 = \cnt\ps\xs.
-    xs (\b0.let ps0 = \ts.ps (\p.p b0 ts) in
-      \ys\uni0\cnt.ys (\b1.
-        let ps1 = \ts.ps0 (\p.p b1 ts) in
-          b0 (uni0 (\v1.(b1 (cnt (\ctx.abs (\v2.v1 (\p.p v2 ctx))))
-                           (uni0 (\v2.cnt (\ctx.app (v1 ctx) (v2 ctx)))))))
-             (b1 (cnt (\ctx.ctx b1))
-                 (\d\d.uni0 (\v.cnt (\ctx.v (ctx b1))) ps0 ys)) ps1)) uni0 cnt
-  in uni0;
 
   -- data T = A (V -> V)  -- abstraction
   --        | V           -- free variable
@@ -51,13 +36,41 @@
     (\f. f u)        -- A: apply
     (nfT u)          -- V: reduce argument to normal form next
     t;               -- O: preserve O
-  appT = \t. caseT t (\f. f) nfT (\u. t); -- same but smaller
+  -- the smaller appT actually used is passed in at the end
 
+in (let
+  ----------------------------------------------------------------------------
+  -- parse binary lambda calculus using HOAS, capturing program.
+  -- uni :: ((t -> t) -> t)     -- abstraction
+  --     -> (t -> (t -> t))     -- application
+  --     -> (([t] -> t) -> ([Bool] -> [Bool]) -> [Bool] -> r)
+  --        -- continuation taking program, parsed string, remainder of input
+  --     -> ([Bool] -> [Bool])  -- initial difference list (id)
+  --     -> [Bool]              -- input
+  --     -> r
+
+  -- cons' lookup (after int.lam, ported by a9lim): the original ys stream
+  -- is the variable's value.
+  -- Keep the old bit-recording recursion for ps; discard its variable value.
+  -- The initial ys captured by cnt stays intact across every unary step.
+  -- The recursion past a unary 1 is bound outside the two arguments it ignores.
+  uni = \abs\app.let uni0 = \cnt\ps\xs.
+    xs (\b0.let ps0 = \ts.ps (\p.p b0 ts) in
+      \ys\uni0\cnt.ys (\b1.
+        let ps1 = \ts.ps0 (\p.p b1 ts) in
+          b0 (uni0 (\v1.(b1 (cnt (\ctx.abs (\v2.v1 (\zx\zy.zx v2 (zy ctx)))))
+                           (uni0 (\v2.cnt (\ctx.app (v1 ctx) (v2 ctx)))))))
+             (b1 (cnt ys)
+                 (let more = uni0 (\v.cnt ys) ps0 ys in \d\d.more)) ps1)) uni0 cnt
+  in uni0;
+
+in \appT. let
   absT = A;
 
   boolT = \x. absT (\t. absT (\f. x t f));
   consT = \x\xs. absT (\p. appT (appT p x) xs);
-
+  consBitT = \x\xs. let abs = absT in -- consT (boolT x) xs, sharing absT
+    abs (\p. appT (appT p (abs (\t. abs (\f. x t f)))) xs);
 
   result = \pspi\rs. \p.
     let uni1 = uni id id (\prog\ps\rs. prog (IF_DIRTY ps omega) rs) id in
@@ -69,13 +82,15 @@
             xs -- A: impossible case
             (result (pspi nil) xs) -- V: we've found the remainder
             -- O: start over with a longer input list
-            (xs (\x\xs. go (\tl. is (consT (boolT x) tl))
+            (xs (\x\xs. go (\tl. is (consBitT x tl))
                            (\tl. pspi (\p. p x tl)) xs))
     in  go id ps;
 
-  pairup = uni absT appT rest id io;
+  pairup = uni absT appT rest id;
 
-in pairup
+in pairup)
+  (\t. caseT t (\f. f) nfT (\u. t)) -- appT, same but smaller
+  ) io
 
 --         0       -> 0           aka ""
 --       1 0 ""    -> 0+1 = 1     aka "0"

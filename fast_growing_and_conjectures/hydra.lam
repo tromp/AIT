@@ -9,18 +9,21 @@ let
   T = \x.\y.x;
   F = \x.\y.y;
 
-  -- 129 bits
-  f = \n\j\i. 
+  -- 122 bits
+  -- m = n (f (\a.a)) occurs in both of the last two branches, so it is bound
+  -- once, before j and i arrive.
+  f = \n. let m = n (f (\a.a)) in \j\i.
     i
       (f (\z. n z i i i))         -- f (\a. a T^x) ? T  -->  f (\a. a T^x+3)
       (j
-        (n (f (\a.a)) j)          -- f (\a. a T^x) T F  -->  f (\a. a) T^x+1
-        (n (f (\a.a)) i i i i));  -- f (\a. a T^x) F F  -->  f (\a. a) T^x F^4
+        (m j)                     -- f (\a. a T^x) T F  -->  f (\a. a) T^x+1
+        (m i i i i));             -- f (\a. a T^x) F F  -->  f (\a. a) T^x F^4
                                   -- f (\a. a T^x) ? (\a\b\c.c) --> \c.c
                                   -- f (\a. a T^x) (\a\b\c.c) --> \i. i (f (\a. a T^x+3)) (\c.c)
 
-  -- 179 bits
-  hydra = f (\a.a) T T F F (\a\b\c.c);
+  -- 171 bits
+  -- the terminator (\a\b\c.c) is written \a.F, sharing F
+  hydra = f (\a.a) T T F F (\a.F);
 in hydra
 
 --  Explicitly: Start from (2, 2) and repeatedly apply the rules

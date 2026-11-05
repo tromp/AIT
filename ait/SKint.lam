@@ -21,4 +21,6 @@ let
   Y1 = \y\x.y (x y x);
   SKY = Y0 Y1 -- 35 bits
   -- for cross-interpreting replace bit K S above by bit bit S and use Y instead of SKY
-in SKY CL     -- 272 bits but could be 230 bits using mtve literally
+in Y1 CL Y1   -- = SKY CL, since SKY = Y0 Y1 = \y. Y1 y Y1
+              -- (applying Y1 itself spares the compiler the Y0 detour: 144 -> 136 bits)
+              -- as SK that is 272 bits, but could be 230 bits using mtve literally

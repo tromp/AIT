@@ -1,32 +1,34 @@
--- universal machine for Levenshtein binary lambda calculus (BLC2)
+-- universal machine for Levenshtein binary lambda calculus (BLC2): 390 bits
+-- a9lim reduced it from 500 bits: one bit reader, get, serves the parser,
+-- the Levenshtein delimiter and the digit accumulator. A fresh byte always
+-- has a first bit, so get reads it directly and needs no recursion.
+-- One self-application, delta, serves the parser's and the delimiter's
+-- fixpoints and the loop.
+\bytes.bytes (
 let
- id = \x.x;
- true = \x\y.x;
- false = \x\y.y;
+ delta = \x.x x;
+ build = \int\cont.
+   let
+    -- get k (bit:bits) = k bit bits, reading the next byte when bits is nil
+    get = \k\bits.bits (\b\tail\ignored.k b tail) (\bytes.bytes (\byte.byte k));
 
- -- readbit f cont n _ input = cont (n . n . if next_input_bit then f else id) bytes' input'
- readbit = \f\cont\n\_\inp.inp (\bit.cont (\x. n (n (bit x (f x)))));
+    -- readbit f cont n input = cont (n . n . if next_input_bit then f else id) input'
+    readbit = \f\cont\n.get (\bit.cont (\x.n (n (bit x (f x)))));
 
- -- delimit f cont _ (levenstein_code_for_n_on_input) = cont (f^n) bytes' input'
- delimit = \f\cont\_\inp.inp (\bit.bit (cont id) (delimit (readbit f) (\n. n cont f)));
-
-  -- binary LC interpreter
-  -- int2 cont _ input = cont (\free.parsed) bytes' input'
-  int2 = \cont\_\inp.inp (\bit0. bit0
-    (\_\inp1.inp1 (\bit1.
-       int2 (\exp.bit1 (cont (\args\arg.exp (\z.z arg args)))
-                       (int2 (\exp2.cont (\args.exp args (exp2 args)))))))
-    (delimit (\l.l bit0) (\n. cont (\args. n args true))));
-  
-  -- input bytes cont = cont nextbit nextbytes nextinput
-  input = \bytes. bytes (\bits\bytes.
-    let go = \bit\bits\next\cont.cont bit bytes (bits go next)
-    in  bits go (input bytes));
-
-  -- loop
-  omega = omega;
-
-  -- binary LC universal machine for closed programs
-  uni2 = \bytes.int2 (\exp\bytes\_.exp omega bytes) bytes (input bytes)
+    -- delimit f cont (levenstein_code_for_n_on_input) = cont (f^n) input'
+    delimit = delta (\self\f\cont.get (\bit.bit
+      (cont (\x.x))
+      (self self (readbit f) (\n.n cont f))))
+   in
+    -- binary LC interpreter
+    -- int cont input = cont (\free.parsed) input'
+    get (\bit0.bit0
+     (get (\bit1.int (\exp.bit1
+       (cont (\args\arg.exp (\z.z arg args)))
+       (int (\exp2.cont (\args.exp args (exp2 args)))))))
+     (delimit (\l.l bit0) (\n.cont (\args.n args (\x\y.x)))))
 in
-  uni2
+ -- binary LC universal machine for closed programs; free variables loop
+ -- assuming closed programs, (\x.x) for the last argument gives a
+ -- non-strict machine of 370 bits
+ delta (\self.build (self self)) (\exp\bits.exp (delta delta)))

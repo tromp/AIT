@@ -1,55 +1,51 @@
+-- 599 bits
 let
-  I  = \x. x;
-  T = \x\y.x;
-  F = \x\y.y;
-  nil = F;-- \p\n.n
-  cons = \x\y\p\n.p x y;
-  K = T;
-  B = \x\y\z.x   (y z);
-  C = \x\y\z.x z y;
+  self = \x.x x;
+  I = \x.x;
+  K = \x\y.x;
+  nil = \x\y.y;
+  succ = \n\s\z.s n;
+  B = \x\y\z.x (y z);
   R = \x\y\z.y z x;
   S = \x\y\z.x z (y z);
+  fix = \f.(\x.x x) (\x.f (x x))
 
-  -- compose cont tm m tn n = cont (max m n) (\...\ tm ...0 (tn ...0))
--- (True:g1, d1) # (True:g2, d2) = (g1, ([], Com "S") # (g1, d1)) # (g2, d2)
--- (True:g1, d1) # (False:g2, d2) = (g1, ([], Com "C") # (g1, d1)) # (g2, d2)
--- (False:g1, d1) # (True:g2, d2) = (g1, ([], Com "B") # (g1, d1)) # (g2, d2)
-  cmps = \cont\tm\m\tn\n.m (\bm\m1.n (\bn. bm bm bn (cmps (\m1\t.cmps (\l.cont (cons T l)) t m1 tn)
-                                                          (\x\y\z.bm (x z) x (bn (y z) y)) nil tm m1)
--- (False:g1, d1) # (False:g2, d2) = (g1, d1) # (g2, d2)
-                                                    (cmps (\l. cont (cons F l)) tm m1 tn))
--- (True:g1, d1) # ([], d2) = ([], Com "R" :@ d2) # (g1, d1)
-                                  (bm (     cmps (\_.cont m) (R tn) n tm m1)
--- (False:g1, d1) # ([], d2) = (g1, d1) # ([], d2)
-                                      (cmps (\_.cont m) tm m1 tn n)))
--- ([], d1) # (True:g2, d2) = ([], Com "B" :@ d1) # (g2, d2)
--- ([], d1) # (False:g2, d2) = ([], d1)           # (g2, d2)
-                           (n (\b.cmps (\_.cont n) (b B I tm) m tn)
--- ([], d1) # ([], d2) = d1 :@ d2
-                              (cont n (tm tn)));
-  -- Kiselyov LC interpreter with Lazy Weakening
+  -- Kiselyov LC interpreter with Eager Weakening
   -- https://theory.stanford.edu/~blynn/lambda/kiselyov.html
-  -- intK cont bits = cont unlambdas closedup unparsed_bits
-  intK = \cont\list.list (\bit0\list1.list1 (\bit1.bit0
-    (intK (\m\tm.bit1 (m (\b.b (\m1. cont m1 tm)
-                               (cmps cont K nil tm))
-                         (cont m (K tm)))
-                      (intK (\n\tn. cmps cont tm m tn n))))
-    (bit1 (cont (cons bit1 nil) I)
-          (\list2.intK (\n.cont (cons bit1 n)) list1))));
-  
-  -- loop
-  omega = omega;
-
-  -- binary LC universal machine for closed programs
-  uni = intK (\n. n omega)
-in uni
-
--- ([], d1) # (True:[], I) = d1
-  -- ([], d1) # (True:g2, d2) = ([], B d1) # ([], I) = B d1 I
--- (True:[], Com "I") # ([], d2) = Com "T" :@ d2
-  -- (True:g1, d1) # ([], d2) = R d2 I = T d2
--- (True:[], Com "I") # (False:g2, d2) = ([], Com "T") # (g2, d2)
-  -- (True:g1, d1) # (False:g2, d2) = (g1, ([], C) # ([], I)) # (g2, d2) = C I # (g2, d2)
--- (False:g1, d1) # (True:[], Com "I") = d1
-  -- (False:g1, d1) # (True:g2, d2) = (g1, ([], B) # (g1, d1)) # ([], I)
+  -- intK cont bits = cont depth closedup unparsed_bits
+  -- (n, d): n is one plus the greatest free index of M, or zero if closed;
+  -- d =beta \x[n-1]...\x[0]. M, where index i in M denotes x[i].
+  -- All n arguments are present, outermost first, including unused ones.
+  -- Depths are Scott naturals: nil = 0, succ n = n+1.
+in self (\recur\outer\list.list (\bit0\list1.list1 (\bit1.
+    (\intK\cont.bit0
+      (intK
+        (let
+          -- cmps cont m tm n tn = cont (max m n) closedup
+          -- add increments the resulting depth; keep preserves a known depth
+          -- up (n, d) = (n+1, d)
+          cmps = fix (\cmps\cont.
+            (\add\keep\m\tm\n\tn.m
+              (\m1.n
+-- (m+1, d1) # (n+1, d2) = up (((0, Com "S") # (m, d1)) # (n, d2))
+                (\n1.cmps
+                  (\m1\t.add m1 t n1 tn)
+                  nil S m1 tm)
+-- (m+1, d1) # (0, d2) = up ((0, Com "R" :@ d2) # (m, d1))
+                (keep m n (R tn) m1 tm))
+-- (0, d1) # (n+1, d2) = up ((0, Com "B" :@ d1) # (n, d2))
+              (n (\n1.keep n m (B tm) n1 tn)
+-- (0, d1) # (0, d2) = (0, d1 :@ d2)
+                 (cont n (tm tn))))
+            (cmps (\l.cont (succ l)))
+            (\m.cmps (\_.cont m)));
+          compose = cmps cont
+         in \m\tm.bit1
+           (m (\m1.cont m1 tm) (cont m (K tm)))
+           (intK (\n\tn.compose m tm n tn))))
+      -- A variable is the first projection on its depth many arguments.
+      -- (1, I); (n, d) becomes (n+1, B K d) for each extra unary 1.
+      (bit1 (cont (succ nil) I)
+            (\list2.intK (\n\tm.cont (succ n) (B K tm)) list1))) (recur recur) outer)))
+  -- closed programs have depth zero; positive depth forces the loop
+  (\n.n (self self))

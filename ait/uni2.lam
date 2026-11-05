@@ -6,31 +6,37 @@ let
  -- readbit f cont n (bit->blob) = cont (n . n . if bit then f else id) blob
  readbit = \f\cont\n\blob.blob (\bit.cont (\x. n (n (bit x (f x)))));
 
+ -- fixpoint combinator, shared by delimit, int2 and omega
+ fix = \f.(\x.x x) (\x.f (x x));
+
  -- delimit f cont (levenstein_code_for_n ++ blob) = cont (f^n) blob
- delimit = \f\cont\blob.blob (\bit.bit (cont id)
-   (delimit (readbit f) (\n. n cont f)));
+ delimit = fix (\delimit\f\cont.
+   let rest = delimit (readbit f) (\n. n cont f)
+   in \blob.blob (\bit.bit (cont id) rest));
 
   -- binary LC interpreter
   -- int2 cont bits = cont (\free.parsed) unparsed_bits
-  int2 = \cont\blob.blob (\bit0. bit0        -- 314 bits
-    (\blob1.blob1 (\bit1.
-       int2 (\exp.bit1 (cont (\args\arg.exp (\z.z arg args)))
-                       (int2 (\exp2.cont (\args.exp args (exp2 args)))))))
-    (delimit (\l.l bit0) (\n. cont (\args. n args true)))
-    );
-  
+  int2 = fix (\int2\cont.                 -- 311 bits
+    -- parse the rest of an abstraction (bit1 = 0) or application (bit1 = 1)
+    let lam_or_app = \bit1.
+          int2 (\exp.bit1 (cont (\args\arg.exp (\z.z arg args)))
+                          (int2 (\exp2.cont (\args.exp args (exp2 args)))))
+    in \blob.blob (\bit0. bit0
+      (\blob1.blob1 lam_or_app)
+      (delimit (\l.l bit0) (\n. cont (\args. n args true)))));
+
   -- blob cont = cont bytes nextbit nextblob
   blob = \bits\bytes\cont. let go = \bs\bit\bits1\z. cont bytes bit (blob bits1 bs)
                          in bits (go bytes)
       (bytes (\byte\bytes1. byte (go bytes1) bytes1));
- 
+
 
   -- loop
-  omega = omega;             -- 18 bits
+  omega = fix fix;           -- no head normal form
 
   -- binary LC universal machine for closed programs
-  uni2 = int2 (\z.z omega);  -- 340 bits
+  uni2 = int2 (\z.z omega);  -- 332 bits
   -- save some bits by assuming closed programs
-  -- uni2 = int2 (\z. z z);  -- 324 bits
+  -- uni2 = int2 (\z. z z);  -- 321 bits
 
 in uni2

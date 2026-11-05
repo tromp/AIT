@@ -9,7 +9,9 @@ let
 
  -- increment or decrement a bigendian binary number
  -- ccps version
- indec = \which\cont\done\list.list (\msb.indec which (\r\dummy.which msb cont done (\z.z (\x\y.msb y x) r)) (\r\dummy.done (\z.z msb r))) (cont list);
+ -- explicit knot (self self = indec), so that indec which is shared outside the lambdas
+ indec = (\x.x x) (\self\which.let again = self self which in
+   \cont\done\list.list (\msb.again (\r\dummy.which msb cont done (\z.z (\x\y.msb y x) r)) (\r\dummy.done (\z.z msb r))) (cont list));
 
  inc = indec (\b\x\y.b y x) (\r\z.z zero r) (\r.r);
 
